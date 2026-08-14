@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: HEI Graduate — Course API
+  description: >
+    CRUD endpoints for the COURSE entity (unique reference, title, credits,
+    active status). Restricted to the ADMINISTRATOR role — see spec §2.1.
+    No physical deletion: DELETE deactivates the course (active=false).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Course
+    description: Course management (curriculum reference data)
+
+paths:
+  /api/courses:
+    get:
+      tags: [Course]
+      operationId: getAllCourses
+      summary: List all courses
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Course]
+      operationId: createCourse
+      summary: Create a course
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseRequest"
+      responses:
+        "201":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "400":
+          description: courseReference already exists, or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/courses/{id}:
+    get:
+      tags: [Course]
+      operationId: getCourseById
+      summary: Get a course by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Course]
+      operationId: updateCourse
+      summary: Update a course
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseRequest"
+      responses:
+        "200":
+          description: Course updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "400":
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Course]
+      operationId: deactivateCourse
+      summary: Deactivate a course (no physical deletion)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "204":
+          description: Course deactivated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CourseId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+    Forbidden:
+      description: Authenticated but ADMINISTRATOR role required (spec §2.1)
+    NotFound:
+      description: No course found for this id
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+
+  schemas:
+    CourseResponse:
+      type: object
+      description: Output representation of a course.
+      required: [id, courseReference, title, credits, active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        courseReference:
+          type: string
+          example: PROG4
+        title:
+          type: string
+          example: Advanced Programming
+        credits:
+          type: integer
+          example: 5
+        active:
+          type: boolean
+          example: true
+
+    CourseRequest:
+      type: object
+      description: Expected request body to create/update a course.
+      required: [courseReference, title, credits]
+      properties:
+        courseReference:
+          type: string
+          minLength: 1
+          example: PROG4
+        title:
+          type: string
+          minLength: 1
+          example: Advanced Programming
+        credits:
+          type: integer
+          minimum: 1
+          example: 5
+
+    ApiError:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
