@@ -1,8 +1,9 @@
 package com.heigraduate.app.graduate.validator;
 
 import com.heigraduate.app.graduate.exception.DuplicateParcoursCodeException;
+import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
-import com.heigraduate.app.model.Parcours;
+
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

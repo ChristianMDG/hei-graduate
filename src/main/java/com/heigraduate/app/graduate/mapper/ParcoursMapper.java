@@ -1,7 +1,8 @@
 package com.heigraduate.app.graduate.mapper;
 
 import com.heigraduate.app.graduate.dto.ParcoursResponse;
-import com.heigraduate.app.model.Parcours;
+import com.heigraduate.app.graduate.model.Parcours;
+
 
 public final class ParcoursMapper {
 
