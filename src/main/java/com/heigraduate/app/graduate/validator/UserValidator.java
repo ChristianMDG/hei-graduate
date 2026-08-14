@@ -4,7 +4,6 @@ package com.heigraduate.app.graduate.validator;
 import java.util.UUID;
 
 import com.heigraduate.app.graduate.exception.ConflictException;
-import com.heigraduate.app.graduate.exception.DuplicateUserCodeException;
 import com.heigraduate.app.graduate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,7 @@ public class UserValidator {
 
     public void validateEmailIsUnique(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new DuplicateUserCodeException("A user with email '" + email + "' already exists");
+            throw new ConflictException("A user with email '" + email + "' already exists");
         }
     }
 
@@ -27,7 +26,7 @@ public class UserValidator {
                 .filter(existing -> !existing.getId().equals(currentUserId))
                 .ifPresent(
                         existing -> {
-                            throw new DuplicateUserCodeException("A user with email '" + email + "' already exists");
+                            throw new ConflictException("A user with email '" + email + "' already exists");
                         });
     }
 }

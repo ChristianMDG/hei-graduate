@@ -3,6 +3,12 @@ package com.heigraduate.app.graduate.service;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.model.UserRole;
+import com.heigraduate.app.graduate.repository.UserRepository;
+import com.heigraduate.app.graduate.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
