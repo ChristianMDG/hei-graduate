@@ -7,4 +7,4 @@ import jakarta.validation.constraints.Positive;
 public record CourseRequest(
     @NotBlank String courseReference,
     @NotBlank String title,
-    @NotNull @Positive Integer Credits) {}
+    @NotNull @Positive Integer credits) {}

@@ -22,7 +22,7 @@ public class Course {
   private String title;
 
   @Column(name = "credits", nullable = false)
-  private Integer Credits;
+  private Integer credits;
 
   @Column(nullable = false)
   @Builder.Default
