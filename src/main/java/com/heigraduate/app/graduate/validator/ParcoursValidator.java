@@ -8,17 +8,16 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-
 @Component
 @RequiredArgsConstructor
 public class ParcoursValidator {
 
-    private final ParcoursRepository parcoursRepository;
+  private final ParcoursRepository parcoursRepository;
 
-    public void validateCodeUniqueness(String code, UUID excludedId) {
-        Optional<Parcours> existing = parcoursRepository.findByCodeIgnoreCase(code.trim());
-        if (existing.isPresent() && !existing.get().getId().equals(excludedId)) {
-            throw new DuplicateParcoursCodeException(code);
-        }
+  public void validateCodeUniqueness(String code, UUID excludedId) {
+    Optional<Parcours> existing = parcoursRepository.findByCodeIgnoreCase(code.trim());
+    if (existing.isPresent() && !existing.get().getId().equals(excludedId)) {
+      throw new DuplicateParcoursCodeException(code);
     }
+  }
 }

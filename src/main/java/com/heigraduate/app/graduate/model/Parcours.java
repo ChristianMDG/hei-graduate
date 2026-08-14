@@ -1,9 +1,8 @@
 package com.heigraduate.app.graduate.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "parcours")
@@ -15,14 +14,14 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 public class Parcours {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(nullable = false, unique = true, length = 10)
-    private String code;
+  @Column(nullable = false, unique = true, length = 10)
+  private String code;
 
-    @Column(nullable = false)
-    private String label;
+  @Column(nullable = false)
+  private String label;
 
-    @Column(nullable = false)
-    private boolean active;
+  @Column(nullable = false)
+  private boolean active;
 }

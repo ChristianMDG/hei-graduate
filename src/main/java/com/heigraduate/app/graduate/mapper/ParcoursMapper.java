@@ -5,10 +5,10 @@ import com.heigraduate.app.model.Parcours;
 
 public final class ParcoursMapper {
 
-    private ParcoursMapper() {}
+  private ParcoursMapper() {}
 
-    public static ParcoursResponse toResponse(Parcours parcours) {
-        return new ParcoursResponse(
-                parcours.getId(), parcours.getCode(), parcours.getLabel(), parcours.isActive());
-    }
+  public static ParcoursResponse toResponse(Parcours parcours) {
+    return new ParcoursResponse(
+        parcours.getId(), parcours.getCode(), parcours.getLabel(), parcours.isActive());
+  }
 }
