@@ -1,6 +1,7 @@
-package com.heigraduate.app.graduate.dto;
+package com.heigraduate.app.graduate.mapper;
 
 
+import com.heigraduate.app.graduate.dto.UserResponse;
 import com.heigraduate.app.graduate.model.User;
 
 public final class UserMapper {
