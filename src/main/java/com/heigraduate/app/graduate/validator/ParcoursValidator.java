@@ -1,6 +1,6 @@
 package com.heigraduate.app.graduate.validator;
 
-import com.heigraduate.app.graduate.exception.ConflictException;
+import com.heigraduate.app.graduate.exception.DuplicateParcoursCodeException;
 import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
 import java.util.Optional;
@@ -17,7 +17,7 @@ public class ParcoursValidator {
   public void validateCodeUniqueness(String code, UUID excludedId) {
     Optional<Parcours> existing = parcoursRepository.findByCodeIgnoreCase(code.trim());
     if (existing.isPresent() && !existing.get().getId().equals(excludedId)) {
-      throw new ConflictException("Parcours with code " + code + " already exists");
+      throw new DuplicateParcoursCodeException(code);
     }
   }
 }
