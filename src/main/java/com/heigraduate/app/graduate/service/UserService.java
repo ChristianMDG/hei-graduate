@@ -65,9 +65,6 @@ public class UserService implements UserDetailsService {
         User user = getUserById(id);
         userRepository.delete(user);
     }
-
-    /** Required by Spring Security to (re)build the authenticated principal from a JWT subject,
-     * and reused by {@link #login} to validate credentials. Email acts as the username. */
     @Override
     @Transactional(readOnly = true)
     public User loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -95,4 +92,4 @@ public class UserService implements UserDetailsService {
     }
 
     public record LoginResult(String token, User user) {}
-}}
+}
