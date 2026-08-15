@@ -115,6 +115,7 @@ class CourseIntegrationTest {
     mockMvc
         .perform(
             post("/api/courses")
+                .with(csrf())
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isForbidden());
