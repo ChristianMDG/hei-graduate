@@ -10,27 +10,28 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 import org.springframework.stereotype.Component;
 
 @Component
-public class SelfOrAdminAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
+public class SelfOrAdminAuthorizationManager
+    implements AuthorizationManager<RequestAuthorizationContext> {
 
-    private static final String PATH_VARIABLE = "id";
+  private static final String PATH_VARIABLE = "id";
 
-    @Override
-    public AuthorizationDecision check(
-            Supplier<Authentication> authenticationSupplier, RequestAuthorizationContext context) {
-        var authentication = authenticationSupplier.get();
+  @Override
+  public AuthorizationDecision check(
+      Supplier<Authentication> authenticationSupplier, RequestAuthorizationContext context) {
+    var authentication = authenticationSupplier.get();
 
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof User principal)) {
-            return new AuthorizationDecision(false);
-        }
-
-        if (UserRole.ADMIN.equals(principal.getRole())) {
-            return new AuthorizationDecision(true);
-        }
-
-        var requestedId = context.getVariables().get(PATH_VARIABLE);
-        var isSelf = requestedId != null && requestedId.equals(principal.getId().toString());
-        return new AuthorizationDecision(isSelf);
+    if (authentication == null
+        || !authentication.isAuthenticated()
+        || !(authentication.getPrincipal() instanceof User principal)) {
+      return new AuthorizationDecision(false);
     }
+
+    if (UserRole.ADMIN.equals(principal.getRole())) {
+      return new AuthorizationDecision(true);
+    }
+
+    var requestedId = context.getVariables().get(PATH_VARIABLE);
+    var isSelf = requestedId != null && requestedId.equals(principal.getId().toString());
+    return new AuthorizationDecision(isSelf);
+  }
 }
