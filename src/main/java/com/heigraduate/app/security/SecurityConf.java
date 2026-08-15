@@ -8,6 +8,8 @@ import com.heigraduate.app.security.filter.BearerAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,32 +25,38 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConf {
 
-  private final RestAuthenticationEntryPoint entryPoint;
-  private final RestAccessDeniedHandler accessDeniedHandler;
+    private final RestAuthenticationEntryPoint entryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-  }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+    }
 
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http, BearerAuthFilter bearerAuthFilter)
-      throws Exception {
-    return http.csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
-        .exceptionHandling(
-            e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
-        .authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers("/auth/login")
-                    .permitAll()
-                    .requestMatchers("/ping", "/health/**")
-                    .permitAll()
-                    .requestMatchers("/api/users", "/api/users/**")
-                    .hasRole("ADMIN")
-                    .anyRequest()
-                    .authenticated())
-        .addFilterBefore(bearerAuthFilter, UsernamePasswordAuthenticationFilter.class)
-        .build();
-  }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, BearerAuthFilter bearerAuthFilter)
+            throws Exception {
+        return http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
+                .exceptionHandling(
+                        e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/auth/login")
+                                        .permitAll()
+                                        .requestMatchers("/ping", "/health/**")
+                                        .permitAll()
+                                        .requestMatchers("/api/users", "/api/users/**")
+                                        .hasRole("ADMIN")
+                                        .anyRequest()
+                                        .authenticated())
+                .addFilterBefore(bearerAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
 }
