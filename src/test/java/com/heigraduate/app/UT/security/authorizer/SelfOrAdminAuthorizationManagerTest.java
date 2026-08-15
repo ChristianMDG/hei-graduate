@@ -6,10 +6,9 @@ import static org.mockito.Mockito.when;
 
 import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.model.UserRole;
+import com.heigraduate.app.security.authorizer.SelfOrAdminAuthorizationManager;
 import java.util.Map;
 import java.util.UUID;
-
-import com.heigraduate.app.security.authorizer.SelfOrAdminAuthorizationManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;

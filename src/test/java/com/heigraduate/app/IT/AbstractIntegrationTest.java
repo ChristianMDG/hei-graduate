@@ -12,21 +12,21 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
-                    .withDatabaseName("hei_graduate_test")
-                    .withUsername("test")
-                    .withPassword("test");
+  @Container
+  static final PostgreSQLContainer<?> POSTGRES =
+      new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
+          .withDatabaseName("hei_graduate_test")
+          .withUsername("test")
+          .withPassword("test");
 
-    static {
-        POSTGRES.start();
-    }
+  static {
+    POSTGRES.start();
+  }
 
-    @DynamicPropertySource
-    static void registerDatasourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-    }
+  @DynamicPropertySource
+  static void registerDatasourceProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+    registry.add("spring.datasource.username", POSTGRES::getUsername);
+    registry.add("spring.datasource.password", POSTGRES::getPassword);
+  }
 }

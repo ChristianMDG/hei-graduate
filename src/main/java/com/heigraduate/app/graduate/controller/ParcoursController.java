@@ -27,46 +27,46 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ParcoursController {
 
-    private final ParcoursService parcoursService;
+  private final ParcoursService parcoursService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ParcoursResponse> create(@Valid @RequestBody ParcoursRequest request) {
-        Parcours created = parcoursService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ParcoursMapper.toResponse(created));
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ParcoursResponse> create(@Valid @RequestBody ParcoursRequest request) {
+    Parcours created = parcoursService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ParcoursMapper.toResponse(created));
+  }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ParcoursResponse> update(
-            @PathVariable UUID id, @Valid @RequestBody ParcoursRequest request) {
-        return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ParcoursResponse> update(
+      @PathVariable UUID id, @Valid @RequestBody ParcoursRequest request) {
+    return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.update(id, request)));
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ParcoursResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.getById(id)));
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ParcoursResponse> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.getById(id)));
+  }
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<ParcoursResponse>> getAll(
-            @RequestParam(defaultValue = "false") boolean activeOnly) {
-        List<ParcoursResponse> body =
-                parcoursService.getAll(activeOnly).stream().map(ParcoursMapper::toResponse).toList();
-        return ResponseEntity.ok(body);
-    }
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<ParcoursResponse>> getAll(
+      @RequestParam(defaultValue = "false") boolean activeOnly) {
+    List<ParcoursResponse> body =
+        parcoursService.getAll(activeOnly).stream().map(ParcoursMapper::toResponse).toList();
+    return ResponseEntity.ok(body);
+  }
 
-    @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ParcoursResponse> deactivate(@PathVariable UUID id) {
-        return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.deactivate(id)));
-    }
+  @PatchMapping("/{id}/deactivate")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ParcoursResponse> deactivate(@PathVariable UUID id) {
+    return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.deactivate(id)));
+  }
 
-    @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ParcoursResponse> activate(@PathVariable UUID id) {
-        return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.activate(id)));
-    }
+  @PatchMapping("/{id}/activate")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ParcoursResponse> activate(@PathVariable UUID id) {
+    return ResponseEntity.ok(ParcoursMapper.toResponse(parcoursService.activate(id)));
+  }
 }

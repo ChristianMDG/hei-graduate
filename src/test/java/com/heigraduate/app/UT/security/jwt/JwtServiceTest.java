@@ -4,9 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.model.UserRole;
-import java.util.UUID;
-
 import com.heigraduate.app.security.jwt.JwtService;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
