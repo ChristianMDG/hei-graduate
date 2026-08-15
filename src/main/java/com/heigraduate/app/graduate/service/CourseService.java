@@ -2,8 +2,8 @@ package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.CourseRequest;
 import com.heigraduate.app.graduate.dto.CourseResponse;
-import com.heigraduate.app.graduate.exception.CourseNotFoundException;
-import com.heigraduate.app.graduate.exception.DuplicateCourseReferenceException;
+import com.heigraduate.app.graduate.exception.ConflictException;
+import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.CourseMapper;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.repository.CourseRepository;
@@ -29,13 +29,14 @@ public class CourseService {
     return courseRepository
         .findById(id)
         .map(CourseMapper::toResponse)
-        .orElseThrow(() -> new CourseNotFoundException(id));
+        .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
   }
 
   @Transactional
   public CourseResponse create(CourseRequest request) {
     if (courseRepository.existsByCourseReference(request.courseReference())) {
-      throw new DuplicateCourseReferenceException(request.courseReference());
+      throw new ConflictException(
+          "A course with reference '" + request.courseReference() + "' already exists");
     }
     Course course =
         Course.builder()
@@ -50,7 +51,9 @@ public class CourseService {
   @Transactional
   public CourseResponse update(UUID id, CourseRequest request) {
     Course course =
-        courseRepository.findById(id).orElseThrow(() -> new CourseNotFoundException(id));
+        courseRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
     course.setCourseReference(request.courseReference());
     course.setTitle(request.title());
     course.setCredits(request.credits());
@@ -60,7 +63,9 @@ public class CourseService {
   @Transactional
   public void deactivate(UUID id) {
     Course course =
-        courseRepository.findById(id).orElseThrow(() -> new CourseNotFoundException(id));
+        courseRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
     course.setActive(false);
     courseRepository.save(course);
   }
