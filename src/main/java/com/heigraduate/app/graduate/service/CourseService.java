@@ -2,10 +2,12 @@ package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.CourseRequest;
 import com.heigraduate.app.graduate.dto.CourseResponse;
+import com.heigraduate.app.graduate.exception.CourseNotFoundException;
+import com.heigraduate.app.graduate.exception.DuplicateCourseReferenceException;
+import com.heigraduate.app.graduate.mapper.CourseMapper;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,22 +21,21 @@ public class CourseService {
 
   @Transactional(readOnly = true)
   public List<CourseResponse> findAll() {
-    return courseRepository.findAll().stream().map(this::toDto).toList();
+    return courseRepository.findAll().stream().map(CourseMapper::toResponse).toList();
   }
 
   @Transactional(readOnly = true)
   public CourseResponse findById(UUID id) {
     return courseRepository
         .findById(id)
-        .map(this::toDto)
-        .orElseThrow(() -> new NoSuchElementException("Course not found: " + id));
+        .map(CourseMapper::toResponse)
+        .orElseThrow(() -> new CourseNotFoundException(id));
   }
 
   @Transactional
   public CourseResponse create(CourseRequest request) {
     if (courseRepository.existsByCourseReference(request.courseReference())) {
-      throw new IllegalArgumentException(
-          "A course with reference " + request.courseReference() + " already exists");
+      throw new DuplicateCourseReferenceException(request.courseReference());
     }
     Course course =
         Course.builder()
@@ -43,37 +44,24 @@ public class CourseService {
             .credits(request.credits())
             .active(true)
             .build();
-    return toDto(courseRepository.save(course));
+    return CourseMapper.toResponse(courseRepository.save(course));
   }
 
   @Transactional
   public CourseResponse update(UUID id, CourseRequest request) {
     Course course =
-        courseRepository
-            .findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Course not found: " + id));
+        courseRepository.findById(id).orElseThrow(() -> new CourseNotFoundException(id));
     course.setCourseReference(request.courseReference());
     course.setTitle(request.title());
     course.setCredits(request.credits());
-    return toDto(courseRepository.save(course));
+    return CourseMapper.toResponse(courseRepository.save(course));
   }
 
   @Transactional
   public void deactivate(UUID id) {
     Course course =
-        courseRepository
-            .findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Course not found: " + id));
+        courseRepository.findById(id).orElseThrow(() -> new CourseNotFoundException(id));
     course.setActive(false);
     courseRepository.save(course);
-  }
-
-  private CourseResponse toDto(Course course) {
-    return new CourseResponse(
-        course.getId(),
-        course.getCourseReference(),
-        course.getTitle(),
-        course.getCredits(),
-        course.getActive());
   }
 }
