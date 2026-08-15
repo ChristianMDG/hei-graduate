@@ -9,13 +9,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
 
-    List<Enrollment> findByStudentIdOrderByStartDateAsc(UUID studentId);
+  List<Enrollment> findByStudentIdOrderByStartDateAsc(UUID studentId);
 
-    Optional<Enrollment> findByStudentIdAndEndDateIsNull(UUID studentId);
+  Optional<Enrollment> findByStudentIdAndEndDateIsNull(UUID studentId);
 
-    @org.springframework.data.jpa.repository.Query(
-            "SELECT e FROM Enrollment e WHERE e.studentId = :studentId "
-                    + "AND e.startDate <= :date "
-                    + "AND (e.endDate IS NULL OR e.endDate >= :date)")
-    Optional<Enrollment> findActiveAt(UUID studentId, LocalDate date);
+  @org.springframework.data.jpa.repository.Query(
+      "SELECT e FROM Enrollment e WHERE e.studentId = :studentId "
+          + "AND e.startDate <= :date "
+          + "AND (e.endDate IS NULL OR e.endDate >= :date)")
+  Optional<Enrollment> findActiveAt(UUID studentId, LocalDate date);
 }

@@ -19,33 +19,33 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StudentController {
 
-    private final StudentService studentService;
+  private final StudentService studentService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<StudentResponse> create(@Valid @RequestBody StudentRequest request) {
-        Student created = studentService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(StudentMapper.toResponse(created));
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<StudentResponse> create(@Valid @RequestBody StudentRequest request) {
+    Student created = studentService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(StudentMapper.toResponse(created));
+  }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<StudentResponse> update(
-            @PathVariable UUID id, @Valid @RequestBody StudentRequest request) {
-        return ResponseEntity.ok(StudentMapper.toResponse(studentService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<StudentResponse> update(
+      @PathVariable UUID id, @Valid @RequestBody StudentRequest request) {
+    return ResponseEntity.ok(StudentMapper.toResponse(studentService.update(id, request)));
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
-    public ResponseEntity<StudentResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(StudentMapper.toResponse(studentService.getById(id)));
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+  public ResponseEntity<StudentResponse> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(StudentMapper.toResponse(studentService.getById(id)));
+  }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
-    public ResponseEntity<List<StudentResponse>> getAll() {
-        List<StudentResponse> body =
-                studentService.getAll().stream().map(StudentMapper::toResponse).toList();
-        return ResponseEntity.ok(body);
-    }
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+  public ResponseEntity<List<StudentResponse>> getAll() {
+    List<StudentResponse> body =
+        studentService.getAll().stream().map(StudentMapper::toResponse).toList();
+    return ResponseEntity.ok(body);
+  }
 }

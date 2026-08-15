@@ -4,4 +4,4 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record AcademicYearResponse(
-        UUID id, String label, LocalDate startDate, LocalDate endDate, String level) {}
+    UUID id, String label, LocalDate startDate, LocalDate endDate, String level) {}

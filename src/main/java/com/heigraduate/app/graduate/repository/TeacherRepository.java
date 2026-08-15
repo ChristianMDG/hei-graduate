@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
 
-    Optional<Teacher> findByUserId(UUID userId);
+  Optional<Teacher> findByUserId(UUID userId);
 
-    boolean existsByUserId(UUID userId);
+  boolean existsByUserId(UUID userId);
 }

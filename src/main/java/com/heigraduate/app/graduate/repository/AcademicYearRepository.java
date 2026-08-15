@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AcademicYearRepository extends JpaRepository<AcademicYear, UUID> {
 
-    List<AcademicYear> findByStartDateLessThanEqualAndEndDateGreaterThanEqual(
-            LocalDate date, LocalDate sameDate);
+  List<AcademicYear> findByStartDateLessThanEqualAndEndDateGreaterThanEqual(
+      LocalDate date, LocalDate sameDate);
 }

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StudentGroupRepository extends JpaRepository<StudentGroup, UUID> {
 
-    Optional<StudentGroup> findByReferenceIgnoreCase(String reference);
+  Optional<StudentGroup> findByReferenceIgnoreCase(String reference);
 
-    boolean existsByReferenceIgnoreCase(String reference);
+  boolean existsByReferenceIgnoreCase(String reference);
 }

@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TeacherValidator {
 
-    private final TeacherRepository teacherRepository;
+  private final TeacherRepository teacherRepository;
 
-    public void validateUserNotAlreadyLinked(UUID userId, UUID excludedId) {
-        Optional<Teacher> existing = teacherRepository.findByUserId(userId);
-        if (existing.isPresent() && !existing.get().getId().equals(excludedId)) {
-            throw new ConflictException("This user is already linked to a teacher profile");
-        }
+  public void validateUserNotAlreadyLinked(UUID userId, UUID excludedId) {
+    Optional<Teacher> existing = teacherRepository.findByUserId(userId);
+    if (existing.isPresent() && !existing.get().getId().equals(excludedId)) {
+      throw new ConflictException("This user is already linked to a teacher profile");
     }
+  }
 }

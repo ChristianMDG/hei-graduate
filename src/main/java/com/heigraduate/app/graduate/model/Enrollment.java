@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import lombok.*;
 
-
 @Entity
 @Table(name = "enrollment")
 @Getter
@@ -16,20 +15,20 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class Enrollment {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(name = "student_id", nullable = false)
-    private UUID studentId;
+  @Column(name = "student_id", nullable = false)
+  private UUID studentId;
 
-    @Column(name = "parcours_id", nullable = false)
-    private UUID parcoursId;
+  @Column(name = "parcours_id", nullable = false)
+  private UUID parcoursId;
 
-    @Column(name = "student_group_id", nullable = false)
-    private UUID studentGroupId;
+  @Column(name = "student_group_id", nullable = false)
+  private UUID studentGroupId;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+  @Column(name = "start_date", nullable = false)
+  private LocalDate startDate;
 
-    @Column(name = "end_date")
-    private LocalDate endDate;
+  @Column(name = "end_date")
+  private LocalDate endDate;
 }

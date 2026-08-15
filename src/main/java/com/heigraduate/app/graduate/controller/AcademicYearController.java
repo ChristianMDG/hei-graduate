@@ -19,34 +19,35 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AcademicYearController {
 
-    private final AcademicYearService academicYearService;
+  private final AcademicYearService academicYearService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AcademicYearResponse> create(
-            @Valid @RequestBody AcademicYearRequest request) {
-        AcademicYear created = academicYearService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(AcademicYearMapper.toResponse(created));
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<AcademicYearResponse> create(
+      @Valid @RequestBody AcademicYearRequest request) {
+    AcademicYear created = academicYearService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(AcademicYearMapper.toResponse(created));
+  }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AcademicYearResponse> update(
-            @PathVariable UUID id, @Valid @RequestBody AcademicYearRequest request) {
-        return ResponseEntity.ok(AcademicYearMapper.toResponse(academicYearService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<AcademicYearResponse> update(
+      @PathVariable UUID id, @Valid @RequestBody AcademicYearRequest request) {
+    return ResponseEntity.ok(
+        AcademicYearMapper.toResponse(academicYearService.update(id, request)));
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AcademicYearResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(AcademicYearMapper.toResponse(academicYearService.getById(id)));
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<AcademicYearResponse> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(AcademicYearMapper.toResponse(academicYearService.getById(id)));
+  }
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<AcademicYearResponse>> getAll() {
-        List<AcademicYearResponse> body =
-                academicYearService.getAll().stream().map(AcademicYearMapper::toResponse).toList();
-        return ResponseEntity.ok(body);
-    }
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<AcademicYearResponse>> getAll() {
+    List<AcademicYearResponse> body =
+        academicYearService.getAll().stream().map(AcademicYearMapper::toResponse).toList();
+    return ResponseEntity.ok(body);
+  }
 }

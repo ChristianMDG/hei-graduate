@@ -14,11 +14,11 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class StudentGroup {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(nullable = false, length = 20)
-    private String reference; // e.g. "K1", "K2", "K3"
+  @Column(nullable = false, length = 20)
+  private String reference; // e.g. "K1", "K2", "K3"
 
-    @Column(name = "max_size")
-    private Integer maxSize;
+  @Column(name = "max_size")
+  private Integer maxSize;
 }

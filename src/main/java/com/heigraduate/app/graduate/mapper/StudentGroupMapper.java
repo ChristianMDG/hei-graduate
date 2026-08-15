@@ -5,10 +5,10 @@ import com.heigraduate.app.graduate.model.StudentGroup;
 
 public final class StudentGroupMapper {
 
-    private StudentGroupMapper() {}
+  private StudentGroupMapper() {}
 
-    public static StudentGroupResponse toResponse(StudentGroup studentGroup) {
-        return new StudentGroupResponse(
-                studentGroup.getId(), studentGroup.getReference(), studentGroup.getMaxSize());
-    }
+  public static StudentGroupResponse toResponse(StudentGroup studentGroup) {
+    return new StudentGroupResponse(
+        studentGroup.getId(), studentGroup.getReference(), studentGroup.getMaxSize());
+  }
 }

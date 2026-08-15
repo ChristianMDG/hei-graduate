@@ -5,15 +5,15 @@ import com.heigraduate.app.graduate.model.Teacher;
 
 public final class TeacherMapper {
 
-    private TeacherMapper() {}
+  private TeacherMapper() {}
 
-    public static TeacherResponse toResponse(Teacher teacher) {
-        return new TeacherResponse(
-                teacher.getId(),
-                teacher.getUserId(),
-                teacher.getLastName(),
-                teacher.getFirstName(),
-                teacher.getSpecialty(),
-                teacher.getContractType());
-    }
+  public static TeacherResponse toResponse(Teacher teacher) {
+    return new TeacherResponse(
+        teacher.getId(),
+        teacher.getUserId(),
+        teacher.getLastName(),
+        teacher.getFirstName(),
+        teacher.getSpecialty(),
+        teacher.getContractType());
+  }
 }

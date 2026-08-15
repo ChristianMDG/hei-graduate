@@ -22,43 +22,43 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class EnrollmentController {
 
-    private final EnrollmentService enrollmentService;
+  private final EnrollmentService enrollmentService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EnrollmentResponse> enroll(@Valid @RequestBody EnrollmentRequest request) {
-        Enrollment created = enrollmentService.enroll(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(EnrollmentMapper.toResponse(created));
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<EnrollmentResponse> enroll(@Valid @RequestBody EnrollmentRequest request) {
+    Enrollment created = enrollmentService.enroll(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(EnrollmentMapper.toResponse(created));
+  }
 
-    @PostMapping("/{studentId}/transfer")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EnrollmentResponse> transfer(
-            @PathVariable UUID studentId, @Valid @RequestBody TransferRequest request) {
-        Enrollment updated = enrollmentService.transfer(studentId, request);
-        return ResponseEntity.ok(EnrollmentMapper.toResponse(updated));
-    }
+  @PostMapping("/{studentId}/transfer")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<EnrollmentResponse> transfer(
+      @PathVariable UUID studentId, @Valid @RequestBody TransferRequest request) {
+    Enrollment updated = enrollmentService.transfer(studentId, request);
+    return ResponseEntity.ok(EnrollmentMapper.toResponse(updated));
+  }
 
-    @GetMapping("/{studentId}/current")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
-    public ResponseEntity<EnrollmentResponse> getCurrent(@PathVariable UUID studentId) {
-        return ResponseEntity.ok(EnrollmentMapper.toResponse(enrollmentService.getCurrent(studentId)));
-    }
+  @GetMapping("/{studentId}/current")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+  public ResponseEntity<EnrollmentResponse> getCurrent(@PathVariable UUID studentId) {
+    return ResponseEntity.ok(EnrollmentMapper.toResponse(enrollmentService.getCurrent(studentId)));
+  }
 
-    @GetMapping("/{studentId}/history")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
-    public ResponseEntity<List<EnrollmentResponse>> getHistory(@PathVariable UUID studentId) {
-        List<EnrollmentResponse> body =
-                enrollmentService.getHistory(studentId).stream().map(EnrollmentMapper::toResponse).toList();
-        return ResponseEntity.ok(body);
-    }
+  @GetMapping("/{studentId}/history")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+  public ResponseEntity<List<EnrollmentResponse>> getHistory(@PathVariable UUID studentId) {
+    List<EnrollmentResponse> body =
+        enrollmentService.getHistory(studentId).stream().map(EnrollmentMapper::toResponse).toList();
+    return ResponseEntity.ok(body);
+  }
 
-    @GetMapping("/{studentId}/at")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
-    public ResponseEntity<EnrollmentResponse> getActiveAt(
-            @PathVariable UUID studentId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(
-                EnrollmentMapper.toResponse(enrollmentService.getActiveAt(studentId, date)));
-    }
+  @GetMapping("/{studentId}/at")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+  public ResponseEntity<EnrollmentResponse> getActiveAt(
+      @PathVariable UUID studentId,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    return ResponseEntity.ok(
+        EnrollmentMapper.toResponse(enrollmentService.getActiveAt(studentId, date)));
+  }
 }

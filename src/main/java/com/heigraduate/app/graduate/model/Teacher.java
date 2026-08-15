@@ -14,19 +14,19 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class Teacher {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    private UUID userId;
+  @Column(name = "user_id", nullable = false, unique = true)
+  private UUID userId;
 
-    @Column(name = "last_name", nullable = false)
-    private String lastName;
+  @Column(name = "last_name", nullable = false)
+  private String lastName;
 
-    @Column(name = "first_name", nullable = false)
-    private String firstName;
+  @Column(name = "first_name", nullable = false)
+  private String firstName;
 
-    private String specialty;
+  private String specialty;
 
-    @Column(name = "contract_type")
-    private String contractType;
+  @Column(name = "contract_type")
+  private String contractType;
 }

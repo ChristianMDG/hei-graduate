@@ -15,26 +15,26 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class Student {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    private UUID userId;
+  @Column(name = "user_id", nullable = false, unique = true)
+  private UUID userId;
 
-    @Column(name = "student_number", nullable = false, unique = true, length = 20)
-    private String studentNumber;
+  @Column(name = "student_number", nullable = false, unique = true, length = 20)
+  private String studentNumber;
 
-    @Column(name = "last_name", nullable = false)
-    private String lastName;
+  @Column(name = "last_name", nullable = false)
+  private String lastName;
 
-    @Column(name = "first_name", nullable = false)
-    private String firstName;
+  @Column(name = "first_name", nullable = false)
+  private String firstName;
 
-    @Column(name = "birth_date")
-    private LocalDate birthDate;
+  @Column(name = "birth_date")
+  private LocalDate birthDate;
 
-    @Column(name = "enrollment_date", nullable = false)
-    private LocalDate enrollmentDate;
+  @Column(name = "enrollment_date", nullable = false)
+  private LocalDate enrollmentDate;
 
-    @Column(nullable = false)
-    private String status;
+  @Column(nullable = false)
+  private String status;
 }
