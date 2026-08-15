@@ -1,5 +1,6 @@
 package com.heigraduate.app.feature;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -30,6 +31,8 @@ class CourseIntegrationTest {
     registry.add("spring.datasource.url", postgres::getJdbcUrl);
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
+    registry.add("aws.eventBridge.bus", () -> "test-bus");
+    registry.add("aws.s3.bucket", () -> "test-bucket");
   }
 
   @Autowired private MockMvc mockMvc;
@@ -45,6 +48,7 @@ class CourseIntegrationTest {
         mockMvc
             .perform(
                 post("/api/courses")
+                    .with(csrf())
                     .contentType("application/json")
                     .content(objectMapper.writeValueAsString(createRequest)))
             .andExpect(status().isCreated())
@@ -66,13 +70,14 @@ class CourseIntegrationTest {
     mockMvc
         .perform(
             put("/api/courses/" + id)
+                .with(csrf())
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateRequest)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.title").value("Advanced Programming II"))
         .andExpect(jsonPath("$.credits").value(6));
 
-    mockMvc.perform(delete("/api/courses/" + id)).andExpect(status().isNoContent());
+    mockMvc.perform(delete("/api/courses/" + id).with(csrf())).andExpect(status().isNoContent());
 
     mockMvc
         .perform(get("/api/courses/" + id))
@@ -88,6 +93,7 @@ class CourseIntegrationTest {
     mockMvc
         .perform(
             post("/api/courses")
+                .with(csrf())
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated());
@@ -95,6 +101,7 @@ class CourseIntegrationTest {
     mockMvc
         .perform(
             post("/api/courses")
+                .with(csrf())
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
