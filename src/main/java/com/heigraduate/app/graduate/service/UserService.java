@@ -1,6 +1,6 @@
 package com.heigraduate.app.graduate.service;
 
-
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +9,11 @@ import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.UserRepository;
 import com.heigraduate.app.graduate.validator.UserValidator;
+import com.heigraduate.app.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final UserValidator userValidator;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public User createUser(String email, String rawPassword, UserRole role) {
         userValidator.validateEmailIsUnique(email);
@@ -60,4 +65,34 @@ public class UserService {
         User user = getUserById(id);
         userRepository.delete(user);
     }
-}
+
+    /** Required by Spring Security to (re)build the authenticated principal from a JWT subject,
+     * and reused by {@link #login} to validate credentials. Email acts as the username. */
+    @Override
+    @Transactional(readOnly = true)
+    public User loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("No user found with email " + email));
+    }
+
+    /** Verifies credentials, refreshes {@code lastLogin} and issues a bearer token. */
+    public LoginResult login(String email, String rawPassword) {
+        User user = loadUserByUsername(email);
+
+        if (!user.isEnabled()) {
+            throw new BadCredentialsException("This account has been deactivated");
+        }
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        user.setLastLogin(Instant.now());
+        userRepository.save(user);
+
+        String token = jwtService.generate(user);
+        return new LoginResult(token, user);
+    }
+
+    public record LoginResult(String token, User user) {}
+}}
