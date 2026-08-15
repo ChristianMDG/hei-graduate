@@ -23,29 +23,32 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConf {
 
-    private final RestAuthenticationEntryPoint entryPoint;
-    private final RestAccessDeniedHandler accessDeniedHandler;
+  private final RestAuthenticationEntryPoint entryPoint;
+  private final RestAccessDeniedHandler accessDeniedHandler;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+  }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, BearerAuthFilter bearerAuthFilter) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
-                .exceptionHandling(
-                        e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/login")
-                        .permitAll()
-                        .requestMatchers("/ping", "/health/**")
-                        .permitAll()
-                        .requestMatchers("/api/users", "/api/users/**")
-                        .hasRole("ADMIN")
-                        .anyRequest()
-                        .authenticated())
-                .addFilterBefore(bearerAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http, BearerAuthFilter bearerAuthFilter)
+      throws Exception {
+    return http.csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
+        .exceptionHandling(
+            e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers("/auth/login")
+                    .permitAll()
+                    .requestMatchers("/ping", "/health/**")
+                    .permitAll()
+                    .requestMatchers("/api/users", "/api/users/**")
+                    .hasRole("ADMIN")
+                    .anyRequest()
+                    .authenticated())
+        .addFilterBefore(bearerAuthFilter, UsernamePasswordAuthenticationFilter.class)
+        .build();
+  }
 }

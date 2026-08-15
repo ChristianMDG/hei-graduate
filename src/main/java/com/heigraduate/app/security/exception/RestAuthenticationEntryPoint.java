@@ -16,21 +16,22 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper mapper;
+  private final ObjectMapper mapper;
 
-    @Override
-    public void commence(
-            HttpServletRequest request, HttpServletResponse response, AuthenticationException e)
-            throws IOException {
-        var status = HttpStatus.UNAUTHORIZED;
-        var error = new ApiError(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                "Authentication is required to access this resource",
-                request.getRequestURI());
-        response.setStatus(status.value());
-        response.setContentType("application/json");
-        response.getWriter().write(mapper.writeValueAsString(error));
-    }
+  @Override
+  public void commence(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException e)
+      throws IOException {
+    var status = HttpStatus.UNAUTHORIZED;
+    var error =
+        new ApiError(
+            Instant.now(),
+            status.value(),
+            status.getReasonPhrase(),
+            "Authentication is required to access this resource",
+            request.getRequestURI());
+    response.setStatus(status.value());
+    response.setContentType("application/json");
+    response.getWriter().write(mapper.writeValueAsString(error));
+  }
 }

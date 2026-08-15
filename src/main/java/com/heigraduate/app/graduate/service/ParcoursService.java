@@ -63,8 +63,9 @@ public class ParcoursService {
     return parcoursRepository.save(existing);
   }
 
-    private Parcours getOrThrow(UUID id) {
-        return parcoursRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Parcours not found with id: " + id));
-    }
+  private Parcours getOrThrow(UUID id) {
+    return parcoursRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Parcours not found with id: " + id));
+  }
 }

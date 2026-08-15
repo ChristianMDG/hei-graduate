@@ -19,46 +19,49 @@ import org.springframework.security.core.Authentication;
 
 class AuthServiceTest {
 
-    private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-    private final UserRepository userRepository = mock(UserRepository.class);
-    private final JwtService jwtService = mock(JwtService.class);
+  private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
+  private final UserRepository userRepository = mock(UserRepository.class);
+  private final JwtService jwtService = mock(JwtService.class);
 
-    private final AuthService authService = new AuthService(authenticationManager, userRepository, jwtService);
+  private final AuthService authService =
+      new AuthService(authenticationManager, userRepository, jwtService);
 
-    private User user;
+  private User user;
 
-    @BeforeEach
-    void setUp() {
-        user = User.builder()
-                .id(UUID.randomUUID())
-                .email("teacher@hei.school")
-                .password("hashed")
-                .role(UserRole.TEACHER)
-                .active(true)
-                .build();
-    }
+  @BeforeEach
+  void setUp() {
+    user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email("teacher@hei.school")
+            .password("hashed")
+            .role(UserRole.TEACHER)
+            .active(true)
+            .build();
+  }
 
-    @Test
-    void returns_a_token_and_refreshes_last_login_on_successful_authentication() {
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
-        when(jwtService.generate(user)).thenReturn("a-generated-token");
-        when(userRepository.save(user)).thenReturn(user);
+  @Test
+  void returns_a_token_and_refreshes_last_login_on_successful_authentication() {
+    Authentication authentication = mock(Authentication.class);
+    when(authentication.getPrincipal()).thenReturn(user);
+    when(authenticationManager.authenticate(any())).thenReturn(authentication);
+    when(jwtService.generate(user)).thenReturn("a-generated-token");
+    when(userRepository.save(user)).thenReturn(user);
 
-        var result = authService.login(user.getEmail(), "the-raw-password");
+    var result = authService.login(user.getEmail(), "the-raw-password");
 
-        assertThat(result.token()).isEqualTo("a-generated-token");
-        assertThat(result.user()).isEqualTo(user);
-        assertThat(user.getLastLogin()).isNotNull();
-        verify(userRepository).save(user);
-    }
+    assertThat(result.token()).isEqualTo("a-generated-token");
+    assertThat(result.user()).isEqualTo(user);
+    assertThat(user.getLastLogin()).isNotNull();
+    verify(userRepository).save(user);
+  }
 
-    @Test
-    void propagates_the_authentication_manager_failure_without_swallowing_it() {
-        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("bad credentials"));
+  @Test
+  void propagates_the_authentication_manager_failure_without_swallowing_it() {
+    when(authenticationManager.authenticate(any()))
+        .thenThrow(new BadCredentialsException("bad credentials"));
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-                BadCredentialsException.class, () -> authService.login(user.getEmail(), "wrong-password"));
-    }
+    org.junit.jupiter.api.Assertions.assertThrows(
+        BadCredentialsException.class, () -> authService.login(user.getEmail(), "wrong-password"));
+  }
 }
