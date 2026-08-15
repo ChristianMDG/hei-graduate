@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -9,4 +9,4 @@ CREATE TABLE users (
     CONSTRAINT uk_users_email UNIQUE (email)
 );
 
-CREATE INDEX idx_users_role ON users (role);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
