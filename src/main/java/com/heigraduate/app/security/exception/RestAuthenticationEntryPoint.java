@@ -1,21 +1,22 @@
 package com.heigraduate.app.security.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.heigraduate.app.graduate.exception.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper mapper;
 
     @Override
     public void commence(

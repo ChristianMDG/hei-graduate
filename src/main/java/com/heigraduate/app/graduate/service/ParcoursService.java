@@ -1,7 +1,7 @@
 package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.ParcoursRequest;
-import com.heigraduate.app.graduate.exception.ParcoursNotFoundException;
+import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
 import com.heigraduate.app.graduate.validator.ParcoursValidator;
@@ -63,7 +63,8 @@ public class ParcoursService {
     return parcoursRepository.save(existing);
   }
 
-  private Parcours getOrThrow(UUID id) {
-    return parcoursRepository.findById(id).orElseThrow(() -> new ParcoursNotFoundException(id));
-  }
+    private Parcours getOrThrow(UUID id) {
+        return parcoursRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Parcours not found with id: " + id));
+    }
 }
