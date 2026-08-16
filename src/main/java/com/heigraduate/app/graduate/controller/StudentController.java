@@ -4,6 +4,7 @@ import com.heigraduate.app.graduate.dto.StudentRequest;
 import com.heigraduate.app.graduate.dto.StudentResponse;
 import com.heigraduate.app.graduate.mapper.StudentMapper;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.service.StudentService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,5 +49,13 @@ public class StudentController {
     List<StudentResponse> body =
         studentService.getAll().stream().map(StudentMapper::toResponse).toList();
     return ResponseEntity.ok(body);
+  }
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('STUDENT')")
+  public ResponseEntity<StudentResponse> getCurrentStudent(
+      @AuthenticationPrincipal User connectedUser) {
+    Student self = studentService.getByCurrentUser(connectedUser.getId());
+    return ResponseEntity.ok(StudentMapper.toResponse(self));
   }
 }

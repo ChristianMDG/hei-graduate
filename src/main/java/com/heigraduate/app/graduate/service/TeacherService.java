@@ -54,6 +54,16 @@ public class TeacherService {
     return teacherRepository.findAll();
   }
 
+  @Transactional(readOnly = true)
+  public Teacher getByCurrentUser(UUID connectedUserId) {
+    return teacherRepository
+        .findByUserId(connectedUserId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    "No teacher profile linked to user: " + connectedUserId));
+  }
+
   private Teacher getOrThrow(UUID id) {
     return teacherRepository
         .findById(id)
