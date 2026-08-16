@@ -31,8 +31,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class GradeHistoryServiceTest {
@@ -87,9 +85,6 @@ class GradeHistoryServiceTest {
             .value(new BigDecimal("8.50"))
             .status(GradeStatus.PUBLISHED)
             .build();
-
-    SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(actingUserId.toString(), null));
   }
 
   @Test
@@ -104,7 +99,7 @@ class GradeHistoryServiceTest {
     when(gradeHistoryRepository.save(any(GradeHistory.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    GradeResponse result = gradeService.update(gradeId, request);
+    GradeResponse result = gradeService.update(gradeId, request, actingUserId);
 
     assertThat(result.value()).isEqualByComparingTo("10.50");
 
@@ -131,7 +126,8 @@ class GradeHistoryServiceTest {
     when(gradeRepository.findById(unknownId)).thenReturn(Optional.empty());
 
     Assertions.assertThrows(
-        ResourceNotFoundException.class, () -> gradeService.update(unknownId, request));
+        ResourceNotFoundException.class,
+        () -> gradeService.update(unknownId, request, actingUserId));
 
     verify(gradeHistoryRepository, never()).save(any());
     verify(gradeRepository, never()).save(any());

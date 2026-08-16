@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,14 +87,13 @@ public class GradeService implements FinalGradeQuery {
   }
 
   @Transactional
-  public GradeResponse update(UUID id, GradeUpdateRequest request) {
+  public GradeResponse update(UUID id, GradeUpdateRequest request, UUID currentUserId) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
 
     BigDecimal oldValue = grade.getValue();
-    UUID currentUserId = resolveCurrentUserId();
 
     GradeHistory history =
         GradeHistory.builder()
@@ -165,11 +162,6 @@ public class GradeService implements FinalGradeQuery {
     }
 
     return Optional.of(weightedSum.divide(totalCoefficient, 2, RoundingMode.HALF_UP));
-  }
-
-  private UUID resolveCurrentUserId() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    return UUID.fromString(authentication.getName());
   }
 
   @Transactional(readOnly = true)

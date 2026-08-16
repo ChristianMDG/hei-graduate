@@ -88,7 +88,9 @@ public class GraduationService {
       }
     }
 
-    boolean graduated = mandatoryCourseCount > 0 && unvalidatedMandatoryCourses.isEmpty();
+    boolean completedThreeYears = studentYears.size() >= 3;
+    boolean graduated =
+        completedThreeYears && mandatoryCourseCount > 0 && unvalidatedMandatoryCourses.isEmpty();
     BigDecimal overallAverage =
         gradedCredits == 0
             ? null
