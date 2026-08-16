@@ -76,10 +76,10 @@ class CourseTrackServiceTest {
     CourseTrack elYear1 =
         CourseTrack.builder().course(course).track(el).academicYear(year1).obligatory(true).build();
 
-    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndObligatoryTrue(
+    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             el.getId(), year1.getId()))
         .thenReturn(List.of(elYear1));
-    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndObligatoryTrue(
+    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             tn.getId(), year1.getId()))
         .thenReturn(List.of());
 
@@ -92,10 +92,10 @@ class CourseTrackServiceTest {
     CourseTrack tnYear2 =
         CourseTrack.builder().course(course).track(tn).academicYear(year2).obligatory(true).build();
 
-    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndObligatoryTrue(
+    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             tn.getId(), year2.getId()))
         .thenReturn(List.of(tnYear2));
-    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndObligatoryTrue(
+    when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             el.getId(), year2.getId()))
         .thenReturn(List.of());
 
