@@ -7,6 +7,6 @@ public record EnrollmentResponse(
     UUID id,
     UUID studentId,
     UUID parcoursId,
-    UUID studentGroupId,
+    UUID groupId,
     LocalDate startDate,
     LocalDate endDate) {}
