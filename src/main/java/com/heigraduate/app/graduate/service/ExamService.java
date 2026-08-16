@@ -1,0 +1,114 @@
+package com.heigraduate.app.graduate.service;
+
+import com.heigraduate.app.graduate.dto.ExamRequest;
+import com.heigraduate.app.graduate.dto.ExamResponse;
+import com.heigraduate.app.graduate.exception.BadRequestException;
+import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.mapper.ExamMapper;
+import com.heigraduate.app.graduate.model.AcademicYear;
+import com.heigraduate.app.graduate.model.Course;
+import com.heigraduate.app.graduate.model.Exam;
+import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+import com.heigraduate.app.graduate.repository.CourseRepository;
+import com.heigraduate.app.graduate.repository.ExamRepository;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class ExamService {
+
+  private static final BigDecimal MAX_TOTAL_COEFFICIENT = BigDecimal.ONE;
+
+  private final ExamRepository examRepository;
+  private final CourseRepository courseRepository;
+  private final AcademicYearRepository academicYearRepository;
+
+  @Transactional(readOnly = true)
+  public List<ExamResponse> findAll() {
+    return examRepository.findAll().stream().map(ExamMapper::toResponse).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public ExamResponse findById(UUID id) {
+    return examRepository
+        .findById(id)
+        .map(ExamMapper::toResponse)
+        .orElseThrow(() -> new ResourceNotFoundException("Exam not found with id: " + id));
+  }
+
+  @Transactional
+  public ExamResponse create(ExamRequest request) {
+    Course course =
+        courseRepository
+            .findById(request.courseId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Course not found with id: " + request.courseId()));
+    AcademicYear academicYear =
+        academicYearRepository
+            .findById(request.academicYearId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "AcademicYear not found with id: " + request.academicYearId()));
+
+    validateCoefficientSum(
+        request.courseId(), request.academicYearId(), request.coefficient(), null);
+
+    Exam exam =
+        Exam.builder()
+            .course(course)
+            .academicYear(academicYear)
+            .label(request.label())
+            .coefficient(request.coefficient())
+            .build();
+
+    return ExamMapper.toResponse(examRepository.save(exam));
+  }
+
+  @Transactional
+  public ExamResponse update(UUID id, ExamRequest request) {
+    Exam exam =
+        examRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Exam not found with id: " + id));
+
+    validateCoefficientSum(request.courseId(), request.academicYearId(), request.coefficient(), id);
+
+    exam.setLabel(request.label());
+    exam.setCoefficient(request.coefficient());
+    return ExamMapper.toResponse(examRepository.save(exam));
+  }
+
+  @Transactional
+  public void delete(UUID id) {
+    if (!examRepository.existsById(id)) {
+      throw new ResourceNotFoundException("Exam not found with id: " + id);
+    }
+    examRepository.deleteById(id);
+  }
+
+  private void validateCoefficientSum(
+      UUID courseId, UUID academicYearId, BigDecimal newCoefficient, UUID excludeExamId) {
+    List<Exam> existingExams =
+        examRepository.findByCourseIdAndAcademicYearId(courseId, academicYearId);
+
+    BigDecimal sum =
+        existingExams.stream()
+            .filter(e -> excludeExamId == null || !e.getId().equals(excludeExamId))
+            .map(Exam::getCoefficient)
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .add(newCoefficient);
+
+    if (sum.compareTo(MAX_TOTAL_COEFFICIENT) > 0) {
+      throw new BadRequestException(
+          "Sum of coefficients for this course/year would exceed 1 (currently: " + sum + ")");
+    }
+  }
+}
