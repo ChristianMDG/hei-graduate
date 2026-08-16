@@ -40,5 +40,4 @@ out/
 **.toml
 
 ### Mac OS ###
-.DS_Store
-.env
+.DS_Store.env

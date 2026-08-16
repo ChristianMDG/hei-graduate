@@ -23,8 +23,8 @@ public class Enrollment {
   @Column(name = "parcours_id", nullable = false)
   private UUID parcoursId;
 
-  @Column(name = "student_group_id", nullable = false)
-  private UUID studentGroupId;
+  @Column(name = "group_id", nullable = false)
+  private UUID groupId;
 
   @Column(name = "start_date", nullable = false)
   private LocalDate startDate;
