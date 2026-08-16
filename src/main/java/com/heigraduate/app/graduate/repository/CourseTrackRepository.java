@@ -9,7 +9,7 @@ public interface CourseTrackRepository extends JpaRepository<CourseTrack, UUID> 
 
   List<CourseTrack> findByTrackIdAndAcademicYearId(UUID trackId, UUID academicYearId);
 
-    List<CourseTrack> findByTrackIdAndAcademicYearIdAndMandatoryTrue(
+  List<CourseTrack> findByTrackIdAndAcademicYearIdAndMandatoryTrue(
       UUID trackId, UUID academicYearId);
 
   boolean existsByCourseIdAndTrackIdAndAcademicYearId(

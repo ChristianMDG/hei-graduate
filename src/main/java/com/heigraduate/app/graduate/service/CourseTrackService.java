@@ -84,7 +84,7 @@ public class CourseTrackService {
   @Transactional(readOnly = true)
   public List<Course> getMandatoryCourses(UUID trackId, UUID academicYearId) {
     return courseTrackRepository
-            .findByTrackIdAndAcademicYearIdAndMandatoryTrue(trackId, academicYearId)
+        .findByTrackIdAndAcademicYearIdAndMandatoryTrue(trackId, academicYearId)
         .stream()
         .map(CourseTrack::getCourse)
         .toList();
