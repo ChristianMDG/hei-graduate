@@ -171,4 +171,15 @@ public class GradeService implements FinalGradeQuery {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     return UUID.fromString(authentication.getName());
   }
+
+  @Transactional(readOnly = true)
+  public List<GradeResponse> findMyPublishedGrades(UUID userId) {
+    Student student =
+        studentRepository
+            .findByUserId(userId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException("No student profile linked to user: " + userId));
+    return findPublishedForStudent(student.getId());
+  }
 }
