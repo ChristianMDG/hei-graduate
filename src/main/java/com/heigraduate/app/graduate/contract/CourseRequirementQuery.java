@@ -5,5 +5,5 @@ import java.util.UUID;
 
 public interface CourseRequirementQuery {
 
-    List<UUID> getMandatoryCourseIds(UUID parcoursId, UUID academicYearId);
+  List<UUID> getMandatoryCourseIds(UUID parcoursId, UUID academicYearId);
 }

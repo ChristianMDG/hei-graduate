@@ -72,7 +72,7 @@ class CourseTrackServiceTest {
   }
 
   @Test
-  void getMandatoryCourses_shouldNeverLeakElCourseIntoTn_evenAcrossDifferentYears() {
+  void getMandatoryCourseIds_shouldNeverLeakElCourseIntoTn_evenAcrossDifferentYears() {
     CourseTrack elYear1 =
         CourseTrack.builder().course(course).track(el).academicYear(year1).mandatory(true).build();
 
@@ -83,11 +83,13 @@ class CourseTrackServiceTest {
             tn.getId(), year1.getId()))
         .thenReturn(List.of());
 
-    List<Course> elCoursesYear1 = courseTrackService.getMandatoryCourses(el.getId(), year1.getId());
-    List<Course> tnCoursesYear1 = courseTrackService.getMandatoryCourses(tn.getId(), year1.getId());
+    List<UUID> elCourseIdsYear1 =
+        courseTrackService.getMandatoryCourseIds(el.getId(), year1.getId());
+    List<UUID> tnCourseIdsYear1 =
+        courseTrackService.getMandatoryCourseIds(tn.getId(), year1.getId());
 
-    assertThat(elCoursesYear1).extracting(Course::getCourseReference).containsExactly("PROG4");
-    assertThat(tnCoursesYear1).isEmpty();
+    assertThat(elCourseIdsYear1).containsExactly(course.getId());
+    assertThat(tnCourseIdsYear1).isEmpty();
 
     CourseTrack tnYear2 =
         CourseTrack.builder().course(course).track(tn).academicYear(year2).mandatory(true).build();
@@ -99,12 +101,14 @@ class CourseTrackServiceTest {
             el.getId(), year2.getId()))
         .thenReturn(List.of());
 
-    List<Course> tnCoursesYear2 = courseTrackService.getMandatoryCourses(tn.getId(), year2.getId());
-    List<Course> elCoursesYear2 = courseTrackService.getMandatoryCourses(el.getId(), year2.getId());
+    List<UUID> tnCourseIdsYear2 =
+        courseTrackService.getMandatoryCourseIds(tn.getId(), year2.getId());
+    List<UUID> elCourseIdsYear2 =
+        courseTrackService.getMandatoryCourseIds(el.getId(), year2.getId());
 
-    assertThat(tnCoursesYear2).extracting(Course::getCourseReference).containsExactly("PROG4");
-    assertThat(elCoursesYear2).isEmpty();
+    assertThat(tnCourseIdsYear2).containsExactly(course.getId());
+    assertThat(elCourseIdsYear2).isEmpty();
 
-    assertThat(elCoursesYear1).extracting(Course::getCourseReference).containsExactly("PROG4");
+    assertThat(elCourseIdsYear1).containsExactly(course.getId());
   }
 }
