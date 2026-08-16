@@ -67,7 +67,7 @@ public class CourseTrackService {
             .course(course)
             .track(track)
             .academicYear(academicYear)
-            .obligatory(request.obligatory())
+            .mandatory(request.mandatory())
             .build();
 
     return CourseTrackMapper.toResponse(courseTrackRepository.save(courseTrack));
@@ -82,11 +82,11 @@ public class CourseTrackService {
   }
 
   @Transactional(readOnly = true)
-  public List<Course> getMandatoryCourses(UUID trackId, UUID academicYearId) {
+  public List<UUID> getMandatoryCourseIds(UUID trackId, UUID academicYearId) {
     return courseTrackRepository
-        .findByTrackIdAndAcademicYearIdAndObligatoryTrue(trackId, academicYearId)
+        .findByTrackIdAndAcademicYearIdAndMandatoryTrue(trackId, academicYearId)
         .stream()
-        .map(CourseTrack::getCourse)
+        .map(ct -> ct.getCourse().getId())
         .toList();
   }
 }
