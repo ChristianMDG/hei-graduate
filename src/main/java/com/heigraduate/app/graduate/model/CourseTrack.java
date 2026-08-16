@@ -35,5 +35,5 @@ public class CourseTrack {
 
   @Column(nullable = false)
   @Builder.Default
-  private Boolean obligatory = true;
+  private Boolean mandatory = true;
 }

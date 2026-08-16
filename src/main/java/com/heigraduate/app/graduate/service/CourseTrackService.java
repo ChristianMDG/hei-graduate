@@ -67,7 +67,7 @@ public class CourseTrackService {
             .course(course)
             .track(track)
             .academicYear(academicYear)
-            .obligatory(request.obligatory())
+            .mandatory(request.mandatory())
             .build();
 
     return CourseTrackMapper.toResponse(courseTrackRepository.save(courseTrack));

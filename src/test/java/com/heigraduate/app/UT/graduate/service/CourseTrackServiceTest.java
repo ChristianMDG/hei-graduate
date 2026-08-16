@@ -74,7 +74,7 @@ class CourseTrackServiceTest {
   @Test
   void getMandatoryCourses_shouldNeverLeakElCourseIntoTn_evenAcrossDifferentYears() {
     CourseTrack elYear1 =
-        CourseTrack.builder().course(course).track(el).academicYear(year1).obligatory(true).build();
+        CourseTrack.builder().course(course).track(el).academicYear(year1).mandatory(true).build();
 
     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             el.getId(), year1.getId()))
@@ -90,7 +90,7 @@ class CourseTrackServiceTest {
     assertThat(tnCoursesYear1).isEmpty();
 
     CourseTrack tnYear2 =
-        CourseTrack.builder().course(course).track(tn).academicYear(year2).obligatory(true).build();
+        CourseTrack.builder().course(course).track(tn).academicYear(year2).mandatory(true).build();
 
     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             tn.getId(), year2.getId()))
