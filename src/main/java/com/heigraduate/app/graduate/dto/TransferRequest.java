@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public record TransferRequest(
     UUID parcoursId,
-    UUID studentGroupId,
+    UUID groupId,
     @NotNull(message = "effectiveDate is required") LocalDate effectiveDate) {}

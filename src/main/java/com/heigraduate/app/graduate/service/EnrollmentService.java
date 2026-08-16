@@ -27,7 +27,7 @@ public class EnrollmentService {
         Enrollment.builder()
             .studentId(request.studentId())
             .parcoursId(request.parcoursId())
-            .studentGroupId(request.studentGroupId())
+            .groupId(request.groupId())
             .startDate(request.startDate())
             .endDate(null)
             .build();
@@ -54,10 +54,8 @@ public class EnrollmentService {
             .studentId(studentId)
             .parcoursId(
                 request.parcoursId() != null ? request.parcoursId() : currentActive.getParcoursId())
-            .studentGroupId(
-                request.studentGroupId() != null
-                    ? request.studentGroupId()
-                    : currentActive.getStudentGroupId())
+            .groupId(
+                request.groupId() != null ? request.groupId() : currentActive.getGroupId())
             .startDate(request.effectiveDate())
             .endDate(null)
             .build();
