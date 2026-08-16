@@ -36,8 +36,8 @@ public class GradeController {
   @GetMapping("/me")
   @PreAuthorize("hasRole('STUDENT')")
   public List<GradeResponse> findMyPublishedGrades(Authentication authentication) {
-    UUID studentId = UUID.fromString(authentication.getName());
-    return gradeService.findPublishedForStudent(studentId);
+    UUID userId = UUID.fromString(authentication.getName());
+    return gradeService.findMyPublishedGrades(userId);
   }
 
   @GetMapping("/{id}/history")
