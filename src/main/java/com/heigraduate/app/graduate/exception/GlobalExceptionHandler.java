@@ -51,4 +51,10 @@ public class GlobalExceptionHandler {
             request.getRequestURI());
     return ResponseEntity.status(status).body(error);
   }
+
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ApiError> handleBadRequest(
+      BadRequestException ex, HttpServletRequest request) {
+    return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+  }
 }
