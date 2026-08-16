@@ -12,7 +12,7 @@ public final class EnrollmentMapper {
         enrollment.getId(),
         enrollment.getStudentId(),
         enrollment.getParcoursId(),
-        enrollment.getStudentGroupId(),
+        enrollment.getGroupId(),
         enrollment.getStartDate(),
         enrollment.getEndDate());
   }
