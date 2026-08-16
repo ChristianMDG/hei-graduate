@@ -4,14 +4,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public record AssignmentResponse(
-        UUID id,
-        UUID courseId,
-        String courseReference,
-        UUID teacherId,
-        String teacherLastName,
-        UUID academicYearId,
-        String academicYearLabel,
-        Set<GroupSummary> groups) {
+    UUID id,
+    UUID courseId,
+    String courseReference,
+    UUID teacherId,
+    String teacherLastName,
+    UUID academicYearId,
+    String academicYearLabel,
+    Set<GroupSummary> groups) {
 
-    public record GroupSummary(UUID id, String reference) {}
+  public record GroupSummary(UUID id, String reference) {}
 }
