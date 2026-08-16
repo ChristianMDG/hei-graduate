@@ -4,6 +4,7 @@ import com.heigraduate.app.graduate.dto.TeacherRequest;
 import com.heigraduate.app.graduate.dto.TeacherResponse;
 import com.heigraduate.app.graduate.mapper.TeacherMapper;
 import com.heigraduate.app.graduate.model.Teacher;
+import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.service.TeacherService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,5 +49,13 @@ public class TeacherController {
     List<TeacherResponse> body =
         teacherService.getAll().stream().map(TeacherMapper::toResponse).toList();
     return ResponseEntity.ok(body);
+  }
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('TEACHER')")
+  public ResponseEntity<TeacherResponse> getCurrentTeacher(
+      @AuthenticationPrincipal User connectedUser) {
+    Teacher self = teacherService.getByCurrentUser(connectedUser.getId());
+    return ResponseEntity.ok(TeacherMapper.toResponse(self));
   }
 }

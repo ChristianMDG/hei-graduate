@@ -60,6 +60,16 @@ public class StudentService {
     return studentRepository.findAll();
   }
 
+  @Transactional(readOnly = true)
+  public Student getByCurrentUser(UUID connectedUserId) {
+    return studentRepository
+        .findByUserId(connectedUserId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    "No student profile linked to user: " + connectedUserId));
+  }
+
   private Student getOrThrow(UUID id) {
     return studentRepository
         .findById(id)
