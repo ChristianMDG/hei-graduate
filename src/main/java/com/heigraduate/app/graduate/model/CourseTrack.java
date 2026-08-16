@@ -9,8 +9,8 @@ import lombok.*;
         name = "course_track",
         uniqueConstraints =
         @UniqueConstraint(
-                name = "uk_course_track_course_parcours_year",
-                columnNames = {"course_id", "parcours_id", "academic_year_id"}))
+                name = "uk_course_track_course_track_year",
+                columnNames = {"course_id", "track_id", "academic_year_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,8 +26,8 @@ public class CourseTrack {
     private Course course;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "parcours_id", nullable = false)
-    private Parcours parcours;
+    @JoinColumn(name = "track_id", nullable = false)
+    private Parcours track;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "academic_year_id", nullable = false)
@@ -35,5 +35,5 @@ public class CourseTrack {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean obligatoire = true;
+    private Boolean obligatory = true;
 }
