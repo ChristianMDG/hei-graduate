@@ -1,8 +1,9 @@
 package com.heigraduate.app.graduate.controller;
 
+import com.heigraduate.app.graduate.dto.GradeHistoryResponse;
 import com.heigraduate.app.graduate.dto.GradeRequest;
 import com.heigraduate.app.graduate.dto.GradeResponse;
-import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.dto.GradeUpdateRequest;
 import com.heigraduate.app.graduate.service.GradeService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,8 +35,15 @@ public class GradeController {
 
   @GetMapping("/me")
   @PreAuthorize("hasRole('STUDENT')")
-  public List<GradeResponse> findMyPublishedGrades(@AuthenticationPrincipal User connectedUser) {
-    return gradeService.findMyPublishedGrades(connectedUser.getId());
+  public List<GradeResponse> findMyPublishedGrades(Authentication authentication) {
+    UUID studentId = UUID.fromString(authentication.getName());
+    return gradeService.findPublishedForStudent(studentId);
+  }
+
+  @GetMapping("/{id}/history")
+  @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+  public List<GradeHistoryResponse> getHistory(@PathVariable UUID id) {
+    return gradeService.getHistory(id);
   }
 
   @PostMapping
@@ -47,7 +55,8 @@ public class GradeController {
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-  public GradeResponse update(@PathVariable UUID id, @Valid @RequestBody GradeRequest request) {
+  public GradeResponse update(
+      @PathVariable UUID id, @Valid @RequestBody GradeUpdateRequest request) {
     return gradeService.update(id, request);
   }
 
