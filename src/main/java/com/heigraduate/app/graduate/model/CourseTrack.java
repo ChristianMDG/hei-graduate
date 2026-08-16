@@ -6,11 +6,11 @@ import lombok.*;
 
 @Entity
 @Table(
-        name = "course_track",
-        uniqueConstraints =
+    name = "course_track",
+    uniqueConstraints =
         @UniqueConstraint(
-                name = "uk_course_track_course_track_year",
-                columnNames = {"course_id", "track_id", "academic_year_id"}))
+            name = "uk_course_track_course_track_year",
+            columnNames = {"course_id", "track_id", "academic_year_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,21 +19,21 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class CourseTrack {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "course_id", nullable = false)
+  private Course course;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "track_id", nullable = false)
-    private Parcours track;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "track_id", nullable = false)
+  private Parcours track;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "academic_year_id", nullable = false)
-    private AcademicYear academicYear;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "academic_year_id", nullable = false)
+  private AcademicYear academicYear;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean obligatory = true;
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean obligatory = true;
 }

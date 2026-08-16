@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CourseTrackRequest(
-        @NotNull UUID courseId,
-        @NotNull UUID trackId,
-        @NotNull UUID academicYearId,
-        @NotNull Boolean obligatory) {}
+    @NotNull UUID courseId,
+    @NotNull UUID trackId,
+    @NotNull UUID academicYearId,
+    @NotNull Boolean obligatory) {}
