@@ -1,16 +1,21 @@
 package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.contract.FinalGradeQuery;
+import com.heigraduate.app.graduate.dto.GradeHistoryResponse;
 import com.heigraduate.app.graduate.dto.GradeRequest;
 import com.heigraduate.app.graduate.dto.GradeResponse;
+import com.heigraduate.app.graduate.dto.GradeUpdateRequest;
 import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.mapper.GradeHistoryMapper;
 import com.heigraduate.app.graduate.mapper.GradeMapper;
 import com.heigraduate.app.graduate.model.Exam;
 import com.heigraduate.app.graduate.model.Grade;
+import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
 import java.math.BigDecimal;
@@ -19,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GradeService implements FinalGradeQuery {
 
   private final GradeRepository gradeRepository;
+  private final GradeHistoryRepository gradeHistoryRepository;
   private final StudentRepository studentRepository;
   private final ExamRepository examRepository;
 
@@ -48,18 +56,6 @@ public class GradeService implements FinalGradeQuery {
     return gradeRepository.findByStudentIdAndStatus(studentId, GradeStatus.PUBLISHED).stream()
         .map(GradeMapper::toResponse)
         .toList();
-  }
-
-  @Transactional(readOnly = true)
-  public List<GradeResponse> findMyPublishedGrades(UUID connectedUserId) {
-    Student self =
-        studentRepository
-            .findByUserId(connectedUserId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No student profile linked to user: " + connectedUserId));
-    return findPublishedForStudent(self.getId());
   }
 
   @Transactional
@@ -93,13 +89,37 @@ public class GradeService implements FinalGradeQuery {
   }
 
   @Transactional
-  public GradeResponse update(UUID id, GradeRequest request) {
+  public GradeResponse update(UUID id, GradeUpdateRequest request) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+
+    BigDecimal oldValue = grade.getValue();
+    UUID currentUserId = resolveCurrentUserId();
+
+    GradeHistory history =
+        GradeHistory.builder()
+            .grade(grade)
+            .oldValue(oldValue)
+            .newValue(request.value())
+            .reason(request.reason())
+            .changedByUserId(currentUserId)
+            .build();
+    gradeHistoryRepository.save(history);
+
     grade.setValue(request.value());
     return GradeMapper.toResponse(gradeRepository.save(grade));
+  }
+
+  @Transactional(readOnly = true)
+  public List<GradeHistoryResponse> getHistory(UUID gradeId) {
+    if (!gradeRepository.existsById(gradeId)) {
+      throw new ResourceNotFoundException("Grade not found with id: " + gradeId);
+    }
+    return gradeHistoryRepository.findByGradeId(gradeId).stream()
+        .map(GradeHistoryMapper::toResponse)
+        .toList();
   }
 
   @Transactional
@@ -145,5 +165,10 @@ public class GradeService implements FinalGradeQuery {
     }
 
     return Optional.of(weightedSum.divide(totalCoefficient, 2, RoundingMode.HALF_UP));
+  }
+
+  private UUID resolveCurrentUserId() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return UUID.fromString(authentication.getName());
   }
 }
