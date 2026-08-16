@@ -5,13 +5,13 @@ import com.heigraduate.app.graduate.model.Promotion;
 
 public final class PromotionMapper {
 
-    private PromotionMapper() {}
+  private PromotionMapper() {}
 
-    public static PromotionResponse toResponse(Promotion promotion) {
-        return new PromotionResponse(
-                promotion.getId(),
-                promotion.getLabel(),
-                promotion.getFinalAcademicYear().getId(),
-                promotion.getFinalAcademicYear().getLabel());
-    }
+  public static PromotionResponse toResponse(Promotion promotion) {
+    return new PromotionResponse(
+        promotion.getId(),
+        promotion.getLabel(),
+        promotion.getFinalAcademicYear().getId(),
+        promotion.getFinalAcademicYear().getLabel());
+  }
 }

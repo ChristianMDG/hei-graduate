@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DiplomaRepository extends JpaRepository<Diploma, UUID> {
 
-    List<Diploma> findByPromotionIdAndParcoursIdOrderByRankAsc(UUID promotionId, UUID parcoursId);
+  List<Diploma> findByPromotionIdAndParcoursIdOrderByRankAsc(UUID promotionId, UUID parcoursId);
 
-    void deleteByPromotionIdAndParcoursId(UUID promotionId, UUID parcoursId);
+  void deleteByPromotionIdAndParcoursId(UUID promotionId, UUID parcoursId);
 }

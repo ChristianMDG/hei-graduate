@@ -16,26 +16,26 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class Diploma {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(name = "student_id", nullable = false)
-    private UUID studentId;
+  @Column(name = "student_id", nullable = false)
+  private UUID studentId;
 
-    @Column(name = "promotion_id", nullable = false)
-    private UUID promotionId;
+  @Column(name = "promotion_id", nullable = false)
+  private UUID promotionId;
 
-    @Column(name = "parcours_id", nullable = false)
-    private UUID parcoursId;
+  @Column(name = "parcours_id", nullable = false)
+  private UUID parcoursId;
 
-    @Column(name = "obtained_date", nullable = false)
-    private LocalDate obtainedDate;
+  @Column(name = "obtained_date", nullable = false)
+  private LocalDate obtainedDate;
 
-    @Column(name = "overall_average", nullable = false)
-    private BigDecimal overallAverage;
+  @Column(name = "overall_average", nullable = false)
+  private BigDecimal overallAverage;
 
-    @Column(nullable = false)
-    private Integer rank;
+  @Column(nullable = false)
+  private Integer rank;
 
-    @Column(nullable = false)
-    private String mention;
+  @Column(nullable = false)
+  private String mention;
 }

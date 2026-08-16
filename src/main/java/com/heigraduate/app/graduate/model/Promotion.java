@@ -14,12 +14,12 @@ import lombok.*;
 @EqualsAndHashCode(of = "id")
 public class Promotion {
 
-    @Id @GeneratedValue private UUID id;
+  @Id @GeneratedValue private UUID id;
 
-    @Column(nullable = false)
-    private String label;
+  @Column(nullable = false)
+  private String label;
 
-    @ManyToOne
-    @JoinColumn(name = "final_academic_year_id", nullable = false)
-    private AcademicYear finalAcademicYear;
+  @ManyToOne
+  @JoinColumn(name = "final_academic_year_id", nullable = false)
+  private AcademicYear finalAcademicYear;
 }

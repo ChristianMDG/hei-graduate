@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
 
-    boolean existsByFinalAcademicYearId(UUID academicYearId);
+  boolean existsByFinalAcademicYearId(UUID academicYearId);
 
-    Optional<Promotion> findByFinalAcademicYearId(UUID academicYearId);
+  Optional<Promotion> findByFinalAcademicYearId(UUID academicYearId);
 }
