@@ -17,22 +17,22 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class CourseTrackController {
 
-    private final CourseTrackService courseTrackService;
+  private final CourseTrackService courseTrackService;
 
-    @GetMapping
-    public List<CourseTrackResponse> findAll() {
-        return courseTrackService.findAll();
-    }
+  @GetMapping
+  public List<CourseTrackResponse> findAll() {
+    return courseTrackService.findAll();
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CourseTrackResponse create(@Valid @RequestBody CourseTrackRequest request) {
-        return courseTrackService.create(request);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public CourseTrackResponse create(@Valid @RequestBody CourseTrackRequest request) {
+    return courseTrackService.create(request);
+  }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID id) {
-        courseTrackService.delete(id);
-    }
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable UUID id) {
+    courseTrackService.delete(id);
+  }
 }
