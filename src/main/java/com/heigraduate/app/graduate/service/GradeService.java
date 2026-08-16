@@ -50,6 +50,18 @@ public class GradeService implements FinalGradeQuery {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<GradeResponse> findMyPublishedGrades(UUID connectedUserId) {
+    Student self =
+        studentRepository
+            .findByUserId(connectedUserId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "No student profile linked to user: " + connectedUserId));
+    return findPublishedForStudent(self.getId());
+  }
+
   @Transactional
   public GradeResponse create(GradeRequest request) {
     if (gradeRepository.existsByStudentIdAndExamId(request.studentId(), request.examId())) {

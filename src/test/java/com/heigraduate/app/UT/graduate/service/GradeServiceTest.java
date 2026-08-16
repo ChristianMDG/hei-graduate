@@ -120,6 +120,38 @@ class GradeServiceTest {
   }
 
   @Test
+  void findMyPublishedGrades_shouldResolveStudentByUserId_thenReturnPublishedGrades() {
+    Grade published =
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .exam(continuousControl)
+            .value(new BigDecimal("14.00"))
+            .status(GradeStatus.PUBLISHED)
+            .build();
+
+    when(studentRepository.findByUserId(student.getUserId())).thenReturn(Optional.of(student));
+    when(gradeRepository.findByStudentIdAndStatus(student.getId(), GradeStatus.PUBLISHED))
+        .thenReturn(List.of(published));
+
+    List<GradeResponse> result = gradeService.findMyPublishedGrades(student.getUserId());
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).status()).isEqualTo(GradeStatus.PUBLISHED);
+  }
+
+  @Test
+  void findMyPublishedGrades_shouldThrow_whenNoStudentProfileLinkedToUser() {
+    UUID orphanUserId = UUID.randomUUID();
+    when(studentRepository.findByUserId(orphanUserId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> gradeService.findMyPublishedGrades(orphanUserId))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(gradeRepository, never()).findByStudentIdAndStatus(any(), any());
+  }
+
+  @Test
   void create_shouldThrowConflict_whenGradeAlreadyExistsForStudentAndExam() {
     GradeRequest request =
         new GradeRequest(student.getId(), continuousControl.getId(), new BigDecimal("15"));
