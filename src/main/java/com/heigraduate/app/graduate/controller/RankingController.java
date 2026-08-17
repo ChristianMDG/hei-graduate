@@ -1,8 +1,6 @@
 package com.heigraduate.app.graduate.controller;
 
 import com.heigraduate.app.graduate.dto.DiplomaResponse;
-import com.heigraduate.app.graduate.mapper.DiplomaMapper;
-import com.heigraduate.app.graduate.model.Diploma;
 import com.heigraduate.app.graduate.service.RankingService;
 import java.util.List;
 import java.util.UUID;
@@ -21,16 +19,13 @@ public class RankingController {
   @PreAuthorize("hasRole('ADMIN')")
   public List<DiplomaResponse> generate(
       @PathVariable UUID promotionId, @PathVariable UUID parcoursId) {
-    List<Diploma> diplomas = rankingService.generateRanking(promotionId, parcoursId);
-    return diplomas.stream().map(DiplomaMapper::toResponse).toList();
+    return rankingService.generateRanking(promotionId, parcoursId);
   }
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public List<DiplomaResponse> getRanking(
       @PathVariable UUID promotionId, @PathVariable UUID parcoursId) {
-    return rankingService.getRanking(promotionId, parcoursId).stream()
-        .map(DiplomaMapper::toResponse)
-        .toList();
+    return rankingService.getRanking(promotionId, parcoursId);
   }
 }
