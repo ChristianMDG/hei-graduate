@@ -4,7 +4,9 @@ import com.heigraduate.app.graduate.dto.SemesterRequest;
 import com.heigraduate.app.graduate.dto.SemesterResponse;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.SemesterMapper;
+import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Semester;
+import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.validator.SemesterValidator;
 import java.util.List;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SemesterService {
 
   private final SemesterRepository semesterRepository;
+  private final AcademicYearRepository academicYearRepository;
   private final SemesterValidator semesterValidator;
 
   @Transactional(readOnly = true)
@@ -37,9 +40,11 @@ public class SemesterService {
   public SemesterResponse create(SemesterRequest request) {
     semesterValidator.validateDateRange(request.startDate(), request.endDate());
     semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), null);
+    AcademicYear academicYear = getAcademicYear(request.academicYearId());
 
     Semester semester =
         Semester.builder()
+            .academicYear(academicYear)
             .label(request.label())
             .startDate(request.startDate())
             .endDate(request.endDate())
@@ -53,11 +58,13 @@ public class SemesterService {
   public SemesterResponse update(UUID id, SemesterRequest request) {
     semesterValidator.validateDateRange(request.startDate(), request.endDate());
     semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), id);
+    AcademicYear academicYear = getAcademicYear(request.academicYearId());
 
     Semester semester =
         semesterRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + id));
+    semester.setAcademicYear(academicYear);
     semester.setLabel(request.label());
     semester.setStartDate(request.startDate());
     semester.setEndDate(request.endDate());
@@ -73,5 +80,12 @@ public class SemesterService {
             .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + id));
     semester.setActive(false);
     semesterRepository.save(semester);
+  }
+
+  private AcademicYear getAcademicYear(UUID academicYearId) {
+    return academicYearRepository
+        .findById(academicYearId)
+        .orElseThrow(
+            () -> new ResourceNotFoundException("AcademicYear not found: " + academicYearId));
   }
 }

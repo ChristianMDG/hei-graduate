@@ -10,6 +10,7 @@ public class SemesterMapper {
   public static SemesterResponse toResponse(Semester semester) {
     return new SemesterResponse(
         semester.getId(),
+        semester.getAcademicYear().getId(),
         semester.getLabel(),
         semester.getStartDate(),
         semester.getEndDate(),
