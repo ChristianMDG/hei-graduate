@@ -6,14 +6,14 @@ import com.heigraduate.app.graduate.dto.CourseTrackResponse;
 import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.CourseTrackMapper;
-import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.CourseTrack;
 import com.heigraduate.app.graduate.model.Parcours;
-import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.CourseTrackRepository;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class CourseTrackService implements CourseRequirementQuery {
   private final CourseTrackRepository courseTrackRepository;
   private final CourseRepository courseRepository;
   private final ParcoursRepository trackRepository;
-  private final AcademicYearRepository academicYearRepository;
+  private final SemesterRepository semesterRepository;
 
   @Transactional(readOnly = true)
   public List<CourseTrackResponse> findAll() {
@@ -36,10 +36,9 @@ public class CourseTrackService implements CourseRequirementQuery {
 
   @Transactional
   public CourseTrackResponse create(CourseTrackRequest request) {
-    if (courseTrackRepository.existsByCourseIdAndTrackIdAndAcademicYearId(
-        request.courseId(), request.trackId(), request.academicYearId())) {
-      throw new ConflictException(
-          "This course is already linked to this track for this academic year");
+    if (courseTrackRepository.existsByCourseIdAndTrackIdAndSemesterId(
+        request.courseId(), request.trackId(), request.semesterId())) {
+      throw new ConflictException("This course is already linked to this track for this semester");
     }
 
     Course course =
@@ -55,19 +54,19 @@ public class CourseTrackService implements CourseRequirementQuery {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("Track not found with id: " + request.trackId()));
-    AcademicYear academicYear =
-        academicYearRepository
-            .findById(request.academicYearId())
+    Semester semester =
+        semesterRepository
+            .findById(request.semesterId())
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
-                        "AcademicYear not found with id: " + request.academicYearId()));
+                        "Semester not found with id: " + request.semesterId()));
 
     CourseTrack courseTrack =
         CourseTrack.builder()
             .course(course)
             .track(track)
-            .academicYear(academicYear)
+            .semester(semester)
             .mandatory(request.mandatory())
             .build();
 

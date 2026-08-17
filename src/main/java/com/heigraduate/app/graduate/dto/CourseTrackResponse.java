@@ -8,6 +8,7 @@ public record CourseTrackResponse(
     String courseReference,
     UUID trackId,
     String trackCode,
+    UUID semesterId,
+    String semesterLabel,
     UUID academicYearId,
-    String academicYearLabel,
     Boolean mandatory) {}
