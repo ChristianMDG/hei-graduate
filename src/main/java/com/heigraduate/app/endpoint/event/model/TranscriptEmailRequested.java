@@ -18,7 +18,6 @@ import lombok.ToString;
 public class TranscriptEmailRequested extends PojaEvent {
 
   private UUID studentId;
-  private UUID trackId;
   private UUID academicYearId;
 
   @Override
