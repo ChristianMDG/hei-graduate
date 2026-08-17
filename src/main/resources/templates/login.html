@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>HEI Graduate — Connexion</title>
+  <style>
+    body { font-family: sans-serif; max-width: 360px; margin: 80px auto; }
+    label { display: block; margin-top: 12px; }
+    input { width: 100%; padding: 6px; box-sizing: border-box; }
+    button { margin-top: 16px; padding: 8px 16px; }
+    #error { color: #b00020; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Connexion</h1>
+  <form id="login-form">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" required />
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" required />
+    <button type="submit">Se connecter</button>
+    <p id="error"></p>
+  </form>
+
+  <script th:src="@{/js/auth.js}"></script>
+  <script>
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      document.getElementById("error").textContent = "";
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        const response = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, password: password }),
+        });
+        if (!response.ok) {
+          document.getElementById("error").textContent = "Identifiants invalides.";
+          return;
+        }
+        const data = await response.json();
+        window.heiAuth.setSession(data.token, data.user);
+        window.location.href = "/promotions";
+      } catch (err) {
+        document.getElementById("error").textContent = "Erreur de connexion au serveur.";
+      }
+    });
+  </script>
+</body>
+</html>

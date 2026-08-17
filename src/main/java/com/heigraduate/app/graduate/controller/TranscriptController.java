@@ -3,7 +3,7 @@ package com.heigraduate.app.graduate.controller;
 import com.heigraduate.app.endpoint.event.EventProducer;
 import com.heigraduate.app.endpoint.event.model.TranscriptEmailRequested;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
-import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.repository.StudentRepository;
 import com.heigraduate.app.graduate.service.TranscriptService;
 import java.util.List;
@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,9 +37,8 @@ public class TranscriptController {
 
   @GetMapping("/me")
   @PreAuthorize("hasRole('STUDENT')")
-  public ResponseEntity<byte[]> generateMine(Authentication authentication) {
-    UUID userId = UUID.fromString(authentication.getName());
-    byte[] pdf = transcriptService.generateTranscriptForUser(userId);
+  public ResponseEntity<byte[]> generateMine(@AuthenticationPrincipal User connectedUser) {
+    byte[] pdf = transcriptService.generateTranscriptForUser(connectedUser.getId());
     return buildPdfResponse(pdf, "mon-releve.pdf");
   }
 
@@ -58,14 +57,15 @@ public class TranscriptController {
   @PostMapping("/me/send-email")
   @PreAuthorize("hasRole('STUDENT')")
   @ResponseStatus(HttpStatus.ACCEPTED)
-  public void sendMineByEmail(Authentication authentication, @RequestParam UUID academicYearId) {
-    UUID userId = UUID.fromString(authentication.getName());
-    Student student =
+  public void sendMineByEmail(
+      @AuthenticationPrincipal User connectedUser, @RequestParam UUID academicYearId) {
+    var student =
         studentRepository
-            .findByUserId(userId)
+            .findByUserId(connectedUser.getId())
             .orElseThrow(
                 () ->
-                    new ResourceNotFoundException("No student profile linked to user: " + userId));
+                    new ResourceNotFoundException(
+                        "No student profile linked to user: " + connectedUser.getId()));
 
     var event =
         TranscriptEmailRequested.builder()
