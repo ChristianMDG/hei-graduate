@@ -1,6 +1,8 @@
 package com.heigraduate.app.graduate.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 public record ExamResponse(
@@ -10,4 +12,7 @@ public record ExamResponse(
     UUID academicYearId,
     String academicYearLabel,
     String label,
+    LocalDate date,
+    LocalTime startTime,
+    LocalTime endTime,
     BigDecimal coefficient) {}
