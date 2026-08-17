@@ -1,5 +1,4 @@
-// Shared helper for every Thymeleaf page: stores the JWT issued by POST /auth/login
-// and attaches it to every call made against the JSON API under /api/**.
+
 (function (window) {
   const TOKEN_KEY = "hei_token";
   const USER_KEY = "hei_user";
