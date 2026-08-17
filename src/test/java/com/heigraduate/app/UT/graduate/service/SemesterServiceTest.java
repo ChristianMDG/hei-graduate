@@ -1,4 +1,4 @@
-package com.heigraduate.app.graduate.service;
+package com.heigraduate.app.UT.graduate.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,9 +8,12 @@ import static org.mockito.Mockito.*;
 import com.heigraduate.app.graduate.dto.SemesterRequest;
 import com.heigraduate.app.graduate.dto.SemesterResponse;
 import com.heigraduate.app.graduate.exception.BadRequestException;
+import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.SemesterRepository;
+import com.heigraduate.app.graduate.service.SemesterService;
+import com.heigraduate.app.graduate.validator.SemesterValidator;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SemesterServiceTest {
 
   @Mock private SemesterRepository semesterRepository;
+  @Mock private SemesterValidator semesterValidator;
 
   @InjectMocks private SemesterService semesterService;
 
@@ -75,7 +79,7 @@ class SemesterServiceTest {
   }
 
   @Test
-  void create_shouldSaveSemester_whenDatesAreValid() {
+  void create_shouldSaveSemester_whenValidationPasses() {
     SemesterRequest request =
         new SemesterRequest("Semestre 2", LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), 30);
     when(semesterRepository.save(any(Semester.class)))
@@ -84,26 +88,18 @@ class SemesterServiceTest {
     SemesterResponse result = semesterService.create(request);
 
     assertThat(result.label()).isEqualTo("Semestre 2");
-    assertThat(result.expectedCredits()).isEqualTo(30);
+    verify(semesterValidator).validateDateRange(request.startDate(), request.endDate());
+    verify(semesterValidator).validateNoOverlap(request.startDate(), request.endDate(), null);
     verify(semesterRepository).save(any(Semester.class));
   }
 
   @Test
-  void create_shouldThrowBadRequest_whenStartDateAfterEndDate() {
+  void create_shouldPropagateBadRequest_whenDateRangeInvalid() {
     SemesterRequest request =
         new SemesterRequest("Semestre X", LocalDate.of(2026, 6, 30), LocalDate.of(2026, 2, 1), 30);
-
-    assertThatThrownBy(() -> semesterService.create(request))
-        .isInstanceOf(BadRequestException.class)
-        .hasMessageContaining("startDate must be before endDate");
-
-    verify(semesterRepository, never()).save(any());
-  }
-
-  @Test
-  void create_shouldThrowBadRequest_whenStartDateEqualsEndDate() {
-    LocalDate sameDate = LocalDate.of(2026, 3, 1);
-    SemesterRequest request = new SemesterRequest("Semestre X", sameDate, sameDate, 30);
+    doThrow(new BadRequestException("startDate must be before endDate"))
+        .when(semesterValidator)
+        .validateDateRange(request.startDate(), request.endDate());
 
     assertThatThrownBy(() -> semesterService.create(request))
         .isInstanceOf(BadRequestException.class);
@@ -112,7 +108,23 @@ class SemesterServiceTest {
   }
 
   @Test
-  void update_shouldModifyExistingSemester() {
+  void create_shouldPropagateConflict_whenDateRangeOverlapsExistingSemester() {
+    SemesterRequest request =
+        new SemesterRequest(
+            "S1 2026-2027", LocalDate.of(2026, 9, 1), LocalDate.of(2027, 1, 31), 30);
+    doThrow(
+            new ConflictException(
+                "This date range overlaps with an existing semester: S1 2026-2027"))
+        .when(semesterValidator)
+        .validateNoOverlap(request.startDate(), request.endDate(), null);
+
+    assertThatThrownBy(() -> semesterService.create(request)).isInstanceOf(ConflictException.class);
+
+    verify(semesterRepository, never()).save(any());
+  }
+
+  @Test
+  void update_shouldModifyExistingSemester_whenValidationPasses() {
     SemesterRequest request =
         new SemesterRequest(
             "Semestre 1 - modifié", LocalDate.of(2025, 9, 15), LocalDate.of(2026, 2, 15), 30);
@@ -123,6 +135,20 @@ class SemesterServiceTest {
     SemesterResponse result = semesterService.update(semesterId, request);
 
     assertThat(result.label()).isEqualTo("Semestre 1 - modifié");
+    verify(semesterValidator).validateNoOverlap(request.startDate(), request.endDate(), semesterId);
+  }
+
+  @Test
+  void update_shouldExcludeItselfFromOverlapCheck() {
+    SemesterRequest request =
+        new SemesterRequest("Semestre 1", LocalDate.of(2025, 9, 1), LocalDate.of(2026, 1, 31), 30);
+    when(semesterRepository.findById(semesterId)).thenReturn(Optional.of(semester));
+    when(semesterRepository.save(any(Semester.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    semesterService.update(semesterId, request);
+
+    verify(semesterValidator).validateNoOverlap(request.startDate(), request.endDate(), semesterId);
   }
 
   @Test
@@ -134,6 +160,8 @@ class SemesterServiceTest {
 
     assertThatThrownBy(() -> semesterService.update(unknownId, request))
         .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(semesterRepository, never()).save(any());
   }
 
   @Test

@@ -2,11 +2,11 @@ package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.SemesterRequest;
 import com.heigraduate.app.graduate.dto.SemesterResponse;
-import com.heigraduate.app.graduate.exception.BadRequestException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.SemesterMapper;
 import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.SemesterRepository;
+import com.heigraduate.app.graduate.validator.SemesterValidator;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SemesterService {
 
   private final SemesterRepository semesterRepository;
+  private final SemesterValidator semesterValidator;
 
   @Transactional(readOnly = true)
   public List<SemesterResponse> findAll() {
@@ -34,7 +35,9 @@ public class SemesterService {
 
   @Transactional
   public SemesterResponse create(SemesterRequest request) {
-    validateDateRange(request);
+    semesterValidator.validateDateRange(request.startDate(), request.endDate());
+    semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), null);
+
     Semester semester =
         Semester.builder()
             .label(request.label())
@@ -48,7 +51,9 @@ public class SemesterService {
 
   @Transactional
   public SemesterResponse update(UUID id, SemesterRequest request) {
-    validateDateRange(request);
+    semesterValidator.validateDateRange(request.startDate(), request.endDate());
+    semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), id);
+
     Semester semester =
         semesterRepository
             .findById(id)
@@ -68,11 +73,5 @@ public class SemesterService {
             .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + id));
     semester.setActive(false);
     semesterRepository.save(semester);
-  }
-
-  private void validateDateRange(SemesterRequest request) {
-    if (!request.startDate().isBefore(request.endDate())) {
-      throw new BadRequestException("startDate must be before endDate");
-    }
   }
 }
