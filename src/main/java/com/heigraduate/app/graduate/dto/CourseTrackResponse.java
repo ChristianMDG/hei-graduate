@@ -10,4 +10,4 @@ public record CourseTrackResponse(
     String trackCode,
     UUID academicYearId,
     String academicYearLabel,
-    Boolean obligatory) {}
+    Boolean mandatory) {}

@@ -1,5 +1,6 @@
 package com.heigraduate.app.graduate.service;
 
+import com.heigraduate.app.graduate.contract.CourseRequirementQuery;
 import com.heigraduate.app.graduate.dto.CourseTrackRequest;
 import com.heigraduate.app.graduate.dto.CourseTrackResponse;
 import com.heigraduate.app.graduate.exception.ConflictException;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CourseTrackService {
+public class CourseTrackService implements CourseRequirementQuery {
 
   private final CourseTrackRepository courseTrackRepository;
   private final CourseRepository courseRepository;
@@ -67,7 +68,7 @@ public class CourseTrackService {
             .course(course)
             .track(track)
             .academicYear(academicYear)
-            .obligatory(request.obligatory())
+            .mandatory(request.mandatory())
             .build();
 
     return CourseTrackMapper.toResponse(courseTrackRepository.save(courseTrack));
@@ -81,12 +82,13 @@ public class CourseTrackService {
     courseTrackRepository.deleteById(id);
   }
 
+  @Override
   @Transactional(readOnly = true)
-  public List<Course> getMandatoryCourses(UUID trackId, UUID academicYearId) {
+  public List<UUID> getMandatoryCourseIds(UUID trackId, UUID academicYearId) {
     return courseTrackRepository
-        .findByTrackIdAndAcademicYearIdAndObligatoryTrue(trackId, academicYearId)
+        .findByTrackIdAndAcademicYearIdAndMandatoryTrue(trackId, academicYearId)
         .stream()
-        .map(CourseTrack::getCourse)
+        .map(ct -> ct.getCourse().getId())
         .toList();
   }
 }

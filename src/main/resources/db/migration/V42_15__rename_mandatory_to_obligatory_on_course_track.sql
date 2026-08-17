@@ -1,0 +1,1 @@
+ALTER TABLE course_track RENAME COLUMN mandatory TO obligatory;

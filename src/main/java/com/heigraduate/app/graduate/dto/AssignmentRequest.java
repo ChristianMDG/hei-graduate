@@ -1,10 +1,12 @@
 package com.heigraduate.app.graduate.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Set;
 import java.util.UUID;
 
-public record CourseTrackRequest(
+public record AssignmentRequest(
     @NotNull UUID courseId,
-    @NotNull UUID trackId,
+    @NotNull UUID teacherId,
     @NotNull UUID academicYearId,
-    @NotNull Boolean mandatory) {}
+    @NotEmpty Set<UUID> groupIds) {}
