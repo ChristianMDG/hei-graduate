@@ -66,6 +66,9 @@ public class ExamService {
             .course(course)
             .academicYear(academicYear)
             .label(request.label())
+            .date(request.date())
+            .startTime(request.startTime())
+            .endTime(request.endTime())
             .coefficient(request.coefficient())
             .build();
 
@@ -82,6 +85,9 @@ public class ExamService {
     validateCoefficientSum(request.courseId(), request.academicYearId(), request.coefficient(), id);
 
     exam.setLabel(request.label());
+    exam.setDate(request.date());
+    exam.setStartTime(request.startTime());
+    exam.setEndTime(request.endTime());
     exam.setCoefficient(request.coefficient());
     return ExamMapper.toResponse(examRepository.save(exam));
   }

@@ -15,6 +15,9 @@ public class ExamMapper {
         exam.getAcademicYear().getId(),
         exam.getAcademicYear().getLabel(),
         exam.getLabel(),
+        exam.getDate(),
+        exam.getStartTime(),
+        exam.getEndTime(),
         exam.getCoefficient());
   }
 }
