@@ -5,15 +5,18 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.heigraduate.app.graduate.dto.DiplomaResponse;
 import com.heigraduate.app.graduate.dto.GraduationResult;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Diploma;
 import com.heigraduate.app.graduate.model.Enrollment;
 import com.heigraduate.app.graduate.model.Promotion;
+import com.heigraduate.app.graduate.model.Student;
 import com.heigraduate.app.graduate.repository.DiplomaRepository;
 import com.heigraduate.app.graduate.repository.EnrollmentRepository;
 import com.heigraduate.app.graduate.repository.PromotionRepository;
+import com.heigraduate.app.graduate.repository.StudentRepository;
 import com.heigraduate.app.graduate.service.GraduationService;
 import com.heigraduate.app.graduate.service.RankingService;
 import java.math.BigDecimal;
@@ -35,6 +38,7 @@ class RankingServiceTest {
   @Mock private PromotionRepository promotionRepository;
   @Mock private DiplomaRepository diplomaRepository;
   @Mock private EnrollmentRepository enrollmentRepository;
+  @Mock private StudentRepository studentRepository;
   @Mock private GraduationService graduationService;
 
   @InjectMocks private RankingService rankingService;
@@ -72,6 +76,18 @@ class RankingServiceTest {
         .groupId(UUID.randomUUID())
         .startDate(LocalDate.of(2025, 9, 1))
         .endDate(null)
+        .build();
+  }
+
+  private Student student(UUID id, String number, String lastName, String firstName) {
+    return Student.builder()
+        .id(id)
+        .userId(UUID.randomUUID())
+        .studentNumber(number)
+        .lastName(lastName)
+        .firstName(firstName)
+        .enrollmentDate(LocalDate.of(2023, 9, 1))
+        .status("ACTIVE")
         .build();
   }
 
@@ -114,16 +130,25 @@ class RankingServiceTest {
 
     when(diplomaRepository.save(any(Diploma.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    when(studentRepository.findAllById(any()))
+        .thenReturn(
+            List.of(
+                student(studentJean, "STD001", "Rakoto", "Jean"),
+                student(studentMarie, "STD002", "Rasoa", "Marie"),
+                student(studentPaul, "STD003", "Randria", "Paul")));
 
-    List<Diploma> ranking = rankingService.generateRanking(promotionId, parcoursId);
+    List<DiplomaResponse> ranking = rankingService.generateRanking(promotionId, parcoursId);
 
     assertThat(ranking).hasSize(3);
-    assertThat(ranking.get(0).getStudentId()).isEqualTo(studentJean);
-    assertThat(ranking.get(0).getRank()).isEqualTo(1);
-    assertThat(ranking.get(1).getStudentId()).isEqualTo(studentMarie);
-    assertThat(ranking.get(1).getRank()).isEqualTo(2);
-    assertThat(ranking.get(2).getStudentId()).isEqualTo(studentPaul);
-    assertThat(ranking.get(2).getRank()).isEqualTo(3);
+    assertThat(ranking.get(0).studentId()).isEqualTo(studentJean);
+    assertThat(ranking.get(0).studentNumber()).isEqualTo("STD001");
+    assertThat(ranking.get(0).lastName()).isEqualTo("Rakoto");
+    assertThat(ranking.get(0).firstName()).isEqualTo("Jean");
+    assertThat(ranking.get(0).rank()).isEqualTo(1);
+    assertThat(ranking.get(1).studentId()).isEqualTo(studentMarie);
+    assertThat(ranking.get(1).rank()).isEqualTo(2);
+    assertThat(ranking.get(2).studentId()).isEqualTo(studentPaul);
+    assertThat(ranking.get(2).rank()).isEqualTo(3);
 
     verify(graduationService, never()).determineGraduation(otherParcoursStudent);
     verify(diplomaRepository).deleteByPromotionIdAndParcoursId(promotionId, parcoursId);
@@ -159,11 +184,18 @@ class RankingServiceTest {
             new GraduationResult(passable, true, new BigDecimal("10.50"), List.of(), List.of()));
     when(diplomaRepository.save(any(Diploma.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    when(studentRepository.findAllById(any()))
+        .thenReturn(
+            List.of(
+                student(excellent, "STD010", "A", "A"),
+                student(bien, "STD011", "B", "B"),
+                student(assezBien, "STD012", "C", "C"),
+                student(passable, "STD013", "D", "D")));
 
-    List<Diploma> ranking = rankingService.generateRanking(promotionId, parcoursId);
+    List<DiplomaResponse> ranking = rankingService.generateRanking(promotionId, parcoursId);
 
     assertThat(ranking)
-        .extracting(Diploma::getStudentId, Diploma::getMention)
+        .extracting(DiplomaResponse::studentId, DiplomaResponse::mention)
         .containsExactly(
             tuple(excellent, "Tres Bien"),
             tuple(bien, "Bien"),
@@ -182,11 +214,12 @@ class RankingServiceTest {
             new GraduationResult(
                 studentId, false, new BigDecimal("8.00"), List.of(UUID.randomUUID()), List.of()));
 
-    List<Diploma> ranking = rankingService.generateRanking(promotionId, parcoursId);
+    List<DiplomaResponse> ranking = rankingService.generateRanking(promotionId, parcoursId);
 
     assertThat(ranking).isEmpty();
     verify(diplomaRepository).deleteByPromotionIdAndParcoursId(promotionId, parcoursId);
     verify(diplomaRepository, never()).save(any());
+    verify(studentRepository, never()).findAllById(any());
   }
 
   @Test
@@ -199,11 +232,12 @@ class RankingServiceTest {
   }
 
   @Test
-  void getRanking_shouldDelegateToRepositoryOrderedByRank() {
+  void getRanking_shouldReturnDiplomaResponsesEnrichedWithStudentIdentity_orderedByRank() {
+    UUID studentId = UUID.randomUUID();
     Diploma diploma =
         Diploma.builder()
             .id(UUID.randomUUID())
-            .studentId(UUID.randomUUID())
+            .studentId(studentId)
             .promotionId(promotionId)
             .parcoursId(parcoursId)
             .obtainedDate(LocalDate.now())
@@ -213,9 +247,50 @@ class RankingServiceTest {
             .build();
     when(diplomaRepository.findByPromotionIdAndParcoursIdOrderByRankAsc(promotionId, parcoursId))
         .thenReturn(List.of(diploma));
+    when(studentRepository.findAllById(List.of(studentId)))
+        .thenReturn(List.of(student(studentId, "STD099", "Andria", "Fara")));
 
-    List<Diploma> result = rankingService.getRanking(promotionId, parcoursId);
+    List<DiplomaResponse> result = rankingService.getRanking(promotionId, parcoursId);
 
-    assertThat(result).containsExactly(diploma);
+    assertThat(result).hasSize(1);
+    DiplomaResponse response = result.get(0);
+    assertThat(response.studentId()).isEqualTo(studentId);
+    assertThat(response.studentNumber()).isEqualTo("STD099");
+    assertThat(response.lastName()).isEqualTo("Andria");
+    assertThat(response.firstName()).isEqualTo("Fara");
+    assertThat(response.rank()).isEqualTo(1);
+  }
+
+  @Test
+  void getRanking_shouldReturnEmptyList_whenNoDiplomaExistsYet() {
+    when(diplomaRepository.findByPromotionIdAndParcoursIdOrderByRankAsc(promotionId, parcoursId))
+        .thenReturn(List.of());
+
+    List<DiplomaResponse> result = rankingService.getRanking(promotionId, parcoursId);
+
+    assertThat(result).isEmpty();
+    verify(studentRepository, never()).findAllById(any());
+  }
+
+  @Test
+  void getRanking_shouldThrow_whenStudentBehindADiplomaIsMissing() {
+    UUID studentId = UUID.randomUUID();
+    Diploma diploma =
+        Diploma.builder()
+            .id(UUID.randomUUID())
+            .studentId(studentId)
+            .promotionId(promotionId)
+            .parcoursId(parcoursId)
+            .obtainedDate(LocalDate.now())
+            .overallAverage(new BigDecimal("16.00"))
+            .rank(1)
+            .mention("Tres Bien")
+            .build();
+    when(diplomaRepository.findByPromotionIdAndParcoursIdOrderByRankAsc(promotionId, parcoursId))
+        .thenReturn(List.of(diploma));
+    when(studentRepository.findAllById(List.of(studentId))).thenReturn(List.of());
+
+    Assertions.assertThrows(
+        ResourceNotFoundException.class, () -> rankingService.getRanking(promotionId, parcoursId));
   }
 }

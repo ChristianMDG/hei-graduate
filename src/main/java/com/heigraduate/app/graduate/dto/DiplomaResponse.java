@@ -7,6 +7,9 @@ import java.util.UUID;
 public record DiplomaResponse(
     UUID id,
     UUID studentId,
+    String studentNumber,
+    String lastName,
+    String firstName,
     UUID promotionId,
     UUID parcoursId,
     LocalDate obtainedDate,
