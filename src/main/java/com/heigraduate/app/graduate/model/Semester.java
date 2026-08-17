@@ -12,9 +12,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
 public class Semester {
 
   @Id @GeneratedValue private UUID id;
+
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "academic_year_id", nullable = false)
+  private AcademicYear academicYear;
 
   @Column(nullable = false)
   private String label;

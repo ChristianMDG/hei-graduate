@@ -7,10 +7,11 @@ import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.CourseTrack;
 import com.heigraduate.app.graduate.model.Parcours;
-import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.CourseTrackRepository;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.service.CourseTrackService;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,7 +29,7 @@ class CourseTrackServiceTest {
   @Mock private CourseTrackRepository courseTrackRepository;
   @Mock private CourseRepository courseRepository;
   @Mock private ParcoursRepository trackRepository;
-  @Mock private AcademicYearRepository academicYearRepository;
+  @Mock private SemesterRepository semesterRepository;
 
   @InjectMocks private CourseTrackService courseTrackService;
 
@@ -36,6 +37,8 @@ class CourseTrackServiceTest {
   private Parcours tn;
   private AcademicYear year1;
   private AcademicYear year2;
+  private Semester semesterYear1;
+  private Semester semesterYear2;
   private Course course;
 
   @BeforeEach
@@ -61,6 +64,28 @@ class CourseTrackServiceTest {
             .level("L2")
             .build();
 
+    semesterYear1 =
+        Semester.builder()
+            .id(UUID.randomUUID())
+            .academicYear(year1)
+            .label("S3")
+            .startDate(year1.getStartDate())
+            .endDate(year1.getStartDate().plusMonths(4))
+            .expectedCredits(30)
+            .active(true)
+            .build();
+
+    semesterYear2 =
+        Semester.builder()
+            .id(UUID.randomUUID())
+            .academicYear(year2)
+            .label("S5")
+            .startDate(year2.getStartDate())
+            .endDate(year2.getStartDate().plusMonths(4))
+            .expectedCredits(30)
+            .active(true)
+            .build();
+
     course =
         Course.builder()
             .id(UUID.randomUUID())
@@ -74,7 +99,12 @@ class CourseTrackServiceTest {
   @Test
   void getMandatoryCourseIds_shouldNeverLeakElCourseIntoTn_evenAcrossDifferentYears() {
     CourseTrack elYear1 =
-        CourseTrack.builder().course(course).track(el).academicYear(year1).mandatory(true).build();
+        CourseTrack.builder()
+            .course(course)
+            .track(el)
+            .semester(semesterYear1)
+            .mandatory(true)
+            .build();
 
     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             el.getId(), year1.getId()))
@@ -92,7 +122,12 @@ class CourseTrackServiceTest {
     assertThat(tnCourseIdsYear1).isEmpty();
 
     CourseTrack tnYear2 =
-        CourseTrack.builder().course(course).track(tn).academicYear(year2).mandatory(true).build();
+        CourseTrack.builder()
+            .course(course)
+            .track(tn)
+            .semester(semesterYear2)
+            .mandatory(true)
+            .build();
 
     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
             tn.getId(), year2.getId()))

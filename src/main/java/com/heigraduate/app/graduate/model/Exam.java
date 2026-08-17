@@ -27,6 +27,10 @@ public class Exam {
   @JoinColumn(name = "academic_year_id", nullable = false)
   private AcademicYear academicYear;
 
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "semester_id", nullable = false)
+  private Semester semester;
+
   @Column(nullable = false)
   private String label;
 

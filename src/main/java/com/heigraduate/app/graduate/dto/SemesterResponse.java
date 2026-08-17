@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public record SemesterResponse(
     UUID id,
+    UUID academicYearId,
+    String academicYearLabel,
     String label,
     LocalDate startDate,
     LocalDate endDate,

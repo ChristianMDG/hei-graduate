@@ -8,9 +8,11 @@ import com.heigraduate.app.graduate.mapper.ExamMapper;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Exam;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,7 @@ public class ExamService {
   private final ExamRepository examRepository;
   private final CourseRepository courseRepository;
   private final AcademicYearRepository academicYearRepository;
+  private final SemesterRepository semesterRepository;
 
   @Transactional(readOnly = true)
   public List<ExamResponse> findAll() {
@@ -57,6 +60,8 @@ public class ExamService {
                 () ->
                     new ResourceNotFoundException(
                         "AcademicYear not found with id: " + request.academicYearId()));
+    Semester semester = getSemesterOrThrow(request.semesterId());
+    validateSemesterBelongsToAcademicYear(semester, academicYear);
 
     validateCoefficientSum(
         request.courseId(), request.academicYearId(), request.coefficient(), null);
@@ -65,6 +70,7 @@ public class ExamService {
         Exam.builder()
             .course(course)
             .academicYear(academicYear)
+            .semester(semester)
             .label(request.label())
             .date(request.date())
             .startTime(request.startTime())
@@ -98,6 +104,28 @@ public class ExamService {
       throw new ResourceNotFoundException("Exam not found with id: " + id);
     }
     examRepository.deleteById(id);
+  }
+
+  private Semester getSemesterOrThrow(UUID semesterId) {
+    return semesterRepository
+        .findById(semesterId)
+        .orElseThrow(
+            () -> new ResourceNotFoundException("Semester not found with id: " + semesterId));
+  }
+
+  /**
+   * MCD v2, correction #11: an exam's semester and academic year must agree, otherwise the two FKs
+   * could point to inconsistent data (e.g. a semester from a different year than the one declared
+   * on the exam).
+   */
+  private void validateSemesterBelongsToAcademicYear(Semester semester, AcademicYear academicYear) {
+    if (!semester.getAcademicYear().getId().equals(academicYear.getId())) {
+      throw new BadRequestException(
+          "Semester "
+              + semester.getLabel()
+              + " does not belong to academic year "
+              + academicYear.getLabel());
+    }
   }
 
   private void validateCoefficientSum(

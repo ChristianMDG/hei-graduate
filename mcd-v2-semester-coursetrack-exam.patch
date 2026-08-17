@@ -1,0 +1,964 @@
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackRequest.java b/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackRequest.java
+index e7877ff..92b1941 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackRequest.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackRequest.java
+@@ -6,5 +6,5 @@ import java.util.UUID;
+ public record CourseTrackRequest(
+     @NotNull UUID courseId,
+     @NotNull UUID trackId,
+-    @NotNull UUID academicYearId,
++    @NotNull UUID semesterId,
+     @NotNull Boolean mandatory) {}
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackResponse.java b/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackResponse.java
+index af88f3e..647b358 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackResponse.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/CourseTrackResponse.java
+@@ -8,6 +8,8 @@ public record CourseTrackResponse(
+     String courseReference,
+     UUID trackId,
+     String trackCode,
++    UUID semesterId,
++    String semesterLabel,
+     UUID academicYearId,
+     String academicYearLabel,
+     Boolean mandatory) {}
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/ExamRequest.java b/src/main/java/com/heigraduate/app/graduate/dto/ExamRequest.java
+index 1be4507..59979da 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/ExamRequest.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/ExamRequest.java
+@@ -12,6 +12,7 @@ import java.util.UUID;
+ public record ExamRequest(
+     @NotNull UUID courseId,
+     @NotNull UUID academicYearId,
++    @NotNull UUID semesterId,
+     @NotBlank String label,
+     @NotNull LocalDate date,
+     @NotNull LocalTime startTime,
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/ExamResponse.java b/src/main/java/com/heigraduate/app/graduate/dto/ExamResponse.java
+index 7f76e1e..d2bbbde 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/ExamResponse.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/ExamResponse.java
+@@ -11,6 +11,8 @@ public record ExamResponse(
+     String courseReference,
+     UUID academicYearId,
+     String academicYearLabel,
++    UUID semesterId,
++    String semesterLabel,
+     String label,
+     LocalDate date,
+     LocalTime startTime,
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/SemesterRequest.java b/src/main/java/com/heigraduate/app/graduate/dto/SemesterRequest.java
+index 6a8b76d..dede95d 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/SemesterRequest.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/SemesterRequest.java
+@@ -4,8 +4,10 @@ import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.NotNull;
+ import jakarta.validation.constraints.Positive;
+ import java.time.LocalDate;
++import java.util.UUID;
+ 
+ public record SemesterRequest(
++    @NotNull(message = "academicYearId is required") UUID academicYearId,
+     @NotBlank String label,
+     @NotNull LocalDate startDate,
+     @NotNull LocalDate endDate,
+diff --git a/src/main/java/com/heigraduate/app/graduate/dto/SemesterResponse.java b/src/main/java/com/heigraduate/app/graduate/dto/SemesterResponse.java
+index fbb8ec2..c534cee 100644
+--- a/src/main/java/com/heigraduate/app/graduate/dto/SemesterResponse.java
++++ b/src/main/java/com/heigraduate/app/graduate/dto/SemesterResponse.java
+@@ -5,6 +5,8 @@ import java.util.UUID;
+ 
+ public record SemesterResponse(
+     UUID id,
++    UUID academicYearId,
++    String academicYearLabel,
+     String label,
+     LocalDate startDate,
+     LocalDate endDate,
+diff --git a/src/main/java/com/heigraduate/app/graduate/mapper/CourseTrackMapper.java b/src/main/java/com/heigraduate/app/graduate/mapper/CourseTrackMapper.java
+index 22f01e3..f4311e5 100644
+--- a/src/main/java/com/heigraduate/app/graduate/mapper/CourseTrackMapper.java
++++ b/src/main/java/com/heigraduate/app/graduate/mapper/CourseTrackMapper.java
+@@ -14,8 +14,10 @@ public class CourseTrackMapper {
+         ct.getCourse().getCourseReference(),
+         ct.getTrack().getId(),
+         ct.getTrack().getCode(),
+-        ct.getAcademicYear().getId(),
+-        ct.getAcademicYear().getLabel(),
++        ct.getSemester().getId(),
++        ct.getSemester().getLabel(),
++        ct.getSemester().getAcademicYear().getId(),
++        ct.getSemester().getAcademicYear().getLabel(),
+         ct.getMandatory());
+   }
+ }
+diff --git a/src/main/java/com/heigraduate/app/graduate/mapper/ExamMapper.java b/src/main/java/com/heigraduate/app/graduate/mapper/ExamMapper.java
+index 8dc6736..b1a4042 100644
+--- a/src/main/java/com/heigraduate/app/graduate/mapper/ExamMapper.java
++++ b/src/main/java/com/heigraduate/app/graduate/mapper/ExamMapper.java
+@@ -14,6 +14,8 @@ public class ExamMapper {
+         exam.getCourse().getCourseReference(),
+         exam.getAcademicYear().getId(),
+         exam.getAcademicYear().getLabel(),
++        exam.getSemester().getId(),
++        exam.getSemester().getLabel(),
+         exam.getLabel(),
+         exam.getDate(),
+         exam.getStartTime(),
+diff --git a/src/main/java/com/heigraduate/app/graduate/mapper/SemesterMapper.java b/src/main/java/com/heigraduate/app/graduate/mapper/SemesterMapper.java
+index c362323..601456e 100644
+--- a/src/main/java/com/heigraduate/app/graduate/mapper/SemesterMapper.java
++++ b/src/main/java/com/heigraduate/app/graduate/mapper/SemesterMapper.java
+@@ -10,6 +10,8 @@ public class SemesterMapper {
+   public static SemesterResponse toResponse(Semester semester) {
+     return new SemesterResponse(
+         semester.getId(),
++        semester.getAcademicYear().getId(),
++        semester.getAcademicYear().getLabel(),
+         semester.getLabel(),
+         semester.getStartDate(),
+         semester.getEndDate(),
+diff --git a/src/main/java/com/heigraduate/app/graduate/model/CourseTrack.java b/src/main/java/com/heigraduate/app/graduate/model/CourseTrack.java
+index 327585d..b5c582a 100644
+--- a/src/main/java/com/heigraduate/app/graduate/model/CourseTrack.java
++++ b/src/main/java/com/heigraduate/app/graduate/model/CourseTrack.java
+@@ -9,8 +9,8 @@ import lombok.*;
+     name = "course_track",
+     uniqueConstraints =
+         @UniqueConstraint(
+-            name = "uk_course_track_course_track_year",
+-            columnNames = {"course_id", "track_id", "academic_year_id"}))
++            name = "uk_course_track_course_track_semester",
++            columnNames = {"course_id", "track_id", "semester_id"}))
+ @Getter
+ @Setter
+ @NoArgsConstructor
+@@ -30,8 +30,8 @@ public class CourseTrack {
+   private Parcours track;
+ 
+   @ManyToOne(optional = false)
+-  @JoinColumn(name = "academic_year_id", nullable = false)
+-  private AcademicYear academicYear;
++  @JoinColumn(name = "semester_id", nullable = false)
++  private Semester semester;
+ 
+   @Column(nullable = false)
+   @Builder.Default
+diff --git a/src/main/java/com/heigraduate/app/graduate/model/Exam.java b/src/main/java/com/heigraduate/app/graduate/model/Exam.java
+index f8a0c13..1318c76 100644
+--- a/src/main/java/com/heigraduate/app/graduate/model/Exam.java
++++ b/src/main/java/com/heigraduate/app/graduate/model/Exam.java
+@@ -27,6 +27,10 @@ public class Exam {
+   @JoinColumn(name = "academic_year_id", nullable = false)
+   private AcademicYear academicYear;
+ 
++  @ManyToOne(optional = false)
++  @JoinColumn(name = "semester_id", nullable = false)
++  private Semester semester;
++
+   @Column(nullable = false)
+   private String label;
+ 
+diff --git a/src/main/java/com/heigraduate/app/graduate/model/Semester.java b/src/main/java/com/heigraduate/app/graduate/model/Semester.java
+index 1c791bd..6ac4e2a 100644
+--- a/src/main/java/com/heigraduate/app/graduate/model/Semester.java
++++ b/src/main/java/com/heigraduate/app/graduate/model/Semester.java
+@@ -12,10 +12,15 @@ import lombok.*;
+ @NoArgsConstructor
+ @AllArgsConstructor
+ @Builder
++@EqualsAndHashCode(of = "id")
+ public class Semester {
+ 
+   @Id @GeneratedValue private UUID id;
+ 
++  @ManyToOne(optional = false)
++  @JoinColumn(name = "academic_year_id", nullable = false)
++  private AcademicYear academicYear;
++
+   @Column(nullable = false)
+   private String label;
+ 
+diff --git a/src/main/java/com/heigraduate/app/graduate/repository/CourseTrackRepository.java b/src/main/java/com/heigraduate/app/graduate/repository/CourseTrackRepository.java
+index 1e123df..8baddeb 100644
+--- a/src/main/java/com/heigraduate/app/graduate/repository/CourseTrackRepository.java
++++ b/src/main/java/com/heigraduate/app/graduate/repository/CourseTrackRepository.java
+@@ -4,14 +4,30 @@ import com.heigraduate.app.graduate.model.CourseTrack;
+ import java.util.List;
+ import java.util.UUID;
+ import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Query;
++import org.springframework.data.repository.query.Param;
+ 
+ public interface CourseTrackRepository extends JpaRepository<CourseTrack, UUID> {
+ 
+-  List<CourseTrack> findByTrackIdAndAcademicYearId(UUID trackId, UUID academicYearId);
++  /**
++   * MCD v2: course_track is now keyed by semester, not academic year. These two queries stay
++   * keyed by academicYearId for callers (AcademicAverageService, GraduationService via
++   * CourseRequirementQuery) that reason at the year level - they just traverse
++   * course_track.semester.academic_year underneath, aggregating every semester of that year.
++   */
++  @Query(
++      "SELECT ct FROM CourseTrack ct WHERE ct.track.id = :trackId "
++          + "AND ct.semester.academicYear.id = :academicYearId")
++  List<CourseTrack> findByTrackIdAndAcademicYearId(
++      @Param("trackId") UUID trackId, @Param("academicYearId") UUID academicYearId);
+ 
++  @Query(
++      "SELECT ct FROM CourseTrack ct WHERE ct.track.id = :trackId "
++          + "AND ct.semester.academicYear.id = :academicYearId AND ct.mandatory = true")
+   List<CourseTrack> findByTrackIdAndAcademicYearIdAndMandatoryTrue(
+-      UUID trackId, UUID academicYearId);
++      @Param("trackId") UUID trackId, @Param("academicYearId") UUID academicYearId);
+ 
+-  boolean existsByCourseIdAndTrackIdAndAcademicYearId(
+-      UUID courseId, UUID trackId, UUID academicYearId);
++  List<CourseTrack> findByTrackIdAndSemesterId(UUID trackId, UUID semesterId);
++
++  boolean existsByCourseIdAndTrackIdAndSemesterId(UUID courseId, UUID trackId, UUID semesterId);
+ }
+diff --git a/src/main/java/com/heigraduate/app/graduate/service/CourseTrackService.java b/src/main/java/com/heigraduate/app/graduate/service/CourseTrackService.java
+index 19b3233..7645d07 100644
+--- a/src/main/java/com/heigraduate/app/graduate/service/CourseTrackService.java
++++ b/src/main/java/com/heigraduate/app/graduate/service/CourseTrackService.java
+@@ -6,14 +6,14 @@ import com.heigraduate.app.graduate.dto.CourseTrackResponse;
+ import com.heigraduate.app.graduate.exception.ConflictException;
+ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+ import com.heigraduate.app.graduate.mapper.CourseTrackMapper;
+-import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Course;
+ import com.heigraduate.app.graduate.model.CourseTrack;
+ import com.heigraduate.app.graduate.model.Parcours;
+-import com.heigraduate.app.graduate.repository.AcademicYearRepository;
++import com.heigraduate.app.graduate.model.Semester;
+ import com.heigraduate.app.graduate.repository.CourseRepository;
+ import com.heigraduate.app.graduate.repository.CourseTrackRepository;
+ import com.heigraduate.app.graduate.repository.ParcoursRepository;
++import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import java.util.List;
+ import java.util.UUID;
+ import lombok.RequiredArgsConstructor;
+@@ -27,7 +27,7 @@ public class CourseTrackService implements CourseRequirementQuery {
+   private final CourseTrackRepository courseTrackRepository;
+   private final CourseRepository courseRepository;
+   private final ParcoursRepository trackRepository;
+-  private final AcademicYearRepository academicYearRepository;
++  private final SemesterRepository semesterRepository;
+ 
+   @Transactional(readOnly = true)
+   public List<CourseTrackResponse> findAll() {
+@@ -36,10 +36,10 @@ public class CourseTrackService implements CourseRequirementQuery {
+ 
+   @Transactional
+   public CourseTrackResponse create(CourseTrackRequest request) {
+-    if (courseTrackRepository.existsByCourseIdAndTrackIdAndAcademicYearId(
+-        request.courseId(), request.trackId(), request.academicYearId())) {
++    if (courseTrackRepository.existsByCourseIdAndTrackIdAndSemesterId(
++        request.courseId(), request.trackId(), request.semesterId())) {
+       throw new ConflictException(
+-          "This course is already linked to this track for this academic year");
++          "This course is already linked to this track for this semester");
+     }
+ 
+     Course course =
+@@ -55,19 +55,19 @@ public class CourseTrackService implements CourseRequirementQuery {
+             .orElseThrow(
+                 () ->
+                     new ResourceNotFoundException("Track not found with id: " + request.trackId()));
+-    AcademicYear academicYear =
+-        academicYearRepository
+-            .findById(request.academicYearId())
++    Semester semester =
++        semesterRepository
++            .findById(request.semesterId())
+             .orElseThrow(
+                 () ->
+                     new ResourceNotFoundException(
+-                        "AcademicYear not found with id: " + request.academicYearId()));
++                        "Semester not found with id: " + request.semesterId()));
+ 
+     CourseTrack courseTrack =
+         CourseTrack.builder()
+             .course(course)
+             .track(track)
+-            .academicYear(academicYear)
++            .semester(semester)
+             .mandatory(request.mandatory())
+             .build();
+ 
+diff --git a/src/main/java/com/heigraduate/app/graduate/service/ExamService.java b/src/main/java/com/heigraduate/app/graduate/service/ExamService.java
+index 541be06..390c8e1 100644
+--- a/src/main/java/com/heigraduate/app/graduate/service/ExamService.java
++++ b/src/main/java/com/heigraduate/app/graduate/service/ExamService.java
+@@ -8,9 +8,11 @@ import com.heigraduate.app.graduate.mapper.ExamMapper;
+ import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Course;
+ import com.heigraduate.app.graduate.model.Exam;
++import com.heigraduate.app.graduate.model.Semester;
+ import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+ import com.heigraduate.app.graduate.repository.CourseRepository;
+ import com.heigraduate.app.graduate.repository.ExamRepository;
++import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import java.math.BigDecimal;
+ import java.util.List;
+ import java.util.UUID;
+@@ -27,6 +29,7 @@ public class ExamService {
+   private final ExamRepository examRepository;
+   private final CourseRepository courseRepository;
+   private final AcademicYearRepository academicYearRepository;
++  private final SemesterRepository semesterRepository;
+ 
+   @Transactional(readOnly = true)
+   public List<ExamResponse> findAll() {
+@@ -57,6 +60,8 @@ public class ExamService {
+                 () ->
+                     new ResourceNotFoundException(
+                         "AcademicYear not found with id: " + request.academicYearId()));
++    Semester semester = getSemesterOrThrow(request.semesterId());
++    validateSemesterBelongsToAcademicYear(semester, academicYear);
+ 
+     validateCoefficientSum(
+         request.courseId(), request.academicYearId(), request.coefficient(), null);
+@@ -65,6 +70,7 @@ public class ExamService {
+         Exam.builder()
+             .course(course)
+             .academicYear(academicYear)
++            .semester(semester)
+             .label(request.label())
+             .date(request.date())
+             .startTime(request.startTime())
+@@ -100,6 +106,28 @@ public class ExamService {
+     examRepository.deleteById(id);
+   }
+ 
++  private Semester getSemesterOrThrow(UUID semesterId) {
++    return semesterRepository
++        .findById(semesterId)
++        .orElseThrow(
++            () -> new ResourceNotFoundException("Semester not found with id: " + semesterId));
++  }
++
++  /**
++   * MCD v2, correction #11: an exam's semester and academic year must agree, otherwise the two
++   * FKs could point to inconsistent data (e.g. a semester from a different year than the one
++   * declared on the exam).
++   */
++  private void validateSemesterBelongsToAcademicYear(Semester semester, AcademicYear academicYear) {
++    if (!semester.getAcademicYear().getId().equals(academicYear.getId())) {
++      throw new BadRequestException(
++          "Semester "
++              + semester.getLabel()
++              + " does not belong to academic year "
++              + academicYear.getLabel());
++    }
++  }
++
+   private void validateCoefficientSum(
+       UUID courseId, UUID academicYearId, BigDecimal newCoefficient, UUID excludeExamId) {
+     List<Exam> existingExams =
+diff --git a/src/main/java/com/heigraduate/app/graduate/service/SemesterService.java b/src/main/java/com/heigraduate/app/graduate/service/SemesterService.java
+index dee77ae..0a86456 100644
+--- a/src/main/java/com/heigraduate/app/graduate/service/SemesterService.java
++++ b/src/main/java/com/heigraduate/app/graduate/service/SemesterService.java
+@@ -4,7 +4,9 @@ import com.heigraduate.app.graduate.dto.SemesterRequest;
+ import com.heigraduate.app.graduate.dto.SemesterResponse;
+ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+ import com.heigraduate.app.graduate.mapper.SemesterMapper;
++import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Semester;
++import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+ import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import com.heigraduate.app.graduate.validator.SemesterValidator;
+ import java.util.List;
+@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
+ public class SemesterService {
+ 
+   private final SemesterRepository semesterRepository;
++  private final AcademicYearRepository academicYearRepository;
+   private final SemesterValidator semesterValidator;
+ 
+   @Transactional(readOnly = true)
+@@ -37,9 +40,13 @@ public class SemesterService {
+   public SemesterResponse create(SemesterRequest request) {
+     semesterValidator.validateDateRange(request.startDate(), request.endDate());
+     semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), null);
++    AcademicYear academicYear = getAcademicYearOrThrow(request.academicYearId());
++    semesterValidator.validateWithinAcademicYear(
++        academicYear, request.startDate(), request.endDate());
+ 
+     Semester semester =
+         Semester.builder()
++            .academicYear(academicYear)
+             .label(request.label())
+             .startDate(request.startDate())
+             .endDate(request.endDate())
+@@ -53,11 +60,15 @@ public class SemesterService {
+   public SemesterResponse update(UUID id, SemesterRequest request) {
+     semesterValidator.validateDateRange(request.startDate(), request.endDate());
+     semesterValidator.validateNoOverlap(request.startDate(), request.endDate(), id);
++    AcademicYear academicYear = getAcademicYearOrThrow(request.academicYearId());
++    semesterValidator.validateWithinAcademicYear(
++        academicYear, request.startDate(), request.endDate());
+ 
+     Semester semester =
+         semesterRepository
+             .findById(id)
+             .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + id));
++    semester.setAcademicYear(academicYear);
+     semester.setLabel(request.label());
+     semester.setStartDate(request.startDate());
+     semester.setEndDate(request.endDate());
+@@ -65,6 +76,13 @@ public class SemesterService {
+     return SemesterMapper.toResponse(semesterRepository.save(semester));
+   }
+ 
++  private AcademicYear getAcademicYearOrThrow(UUID academicYearId) {
++    return academicYearRepository
++        .findById(academicYearId)
++        .orElseThrow(
++            () -> new ResourceNotFoundException("AcademicYear not found with id: " + academicYearId));
++  }
++
+   @Transactional
+   public void deactivate(UUID id) {
+     Semester semester =
+diff --git a/src/main/java/com/heigraduate/app/graduate/validator/SemesterValidator.java b/src/main/java/com/heigraduate/app/graduate/validator/SemesterValidator.java
+index 543c710..01cf530 100644
+--- a/src/main/java/com/heigraduate/app/graduate/validator/SemesterValidator.java
++++ b/src/main/java/com/heigraduate/app/graduate/validator/SemesterValidator.java
+@@ -2,6 +2,7 @@ package com.heigraduate.app.graduate.validator;
+ 
+ import com.heigraduate.app.graduate.exception.BadRequestException;
+ import com.heigraduate.app.graduate.exception.ConflictException;
++import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Semester;
+ import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import java.time.LocalDate;
+@@ -22,6 +23,22 @@ public class SemesterValidator {
+     }
+   }
+ 
++  /**
++   * MCD v2, correction #4: a semester belongs to exactly one academic year, so its date range
++   * must fall within that academic year's date range - otherwise the FK is technically present
++   * but semantically meaningless.
++   */
++  public void validateWithinAcademicYear(
++      AcademicYear academicYear, LocalDate startDate, LocalDate endDate) {
++    if (startDate.isBefore(academicYear.getStartDate())
++        || endDate.isAfter(academicYear.getEndDate())) {
++      throw new BadRequestException(
++          "Semester date range must be within its academic year ("
++              + academicYear.getLabel()
++              + ")");
++    }
++  }
++
+   public void validateNoOverlap(LocalDate startDate, LocalDate endDate, UUID excludedId) {
+     List<Semester> overlapping = semesterRepository.findOverlapping(startDate, endDate, excludedId);
+     if (!overlapping.isEmpty()) {
+diff --git a/src/main/resources/db/migration/V42_24__add_academic_year_id_to_semester.sql b/src/main/resources/db/migration/V42_24__add_academic_year_id_to_semester.sql
+new file mode 100644
+index 0000000..6ecf82c
+--- /dev/null
++++ b/src/main/resources/db/migration/V42_24__add_academic_year_id_to_semester.sql
+@@ -0,0 +1,16 @@
++-- MCD v2, correction #4 : un semestre appartient toujours a exactement une
++-- annee universitaire. Sans cette FK, rien ne garantit qu'un semestre est
++-- propre a une annee, ce qui rend impossible le rattachement de
++-- COURS_PARCOURS / EXAMEN / AFFECTATION au bon semestre (corrections #10, #11).
++--
++-- NOTE: si des lignes "semester" existent deja sur un environnement
++-- (preprod), cette migration echouera tant qu'elles n'ont pas ete
++-- rattachees a une academic_year existante (backfill manuel requis avant
++-- de relancer, ou table videe si ce sont uniquement des donnees de test).
++ALTER TABLE semester
++    ADD COLUMN academic_year_id UUID REFERENCES academic_year (id);
++
++ALTER TABLE semester
++    ALTER COLUMN academic_year_id SET NOT NULL;
++
++CREATE INDEX IF NOT EXISTS idx_semester_academic_year ON semester (academic_year_id);
+diff --git a/src/main/resources/db/migration/V42_25__course_track_use_semester.sql b/src/main/resources/db/migration/V42_25__course_track_use_semester.sql
+new file mode 100644
+index 0000000..1008466
+--- /dev/null
++++ b/src/main/resources/db/migration/V42_25__course_track_use_semester.sql
+@@ -0,0 +1,24 @@
++-- MCD v2 : COURS_PARCOURS est rattache au SEMESTRE (id_semestre), pas a
++-- l'ANNEE_UNIVERSITAIRE. C'est ce qui permet a un meme cours d'etre place a
++-- des semestres differents selon le parcours, et ce qui rend le semestre
++-- d'un EXAMEN non ambigu (cf. correction #11 sur la table exam).
++--
++-- NOTE: comme pour V42_24, si des lignes "course_track" existent deja sur un
++-- environnement, il faudra les rattacher manuellement a un semester_id avant
++-- de rendre la colonne NOT NULL (ou vider la table si ce sont des donnees de
++-- test).
++ALTER TABLE course_track
++    ADD COLUMN semester_id UUID REFERENCES semester (id);
++
++ALTER TABLE course_track
++    ALTER COLUMN semester_id SET NOT NULL;
++
++CREATE INDEX IF NOT EXISTS idx_course_track_track_semester
++    ON course_track (track_id, semester_id);
++
++ALTER TABLE course_track DROP CONSTRAINT IF EXISTS uk_course_track_course_track_year;
++ALTER TABLE course_track DROP COLUMN IF EXISTS academic_year_id;
++
++ALTER TABLE course_track
++    ADD CONSTRAINT uk_course_track_course_track_semester
++        UNIQUE (course_id, track_id, semester_id);
+diff --git a/src/main/resources/db/migration/V42_26__add_semester_id_to_exam.sql b/src/main/resources/db/migration/V42_26__add_semester_id_to_exam.sql
+new file mode 100644
+index 0000000..b6bbe2a
+--- /dev/null
++++ b/src/main/resources/db/migration/V42_26__add_semester_id_to_exam.sql
+@@ -0,0 +1,15 @@
++-- MCD v2, correction #11 : un cours peut etre positionne a des semestres
++-- differents selon le parcours (via course_track), donc EXAMEN doit preciser
++-- explicitement son semestre en plus de son annee universitaire, sinon on ne
++-- sait pas a quel semestre appartient un examen donne.
++--
++-- NOTE: comme pour V42_24/V42_25, backfill manuel requis si des lignes
++-- "exam" existent deja sur un environnement avant de rendre la colonne
++-- NOT NULL.
++ALTER TABLE exam
++    ADD COLUMN semester_id UUID REFERENCES semester (id);
++
++ALTER TABLE exam
++    ALTER COLUMN semester_id SET NOT NULL;
++
++CREATE INDEX IF NOT EXISTS idx_exam_semester ON exam (semester_id);
+diff --git a/src/test/java/com/heigraduate/app/UT/graduate/service/CourseTrackServiceTest.java b/src/test/java/com/heigraduate/app/UT/graduate/service/CourseTrackServiceTest.java
+index 2628372..55522e5 100644
+--- a/src/test/java/com/heigraduate/app/UT/graduate/service/CourseTrackServiceTest.java
++++ b/src/test/java/com/heigraduate/app/UT/graduate/service/CourseTrackServiceTest.java
+@@ -7,10 +7,11 @@ import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Course;
+ import com.heigraduate.app.graduate.model.CourseTrack;
+ import com.heigraduate.app.graduate.model.Parcours;
+-import com.heigraduate.app.graduate.repository.AcademicYearRepository;
++import com.heigraduate.app.graduate.model.Semester;
+ import com.heigraduate.app.graduate.repository.CourseRepository;
+ import com.heigraduate.app.graduate.repository.CourseTrackRepository;
+ import com.heigraduate.app.graduate.repository.ParcoursRepository;
++import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import com.heigraduate.app.graduate.service.CourseTrackService;
+ import java.time.LocalDate;
+ import java.util.List;
+@@ -28,7 +29,7 @@ class CourseTrackServiceTest {
+   @Mock private CourseTrackRepository courseTrackRepository;
+   @Mock private CourseRepository courseRepository;
+   @Mock private ParcoursRepository trackRepository;
+-  @Mock private AcademicYearRepository academicYearRepository;
++  @Mock private SemesterRepository semesterRepository;
+ 
+   @InjectMocks private CourseTrackService courseTrackService;
+ 
+@@ -36,6 +37,8 @@ class CourseTrackServiceTest {
+   private Parcours tn;
+   private AcademicYear year1;
+   private AcademicYear year2;
++  private Semester semesterYear1;
++  private Semester semesterYear2;
+   private Course course;
+ 
+   @BeforeEach
+@@ -61,6 +64,28 @@ class CourseTrackServiceTest {
+             .level("L2")
+             .build();
+ 
++    semesterYear1 =
++        Semester.builder()
++            .id(UUID.randomUUID())
++            .academicYear(year1)
++            .label("S3")
++            .startDate(year1.getStartDate())
++            .endDate(year1.getStartDate().plusMonths(4))
++            .expectedCredits(30)
++            .active(true)
++            .build();
++
++    semesterYear2 =
++        Semester.builder()
++            .id(UUID.randomUUID())
++            .academicYear(year2)
++            .label("S5")
++            .startDate(year2.getStartDate())
++            .endDate(year2.getStartDate().plusMonths(4))
++            .expectedCredits(30)
++            .active(true)
++            .build();
++
+     course =
+         Course.builder()
+             .id(UUID.randomUUID())
+@@ -74,7 +99,12 @@ class CourseTrackServiceTest {
+   @Test
+   void getMandatoryCourseIds_shouldNeverLeakElCourseIntoTn_evenAcrossDifferentYears() {
+     CourseTrack elYear1 =
+-        CourseTrack.builder().course(course).track(el).academicYear(year1).mandatory(true).build();
++        CourseTrack.builder()
++            .course(course)
++            .track(el)
++            .semester(semesterYear1)
++            .mandatory(true)
++            .build();
+ 
+     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
+             el.getId(), year1.getId()))
+@@ -92,7 +122,12 @@ class CourseTrackServiceTest {
+     assertThat(tnCourseIdsYear1).isEmpty();
+ 
+     CourseTrack tnYear2 =
+-        CourseTrack.builder().course(course).track(tn).academicYear(year2).mandatory(true).build();
++        CourseTrack.builder()
++            .course(course)
++            .track(tn)
++            .semester(semesterYear2)
++            .mandatory(true)
++            .build();
+ 
+     when(courseTrackRepository.findByTrackIdAndAcademicYearIdAndMandatoryTrue(
+             tn.getId(), year2.getId()))
+diff --git a/src/test/java/com/heigraduate/app/UT/graduate/service/ExamServiceTest.java b/src/test/java/com/heigraduate/app/UT/graduate/service/ExamServiceTest.java
+index 0f0c690..f17bd6a 100644
+--- a/src/test/java/com/heigraduate/app/UT/graduate/service/ExamServiceTest.java
++++ b/src/test/java/com/heigraduate/app/UT/graduate/service/ExamServiceTest.java
+@@ -12,9 +12,11 @@ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+ import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Course;
+ import com.heigraduate.app.graduate.model.Exam;
++import com.heigraduate.app.graduate.model.Semester;
+ import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+ import com.heigraduate.app.graduate.repository.CourseRepository;
+ import com.heigraduate.app.graduate.repository.ExamRepository;
++import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import com.heigraduate.app.graduate.service.ExamService;
+ import java.math.BigDecimal;
+ import java.time.LocalDate;
+@@ -35,11 +37,13 @@ class ExamServiceTest {
+   @Mock private ExamRepository examRepository;
+   @Mock private CourseRepository courseRepository;
+   @Mock private AcademicYearRepository academicYearRepository;
++  @Mock private SemesterRepository semesterRepository;
+ 
+   @InjectMocks private ExamService examService;
+ 
+   private Course course;
+   private AcademicYear year;
++  private Semester semester;
+   private LocalDate examDate;
+   private LocalTime startTime;
+   private LocalTime endTime;
+@@ -64,6 +68,17 @@ class ExamServiceTest {
+             .level("L2")
+             .build();
+ 
++    semester =
++        Semester.builder()
++            .id(UUID.randomUUID())
++            .academicYear(year)
++            .label("S3")
++            .startDate(LocalDate.of(2025, 9, 1))
++            .endDate(LocalDate.of(2026, 1, 31))
++            .expectedCredits(30)
++            .active(true)
++            .build();
++
+     examDate = LocalDate.of(2026, 12, 10);
+     startTime = LocalTime.of(9, 0);
+     endTime = LocalTime.of(11, 0);
+@@ -75,6 +90,7 @@ class ExamServiceTest {
+         new ExamRequest(
+             course.getId(),
+             year.getId(),
++            semester.getId(),
+             "Examen final",
+             examDate,
+             startTime,
+@@ -83,6 +99,7 @@ class ExamServiceTest {
+ 
+     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
++    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+         .thenReturn(List.of());
+     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
+@@ -93,6 +110,7 @@ class ExamServiceTest {
+     assertThat(result.date()).isEqualTo(examDate);
+     assertThat(result.startTime()).isEqualTo(startTime);
+     assertThat(result.endTime()).isEqualTo(endTime);
++    assertThat(result.semesterId()).isEqualTo(semester.getId());
+     verify(examRepository).save(any(Exam.class));
+   }
+ 
+@@ -103,6 +121,7 @@ class ExamServiceTest {
+             .id(UUID.randomUUID())
+             .course(course)
+             .academicYear(year)
++            .semester(semester)
+             .label("Controle continu")
+             .date(examDate.minusMonths(1))
+             .startTime(startTime)
+@@ -114,6 +133,7 @@ class ExamServiceTest {
+         new ExamRequest(
+             course.getId(),
+             year.getId(),
++            semester.getId(),
+             "Examen final",
+             examDate,
+             startTime,
+@@ -122,6 +142,7 @@ class ExamServiceTest {
+ 
+     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
++    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+         .thenReturn(List.of(existingExam));
+     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
+@@ -139,6 +160,7 @@ class ExamServiceTest {
+             .id(UUID.randomUUID())
+             .course(course)
+             .academicYear(year)
++            .semester(semester)
+             .label("Controle continu")
+             .date(examDate.minusMonths(1))
+             .startTime(startTime)
+@@ -150,6 +172,7 @@ class ExamServiceTest {
+         new ExamRequest(
+             course.getId(),
+             year.getId(),
++            semester.getId(),
+             "Examen final",
+             examDate,
+             startTime,
+@@ -158,6 +181,7 @@ class ExamServiceTest {
+ 
+     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
++    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+         .thenReturn(List.of(existingExam));
+ 
+@@ -168,6 +192,39 @@ class ExamServiceTest {
+     verify(examRepository, never()).save(any());
+   }
+ 
++  @Test
++  void create_shouldThrowBadRequest_whenSemesterDoesNotBelongToAcademicYear() {
++    AcademicYear otherYear =
++        AcademicYear.builder()
++            .id(UUID.randomUUID())
++            .label("2024-2025")
++            .startDate(LocalDate.of(2024, 9, 1))
++            .endDate(LocalDate.of(2025, 6, 30))
++            .level("L1")
++            .build();
++
++    ExamRequest request =
++        new ExamRequest(
++            course.getId(),
++            otherYear.getId(),
++            semester.getId(),
++            "Examen final",
++            examDate,
++            startTime,
++            endTime,
++            new BigDecimal("0.5"));
++
++    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
++    when(academicYearRepository.findById(otherYear.getId())).thenReturn(Optional.of(otherYear));
++    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
++
++    assertThatThrownBy(() -> examService.create(request))
++        .isInstanceOf(BadRequestException.class)
++        .hasMessageContaining("does not belong to academic year");
++
++    verify(examRepository, never()).save(any());
++  }
++
+   @Test
+   void update_shouldExcludeCurrentExamFromSum_andUpdateDateTime() {
+     UUID examId = UUID.randomUUID();
+@@ -176,6 +233,7 @@ class ExamServiceTest {
+             .id(examId)
+             .course(course)
+             .academicYear(year)
++            .semester(semester)
+             .label("Controle continu")
+             .date(examDate)
+             .startTime(startTime)
+@@ -191,6 +249,7 @@ class ExamServiceTest {
+         new ExamRequest(
+             course.getId(),
+             year.getId(),
++            semester.getId(),
+             "Controle continu",
+             newDate,
+             newStartTime,
+@@ -217,6 +276,7 @@ class ExamServiceTest {
+         new ExamRequest(
+             course.getId(),
+             year.getId(),
++            semester.getId(),
+             "Examen final",
+             examDate,
+             startTime,
+diff --git a/src/test/java/com/heigraduate/app/UT/graduate/service/SemesterServiceTest.java b/src/test/java/com/heigraduate/app/UT/graduate/service/SemesterServiceTest.java
+index 33bceba..ae8b5d9 100644
+--- a/src/test/java/com/heigraduate/app/UT/graduate/service/SemesterServiceTest.java
++++ b/src/test/java/com/heigraduate/app/UT/graduate/service/SemesterServiceTest.java
+@@ -10,7 +10,9 @@ import com.heigraduate.app.graduate.dto.SemesterResponse;
+ import com.heigraduate.app.graduate.exception.BadRequestException;
+ import com.heigraduate.app.graduate.exception.ConflictException;
+ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
++import com.heigraduate.app.graduate.model.AcademicYear;
+ import com.heigraduate.app.graduate.model.Semester;
++import com.heigraduate.app.graduate.repository.AcademicYearRepository;
+ import com.heigraduate.app.graduate.repository.SemesterRepository;
+ import com.heigraduate.app.graduate.service.SemesterService;
+ import com.heigraduate.app.graduate.validator.SemesterValidator;
+@@ -29,19 +31,33 @@ import org.mockito.junit.jupiter.MockitoExtension;
+ class SemesterServiceTest {
+ 
+   @Mock private SemesterRepository semesterRepository;
++  @Mock private AcademicYearRepository academicYearRepository;
+   @Mock private SemesterValidator semesterValidator;
+ 
+   @InjectMocks private SemesterService semesterService;
+ 
+   private Semester semester;
+   private UUID semesterId;
++  private AcademicYear academicYear;
++  private UUID academicYearId;
+ 
+   @BeforeEach
+   void setUp() {
++    academicYearId = UUID.randomUUID();
++    academicYear =
++        AcademicYear.builder()
++            .id(academicYearId)
++            .label("2025-2026")
++            .startDate(LocalDate.of(2025, 9, 1))
++            .endDate(LocalDate.of(2026, 6, 30))
++            .level("L1")
++            .build();
++
+     semesterId = UUID.randomUUID();
+     semester =
+         Semester.builder()
+             .id(semesterId)
++            .academicYear(academicYear)
+             .label("Semestre 1")
+             .startDate(LocalDate.of(2025, 9, 1))
+             .endDate(LocalDate.of(2026, 1, 31))
+@@ -58,6 +74,7 @@ class SemesterServiceTest {
+ 
+     assertThat(result).hasSize(1);
+     assertThat(result.get(0).label()).isEqualTo("Semestre 1");
++    assertThat(result.get(0).academicYearId()).isEqualTo(academicYearId);
+   }
+ 
+   @Test
+@@ -81,22 +98,28 @@ class SemesterServiceTest {
+   @Test
+   void create_shouldSaveSemester_whenValidationPasses() {
+     SemesterRequest request =
+-        new SemesterRequest("Semestre 2", LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), 30);
++        new SemesterRequest(
++            academicYearId, "Semestre 2", LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), 30);
++    when(academicYearRepository.findById(academicYearId)).thenReturn(Optional.of(academicYear));
+     when(semesterRepository.save(any(Semester.class)))
+         .thenAnswer(invocation -> invocation.getArgument(0));
+ 
+     SemesterResponse result = semesterService.create(request);
+ 
+     assertThat(result.label()).isEqualTo("Semestre 2");
++    assertThat(result.academicYearId()).isEqualTo(academicYearId);
+     verify(semesterValidator).validateDateRange(request.startDate(), request.endDate());
+     verify(semesterValidator).validateNoOverlap(request.startDate(), request.endDate(), null);
++    verify(semesterValidator)
++        .validateWithinAcademicYear(academicYear, request.startDate(), request.endDate());
+     verify(semesterRepository).save(any(Semester.class));
+   }
+ 
+   @Test
+   void create_shouldPropagateBadRequest_whenDateRangeInvalid() {
+     SemesterRequest request =
+-        new SemesterRequest("Semestre X", LocalDate.of(2026, 6, 30), LocalDate.of(2026, 2, 1), 30);
++        new SemesterRequest(
++            academicYearId, "Semestre X", LocalDate.of(2026, 6, 30), LocalDate.of(2026, 2, 1), 30);
+     doThrow(new BadRequestException("startDate must be before endDate"))
+         .when(semesterValidator)
+         .validateDateRange(request.startDate(), request.endDate());
+@@ -111,7 +134,11 @@ class SemesterServiceTest {
+   void create_shouldPropagateConflict_whenDateRangeOverlapsExistingSemester() {
+     SemesterRequest request =
+         new SemesterRequest(
+-            "S1 2026-2027", LocalDate.of(2026, 9, 1), LocalDate.of(2027, 1, 31), 30);
++            academicYearId,
++            "S1 2026-2027",
++            LocalDate.of(2026, 9, 1),
++            LocalDate.of(2027, 1, 31),
++            30);
+     doThrow(
+             new ConflictException(
+                 "This date range overlaps with an existing semester: S1 2026-2027"))
+@@ -123,12 +150,31 @@ class SemesterServiceTest {
+     verify(semesterRepository, never()).save(any());
+   }
+ 
++  @Test
++  void create_shouldThrow_whenAcademicYearNotFound() {
++    UUID unknownYearId = UUID.randomUUID();
++    SemesterRequest request =
++        new SemesterRequest(
++            unknownYearId, "Semestre 2", LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), 30);
++    when(academicYearRepository.findById(unknownYearId)).thenReturn(Optional.empty());
++
++    assertThatThrownBy(() -> semesterService.create(request))
++        .isInstanceOf(ResourceNotFoundException.class);
++
++    verify(semesterRepository, never()).save(any());
++  }
++
+   @Test
+   void update_shouldModifyExistingSemester_whenValidationPasses() {
+     SemesterRequest request =
+         new SemesterRequest(
+-            "Semestre 1 - modifié", LocalDate.of(2025, 9, 15), LocalDate.of(2026, 2, 15), 30);
++            academicYearId,
++            "Semestre 1 - modifié",
++            LocalDate.of(2025, 9, 15),
++            LocalDate.of(2026, 2, 15),
++            30);
+     when(semesterRepository.findById(semesterId)).thenReturn(Optional.of(semester));
++    when(academicYearRepository.findById(academicYearId)).thenReturn(Optional.of(academicYear));
+     when(semesterRepository.save(any(Semester.class)))
+         .thenAnswer(invocation -> invocation.getArgument(0));
+ 
+@@ -141,8 +187,10 @@ class SemesterServiceTest {
+   @Test
+   void update_shouldExcludeItselfFromOverlapCheck() {
+     SemesterRequest request =
+-        new SemesterRequest("Semestre 1", LocalDate.of(2025, 9, 1), LocalDate.of(2026, 1, 31), 30);
++        new SemesterRequest(
++            academicYearId, "Semestre 1", LocalDate.of(2025, 9, 1), LocalDate.of(2026, 1, 31), 30);
+     when(semesterRepository.findById(semesterId)).thenReturn(Optional.of(semester));
++    when(academicYearRepository.findById(academicYearId)).thenReturn(Optional.of(academicYear));
+     when(semesterRepository.save(any(Semester.class)))
+         .thenAnswer(invocation -> invocation.getArgument(0));
+ 
+@@ -155,7 +203,8 @@ class SemesterServiceTest {
+   void update_shouldThrow_whenSemesterNotFound() {
+     UUID unknownId = UUID.randomUUID();
+     SemesterRequest request =
+-        new SemesterRequest("X", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 1), 30);
++        new SemesterRequest(
++            academicYearId, "X", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 1), 30);
+     when(semesterRepository.findById(unknownId)).thenReturn(Optional.empty());
+ 
+     assertThatThrownBy(() -> semesterService.update(unknownId, request))

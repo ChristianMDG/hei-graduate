@@ -12,9 +12,11 @@ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Exam;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.service.ExamService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,11 +37,13 @@ class ExamServiceTest {
   @Mock private ExamRepository examRepository;
   @Mock private CourseRepository courseRepository;
   @Mock private AcademicYearRepository academicYearRepository;
+  @Mock private SemesterRepository semesterRepository;
 
   @InjectMocks private ExamService examService;
 
   private Course course;
   private AcademicYear year;
+  private Semester semester;
   private LocalDate examDate;
   private LocalTime startTime;
   private LocalTime endTime;
@@ -64,6 +68,17 @@ class ExamServiceTest {
             .level("L2")
             .build();
 
+    semester =
+        Semester.builder()
+            .id(UUID.randomUUID())
+            .academicYear(year)
+            .label("S3")
+            .startDate(LocalDate.of(2025, 9, 1))
+            .endDate(LocalDate.of(2026, 1, 31))
+            .expectedCredits(30)
+            .active(true)
+            .build();
+
     examDate = LocalDate.of(2026, 12, 10);
     startTime = LocalTime.of(9, 0);
     endTime = LocalTime.of(11, 0);
@@ -75,6 +90,7 @@ class ExamServiceTest {
         new ExamRequest(
             course.getId(),
             year.getId(),
+            semester.getId(),
             "Examen final",
             examDate,
             startTime,
@@ -83,6 +99,7 @@ class ExamServiceTest {
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of());
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -93,6 +110,7 @@ class ExamServiceTest {
     assertThat(result.date()).isEqualTo(examDate);
     assertThat(result.startTime()).isEqualTo(startTime);
     assertThat(result.endTime()).isEqualTo(endTime);
+    assertThat(result.semesterId()).isEqualTo(semester.getId());
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -103,6 +121,7 @@ class ExamServiceTest {
             .id(UUID.randomUUID())
             .course(course)
             .academicYear(year)
+            .semester(semester)
             .label("Controle continu")
             .date(examDate.minusMonths(1))
             .startTime(startTime)
@@ -114,6 +133,7 @@ class ExamServiceTest {
         new ExamRequest(
             course.getId(),
             year.getId(),
+            semester.getId(),
             "Examen final",
             examDate,
             startTime,
@@ -122,6 +142,7 @@ class ExamServiceTest {
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of(existingExam));
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -139,6 +160,7 @@ class ExamServiceTest {
             .id(UUID.randomUUID())
             .course(course)
             .academicYear(year)
+            .semester(semester)
             .label("Controle continu")
             .date(examDate.minusMonths(1))
             .startTime(startTime)
@@ -150,6 +172,7 @@ class ExamServiceTest {
         new ExamRequest(
             course.getId(),
             year.getId(),
+            semester.getId(),
             "Examen final",
             examDate,
             startTime,
@@ -158,12 +181,46 @@ class ExamServiceTest {
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of(existingExam));
 
     assertThatThrownBy(() -> examService.create(request))
         .isInstanceOf(BadRequestException.class)
         .hasMessageContaining("exceed 1");
+
+    verify(examRepository, never()).save(any());
+  }
+
+  @Test
+  void create_shouldThrowBadRequest_whenSemesterDoesNotBelongToAcademicYear() {
+    AcademicYear otherYear =
+        AcademicYear.builder()
+            .id(UUID.randomUUID())
+            .label("2024-2025")
+            .startDate(LocalDate.of(2024, 9, 1))
+            .endDate(LocalDate.of(2025, 6, 30))
+            .level("L1")
+            .build();
+
+    ExamRequest request =
+        new ExamRequest(
+            course.getId(),
+            otherYear.getId(),
+            semester.getId(),
+            "Examen final",
+            examDate,
+            startTime,
+            endTime,
+            new BigDecimal("0.5"));
+
+    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+    when(academicYearRepository.findById(otherYear.getId())).thenReturn(Optional.of(otherYear));
+    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
+    assertThatThrownBy(() -> examService.create(request))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessageContaining("does not belong to academic year");
 
     verify(examRepository, never()).save(any());
   }
@@ -176,6 +233,7 @@ class ExamServiceTest {
             .id(examId)
             .course(course)
             .academicYear(year)
+            .semester(semester)
             .label("Controle continu")
             .date(examDate)
             .startTime(startTime)
@@ -191,6 +249,7 @@ class ExamServiceTest {
         new ExamRequest(
             course.getId(),
             year.getId(),
+            semester.getId(),
             "Controle continu",
             newDate,
             newStartTime,
@@ -217,6 +276,7 @@ class ExamServiceTest {
         new ExamRequest(
             course.getId(),
             year.getId(),
+            semester.getId(),
             "Examen final",
             examDate,
             startTime,
