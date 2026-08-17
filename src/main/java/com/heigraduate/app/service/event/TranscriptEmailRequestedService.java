@@ -60,10 +60,14 @@ public class TranscriptEmailRequestedService implements Consumer<TranscriptEmail
     String bucketKey =
         "releves/" + student.getStudentNumber() + "-" + Instant.now().toEpochMilli() + ".pdf";
     File tempFile = createTempFile("releve-", ".pdf");
-    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-      fos.write(pdf);
+    try {
+      try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+        fos.write(pdf);
+      }
+      bucketComponent.upload(tempFile, bucketKey);
+    } finally {
+      tempFile.delete();
     }
-    bucketComponent.upload(tempFile, bucketKey);
 
     var downloadUri = bucketComponent.presign(bucketKey, LINK_VALIDITY);
 
