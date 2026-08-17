@@ -3,14 +3,18 @@ package com.heigraduate.app.graduate.service;
 import com.heigraduate.app.graduate.contract.CourseRequirementQuery;
 import com.heigraduate.app.graduate.contract.FinalGradeQuery;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
+import com.heigraduate.app.graduate.model.Enrollment;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,6 +36,8 @@ public class TranscriptService {
 
   private final StudentRepository studentRepository;
   private final CourseRepository courseRepository;
+  private final AcademicYearRepository academicYearRepository;
+  private final EnrollmentService enrollmentService;
   private final CourseRequirementQuery courseRequirementQuery;
   private final FinalGradeQuery finalGradeQuery;
 
@@ -69,6 +75,32 @@ public class TranscriptService {
     return renderPdf(student, lines, isComplete);
   }
 
+  @Transactional(readOnly = true)
+  public byte[] generateTranscriptForUser(UUID userId) {
+    Student student =
+        studentRepository
+            .findByUserId(userId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException("No student profile linked to user: " + userId));
+
+    Enrollment currentEnrollment = enrollmentService.getCurrent(student.getId());
+    UUID academicYearId = resolveCurrentAcademicYearId();
+
+    return generateTranscript(student.getId(), currentEnrollment.getParcoursId(), academicYearId);
+  }
+
+  private UUID resolveCurrentAcademicYearId() {
+    LocalDate today = LocalDate.now();
+    return academicYearRepository.findAll().stream()
+        .filter(y -> !today.isBefore(y.getStartDate()) && !today.isAfter(y.getEndDate()))
+        .findFirst()
+        .map(AcademicYear::getId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException("No active academic year found for date: " + today));
+  }
+
   private byte[] renderPdf(Student student, List<TranscriptLine> lines, boolean isComplete) {
     try (PDDocument document = new PDDocument()) {
       PDPage page = new PDPage(PDRectangle.A4);
@@ -80,7 +112,7 @@ public class TranscriptService {
         content.beginText();
         content.setFont(PDType1Font.HELVETICA_BOLD, 16);
         content.newLineAtOffset(MARGIN, y);
-        content.showText(isComplete ? "RELEVE DE NOTES" : "RELEVE DE NOTES PROVISOIRE");
+        content.showText(isComplete ? "Relevé de notes" : "Relevé de notes provisoires");
         content.endText();
         y -= LINE_HEIGHT * 2;
 
@@ -106,8 +138,6 @@ public class TranscriptService {
           content.endText();
           y -= LINE_HEIGHT;
         }
-
-        content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
       }
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
