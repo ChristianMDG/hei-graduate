@@ -14,8 +14,9 @@ public class CourseTrackMapper {
         ct.getCourse().getCourseReference(),
         ct.getTrack().getId(),
         ct.getTrack().getCode(),
-        ct.getAcademicYear().getId(),
-        ct.getAcademicYear().getLabel(),
+        ct.getSemester().getId(),
+        ct.getSemester().getLabel(),
+        ct.getSemester().getAcademicYear().getId(),
         ct.getMandatory());
   }
 }
