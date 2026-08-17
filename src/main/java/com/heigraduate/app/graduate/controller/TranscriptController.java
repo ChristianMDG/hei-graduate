@@ -1,5 +1,6 @@
 package com.heigraduate.app.graduate.controller;
 
+import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.service.TranscriptService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,8 +22,8 @@ public class TranscriptController {
   @GetMapping("/{studentId}")
   @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
   public ResponseEntity<byte[]> generate(
-      @PathVariable UUID studentId, @RequestParam UUID trackId, @RequestParam UUID academicYearId) {
-    byte[] pdf = transcriptService.generateTranscript(studentId, trackId, academicYearId);
+      @PathVariable UUID studentId, @RequestParam UUID academicYearId) {
+    byte[] pdf = transcriptService.generateTranscript(studentId, academicYearId);
 
     ContentDisposition disposition =
         ContentDisposition.attachment().filename("releve-" + studentId + ".pdf").build();
@@ -36,9 +37,8 @@ public class TranscriptController {
 
   @GetMapping("/me")
   @PreAuthorize("hasRole('STUDENT')")
-  public ResponseEntity<byte[]> generateMine(Authentication authentication) {
-    UUID userId = UUID.fromString(authentication.getName());
-    byte[] pdf = transcriptService.generateTranscriptForUser(userId);
+  public ResponseEntity<byte[]> generateMine(@AuthenticationPrincipal User connectedUser) {
+    byte[] pdf = transcriptService.generateTranscriptForUser(connectedUser.getId());
 
     ContentDisposition disposition =
         ContentDisposition.attachment().filename("mon-releve.pdf").build();
