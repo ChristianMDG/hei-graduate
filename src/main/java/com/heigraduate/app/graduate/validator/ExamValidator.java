@@ -31,12 +31,11 @@ public class ExamValidator {
 
   public void validateCoefficientSum(
       UUID courseId,
-      UUID academicYearId,
+      UUID semesterId,
       Integer newNumerator,
       Integer newDenominator,
       UUID excludeExamId) {
-    List<Exam> existingExams =
-        examRepository.findByCourseIdAndAcademicYearId(courseId, academicYearId);
+    List<Exam> existingExams = examRepository.findByCourseIdAndSemesterId(courseId, semesterId);
 
     long sumNumerator = newNumerator;
     long sumDenominator = newDenominator;

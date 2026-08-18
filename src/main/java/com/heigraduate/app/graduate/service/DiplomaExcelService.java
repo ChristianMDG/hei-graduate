@@ -4,8 +4,10 @@ import com.heigraduate.app.file.bucket.BucketComponent;
 import com.heigraduate.app.graduate.dto.DiplomaExcelResponse;
 import com.heigraduate.app.graduate.dto.DiplomaResponse;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.DiplomaList;
 import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.model.Promotion;
+import com.heigraduate.app.graduate.repository.DiplomaListRepository;
 import com.heigraduate.app.graduate.repository.DiplomaRepository;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
 import com.heigraduate.app.graduate.repository.PromotionRepository;
@@ -23,6 +25,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,9 +39,18 @@ public class DiplomaExcelService {
   private final PromotionRepository promotionRepository;
   private final ParcoursRepository parcoursRepository;
   private final DiplomaRepository diplomaRepository;
+  private final DiplomaListRepository diplomaListRepository;
   private final RankingService rankingService;
   private final BucketComponent bucketComponent;
 
+  /**
+   * Génère le fichier Excel des diplômés, l'uploade sur S3 et persiste le lien dans {@code
+   * diploma_list} (MCD LISTE_DIPLOMES, §14).
+   *
+   * <p>BUG-06 FIX — avant ce correctif, le lien S3 n'était jamais sauvegardé en base, rendant
+   * impossible le re-téléchargement sans recalculer tout le classement.
+   */
+  @Transactional
   public DiplomaExcelResponse generateExcel(UUID promotionId) {
     Promotion promotion =
         promotionRepository
@@ -55,6 +67,22 @@ public class DiplomaExcelService {
     File workbookFile = writeWorkbook(promotion, parcoursIds);
     String bucketKey = BUCKET_KEY_PREFIX + promotionId + "/" + UUID.randomUUID() + ".xlsx";
     bucketComponent.upload(workbookFile, bucketKey);
+
+    // BUG-06 FIX — Persister le lien S3 dans diploma_list (MCD LISTE_DIPLOMES §14).
+    // On crée une entrée par parcours pour correspondre au MCD (id_promotion FK + id_parcours FK).
+    for (UUID parcoursId : parcoursIds) {
+      diplomaListRepository
+          .findByPromotionIdAndParcoursId(promotionId, parcoursId)
+          .ifPresentOrElse(
+              existing -> existing.setUrlS3(bucketKey),
+              () ->
+                  diplomaListRepository.save(
+                      DiplomaList.builder()
+                          .promotionId(promotionId)
+                          .parcoursId(parcoursId)
+                          .urlS3(bucketKey)
+                          .build()));
+    }
 
     var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
     return new DiplomaExcelResponse(downloadUrl.toString());

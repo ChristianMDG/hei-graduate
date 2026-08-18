@@ -36,6 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
  * course validation status, instead of recomputing them - §10 and §11 must never disagree on
  * whether a course or a year is validated.
  *
+ * <p>BUG-02 FIX: le PDF est maintenant uploadé sur S3 et persisté en table {@code transcript} (§15
+ * : génération → S3 → lien → e-mail). Le chemin synchrone (GET /api/transcripts) et le chemin
+ * asynchrone (event TranscriptEmailRequested) partagent désormais la même logique.
+ *
  * <p>Known limitation: the subject also asks for "le semestre ou les semestres concernés", but
  * nothing in the current schema links a Course or CourseTrack to a Semester (Semester only has its
  * own start/end dates, no FK to AcademicYear either) - there is no way to compute this field
@@ -47,14 +51,23 @@ public class TranscriptService {
 
   private static final float MARGIN = 50f;
   private static final float LINE_HEIGHT = 18f;
+  private static final String BUCKET_KEY_PREFIX = "releves/";
+  private static final java.time.Duration PRESIGN_VALIDITY = java.time.Duration.ofDays(7);
 
   private final StudentRepository studentRepository;
   private final CourseRepository courseRepository;
   private final AcademicYearRepository academicYearRepository;
   private final AcademicAverageService academicAverageService;
   private final FinalGradeQuery finalGradeQuery;
+  private final com.heigraduate.app.graduate.repository.TranscriptRepository transcriptRepository;
+  private final com.heigraduate.app.file.bucket.BucketComponent bucketComponent;
 
-  @Transactional(readOnly = true)
+  /**
+   * Génère le PDF, l'uploade sur S3, persiste l'entrée en base et retourne les octets du PDF.
+   *
+   * <p>BUG-02 FIX — avant ce correctif, la méthode retournait les octets sans S3 ni DB.
+   */
+  @Transactional
   public byte[] generateTranscript(UUID studentId, UUID academicYearId) {
     Student student =
         studentRepository
@@ -74,7 +87,49 @@ public class TranscriptService {
     List<TranscriptLine> lines = buildLines(studentId, summary);
     boolean isComplete = summary.missingGradeCourseIds().isEmpty();
 
-    return renderPdf(student, academicYear, summary, lines, isComplete);
+    byte[] pdf = renderPdf(student, academicYear, summary, lines, isComplete);
+
+    // BUG-02 FIX — Upload S3 + persistance en base (§15)
+    String bucketKey =
+        BUCKET_KEY_PREFIX
+            + student.getStudentNumber()
+            + "-"
+            + academicYear.getLabel()
+            + "-"
+            + java.time.Instant.now().toEpochMilli()
+            + ".pdf";
+
+    java.io.File tempFile = null;
+    try {
+      tempFile = java.io.File.createTempFile("releve-", ".pdf");
+      try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
+        fos.write(pdf);
+      }
+      bucketComponent.upload(tempFile, bucketKey);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to upload transcript PDF to S3", e);
+    } finally {
+      if (tempFile != null) {
+        tempFile.delete();
+      }
+    }
+
+    com.heigraduate.app.graduate.model.Transcript transcript =
+        com.heigraduate.app.graduate.model.Transcript.builder()
+            .student(student)
+            .academicYear(academicYear)
+            .semester(null)
+            .type(isComplete ? "COMPLET" : "PROVISOIRE")
+            .urlS3(bucketKey)
+            .averageGrade(summary.average())
+            .obtainedCredits(summary.obtainedCredits())
+            .expectedCredits(summary.expectedCredits())
+            .yearValidated(summary.isYearValidated())
+            .emailSent(false)
+            .build();
+    transcriptRepository.save(transcript);
+
+    return pdf;
   }
 
   @Transactional(readOnly = true)

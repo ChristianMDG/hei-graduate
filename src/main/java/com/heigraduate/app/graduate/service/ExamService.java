@@ -73,9 +73,11 @@ public class ExamService {
     examValidator.validateCoefficientFraction(
         request.coefficientNumerator(), request.coefficientDenominator());
 
+    // BUG-01 FIX: la somme des coefficients se calcule par (cours, semestre)
+    // et non par (cours, année) — un même cours peut figurer en S1 et S2.
     examValidator.validateCoefficientSum(
         request.courseId(),
-        request.academicYearId(),
+        request.semesterId(),
         request.coefficientNumerator(),
         request.coefficientDenominator(),
         null);
@@ -116,9 +118,11 @@ public class ExamService {
     examValidator.validateCoefficientFraction(
         request.coefficientNumerator(), request.coefficientDenominator());
 
+    // BUG-01 FIX: la somme des coefficients se calcule par (cours, semestre)
+    // et non par (cours, année) — un même cours peut figurer en S1 et S2.
     examValidator.validateCoefficientSum(
         request.courseId(),
-        request.academicYearId(),
+        request.semesterId(),
         request.coefficientNumerator(),
         request.coefficientDenominator(),
         id);

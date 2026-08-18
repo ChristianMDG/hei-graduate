@@ -64,7 +64,10 @@ public class GradeController {
   }
 
   @PostMapping("/{id}/publish")
-  @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+  // BUG-03 FIX: la publication est une action administrative (§6/§18).
+  // Un enseignant peut saisir et modifier les notes de ses cours, mais seul
+  // l'administrateur peut publier (rendre visibles) les notes aux étudiants.
+  @PreAuthorize("hasRole('ADMIN')")
   public GradeResponse publish(@PathVariable UUID id) {
     return gradeService.publish(id);
   }

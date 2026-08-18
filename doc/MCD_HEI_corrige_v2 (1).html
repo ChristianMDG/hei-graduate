@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MCD corrigé — HEI (notes, parcours, diplômés)</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 1200px; margin: 40px auto; padding: 0 20px; color: #2C2C2A; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  p.sub { color: #5F5E5A; margin-top: 0; }
+  #diagram { overflow-x: auto; border: 1px solid #D3D1C7; border-radius: 8px; padding: 16px; margin: 24px 0; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 14px; }
+  th, td { border: 1px solid #D3D1C7; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: #F1EFE8; }
+  h2 { font-size: 18px; margin-top: 36px; }
+  code { background: #F1EFE8; padding: 1px 5px; border-radius: 4px; }
+  .fix { background: #FFF7E0; }
+</style>
+</head>
+<body>
+
+<h1>MCD corrigé — Gestion des notes, parcours et diplômés (HEI)</h1>
+<p class="sub">Version corrigée suite à l'audit du 14/08/2026 (v2) : FK manquantes ajoutées, cardinalité SEMESTRE↔AFFECTATION corrigée, INSCRIPTION_GROUPE et INSCRIPTION_PARCOURS fusionnées, clé primaire ajoutée sur COURS_PARCOURS, EXAMEN rattaché explicitement à SEMESTRE.</p>
+
+<h2>Corrections apportées (par rapport à MCD_HEI_fusion.html)</h2>
+<table>
+<tr><th>#</th><th>Problème détecté</th><th>Correction</th></tr>
+<tr class="fix"><td>1</td><td>ETUDIANT et ENSEIGNANT liés à UTILISATEUR dans le diagramme, mais sans FK dans leurs attributs → impossible pour Spring Security de retrouver le profil métier d'un compte connecté (bloquant pour §18).</td><td>Ajout de <code>id_utilisateur FK</code> sur ETUDIANT et sur ENSEIGNANT.</td></tr>
+<tr class="fix"><td>2</td><td>HISTORIQUE_NOTE relié à UTILISATEUR dans le diagramme ("modifie") mais sans FK correspondante → l'exemple du §9 ("Modifié par : Administrateur") était irréalisable.</td><td>Ajout de <code>id_utilisateur FK</code> sur HISTORIQUE_NOTE.</td></tr>
+<tr class="fix"><td>3</td><td>NOTE reliée à UTILISATEUR ("saisit") sans FK correspondante.</td><td>Ajout de <code>id_utilisateur_saisie FK</code> sur NOTE.</td></tr>
+<tr class="fix"><td>4</td><td>SEMESTRE relié à ANNEE_UNIVERSITAIRE ("compose") sans FK correspondante → sans elle, rien ne garantit qu'un semestre est propre à une année, alors que c'est ce mécanisme qui rend COURS_PARCOURS implicitement daté (cf. §2.2 et la « Preuve par l'absurde » sur OFFRE_COURS).</td><td>Ajout de <code>id_annee FK</code> sur SEMESTRE.</td></tr>
+<tr class="fix"><td>5</td><td>RELEVE relié à ANNEE_UNIVERSITAIRE et SEMESTRE dans le diagramme, mais sans FK correspondantes → un « relevé annuel » (§10) sans lien vers l'année n'a pas de sens.</td><td>Ajout de <code>id_annee FK</code> et <code>id_semestre FK</code> (nullable — NULL = relevé complet de l'année, renseigné = relevé partiel d'un semestre) sur RELEVE.</td></tr>
+<tr class="fix"><td>6</td><td>SEMESTRE↔AFFECTATION modélisée en many-to-many (<code>}o--o{</code>), alors qu'une affectation ne concerne qu'un seul semestre au plus (§5 : « éventuellement <i>le</i> semestre »).</td><td>Cardinalité corrigée en <code>|o--o{</code> (0,1)–(0,n).</td></tr>
+<tr class="fix"><td>7</td><td>INSCRIPTION_GROUPE et INSCRIPTION_PARCOURS étaient deux entités indépendantes → rien n'empêchait une période de groupe active de contredire une période de parcours active portée par une autre table.</td><td>Fusion en une seule entité <b>INSCRIPTION</b> (étudiant + parcours + groupe + dates) : à tout instant t, l'étudiant a exactement une ligne active, comme demandé dans le document d'explication d'origine.</td></tr>
+<tr class="fix"><td>8</td><td>La contrainte d'unicité (id_etudiant, id_examen) sur NOTE — pourtant essentielle pour que HISTORIQUE_NOTE désigne sans ambiguïté « la » note modifiée — n'était listée nulle part.</td><td>Ajoutée explicitement à la liste « hors MCD » ci-dessous.</td></tr>
+<tr class="fix"><td>9</td><td><i>Suggestion (optionnelle, pas un bug)</i> : rien ne trace si l'e-mail asynchrone du §15 a bien été envoyé, ce qui complique les tests d'intégration du §19.</td><td>Ajout de <code>email_envoye</code> (boolean) et <code>date_envoi_email</code> (nullable) sur RELEVE. À retirer si tu préfères gérer ça uniquement via les logs applicatifs.</td></tr>
+<tr class="fix"><td>10</td><td>COURS_PARCOURS est une entité associative (3 FK) mais n'avait aucune clé primaire propre → problématique pour la mapper en entité JPA (Hibernate a besoin d'un @Id).</td><td>Ajout de <code>id_cours_parcours PK</code> (clé technique) sur COURS_PARCOURS, avec contrainte d'unicité <code>(id_cours, id_parcours, id_semestre)</code> ajoutée à la liste « hors MCD ».</td></tr>
+<tr class="fix"><td>11</td><td>EXAMEN n'était rattaché qu'à COURS + ANNEE_UNIVERSITAIRE, pas à SEMESTRE → si un même cours est positionné à des semestres différents selon le parcours (via COURS_PARCOURS), il devient ambigu de savoir à quel semestre appartient un examen donné.</td><td>Ajout de <code>id_semestre FK</code> sur EXAMEN.</td></tr>
+</table>
+
+<div id="diagram"></div>
+
+<h2>Ce qui reste hors MCD (couche Service)</h2>
+<ul>
+<li>Statut « diplômé oui/non » avant délivrance officielle : calculé (INSCRIPTION + COURS_PARCOURS + NOTE), jamais stocké tant que le DIPLOME n'est pas généré.</li>
+<li>Aucun chevauchement de périodes dans INSCRIPTION pour un même étudiant (à garantir par une contrainte d'exclusion en base ou, à défaut, une vérification transactionnelle côté service avant tout INSERT/UPDATE).</li>
+<li>Somme des coefficients des EXAMEN d'un même cours égale à 1.</li>
+<li>Unicité du couple (id_etudiant, id_examen) sur NOTE — un étudiant n'a qu'une seule note active par examen.</li>
+<li>Unicité du triplet (id_cours, id_parcours, id_semestre) sur COURS_PARCOURS — un cours n'est rattaché qu'une seule fois à un même couple parcours/semestre.</li>
+<li>Une NOTE n'est jamais modifiée sans passer d'abord par HISTORIQUE_NOTE.</li>
+<li>Une fois DIPLOME généré, toute correction de note ultérieure ne le met pas à jour automatiquement — seule une régénération explicite (même logique que RELEVE) peut le faire.</li>
+</ul>
+
+<h2>Lecture des cardinalités (crow's foot ↔ Merise)</h2>
+<table>
+<tr><th>Symbole</th><th>Signification</th><th>Merise</th></tr>
+<tr><td><code>|o--</code></td><td>zéro ou un</td><td>(0,1)</td></tr>
+<tr><td><code>||--</code></td><td>exactement un</td><td>(1,1)</td></tr>
+<tr><td><code>--o{</code></td><td>zéro à plusieurs</td><td>(0,n)</td></tr>
+<tr><td><code>--|{</code></td><td>un à plusieurs</td><td>(1,n)</td></tr>
+</table>
+
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({ startOnLoad: false, theme: "default", er: { fontSize: 13 } });
+
+const src = `erDiagram
+  UTILISATEUR |o--|| ETUDIANT : identifie
+  UTILISATEUR |o--|| ENSEIGNANT : identifie
+  UTILISATEUR ||--o{ NOTE : saisit
+  UTILISATEUR ||--o{ HISTORIQUE_NOTE : modifie
+
+  PROMOTION ||--o{ DIPLOME : concerne
+  PROMOTION ||--o{ LISTE_DIPLOMES : genere
+
+  ETUDIANT ||--o{ INSCRIPTION : historise
+  PARCOURS ||--o{ INSCRIPTION : concerne
+  GROUPE ||--o{ INSCRIPTION : concerne
+
+  PARCOURS ||--o{ DIPLOME : concerne
+  PARCOURS ||--o{ LISTE_DIPLOMES : genere
+
+  COURS ||--o{ COURS_PARCOURS : rattache
+  PARCOURS ||--o{ COURS_PARCOURS : rattache
+  SEMESTRE ||--o{ COURS_PARCOURS : rattache
+
+  COURS ||--o{ AFFECTATION : porte
+  ENSEIGNANT ||--o{ AFFECTATION : assure
+  ANNEE_UNIVERSITAIRE ||--o{ AFFECTATION : pour
+  SEMESTRE |o--o{ AFFECTATION : pour_optionnel
+  AFFECTATION }o--o{ GROUPE : concerne
+
+  COURS ||--o{ EXAMEN : comporte
+  ANNEE_UNIVERSITAIRE ||--o{ EXAMEN : situe
+  SEMESTRE ||--o{ EXAMEN : situe_semestre
+  ETUDIANT ||--o{ NOTE : obtient
+  EXAMEN ||--o{ NOTE : porte
+  NOTE ||--o{ HISTORIQUE_NOTE : trace
+
+  ETUDIANT ||--o{ RELEVE : possede
+  ANNEE_UNIVERSITAIRE ||--o{ RELEVE : concerne
+  SEMESTRE |o--o{ RELEVE : concerne_partiel
+  ANNEE_UNIVERSITAIRE ||--o{ SEMESTRE : compose
+
+  ETUDIANT |o--|| DIPLOME : obtient
+
+  UTILISATEUR {
+    uuid id_utilisateur PK
+    string email UK
+    string mot_de_passe
+    string role
+    boolean actif
+    datetime date_creation
+    datetime derniere_connexion
+  }
+  ETUDIANT {
+    uuid id_etudiant PK
+    uuid id_utilisateur FK
+    string std UK
+    string nom
+    string prenom
+    date date_naissance
+    date date_entree_hei
+    string statut
+  }
+  ENSEIGNANT {
+    uuid id_enseignant PK
+    uuid id_utilisateur FK
+    string nom
+    string prenom
+    string specialite
+    string type_contrat
+  }
+  PROMOTION {
+    uuid id_promotion PK
+    int annee_diplome
+    string libelle
+  }
+  PARCOURS {
+    uuid id_parcours PK
+    string code
+    string libelle
+    boolean actif
+  }
+  GROUPE {
+    uuid id_groupe PK
+    string reference
+    int effectif_max
+  }
+  ANNEE_UNIVERSITAIRE {
+    uuid id_annee PK
+    string libelle
+    date date_debut
+    date date_fin
+    string niveau
+  }
+  SEMESTRE {
+    uuid id_semestre PK
+    uuid id_annee FK
+    int numero
+    date date_debut
+    date date_fin
+    int credits_attendus
+  }
+  COURS {
+    uuid id_cours PK
+    string reference_hei UK
+    string intitule
+    int credits_ects
+    boolean actif
+  }
+  COURS_PARCOURS {
+    uuid id_cours_parcours PK
+    uuid id_cours FK
+    uuid id_parcours FK
+    uuid id_semestre FK
+    boolean obligatoire
+  }
+  AFFECTATION {
+    uuid id_affectation PK
+    uuid id_cours FK
+    uuid id_enseignant FK
+    uuid id_annee FK
+    uuid id_semestre FK
+  }
+  EXAMEN {
+    uuid id_examen PK
+    uuid id_cours FK
+    uuid id_annee FK
+    uuid id_semestre FK
+    date date_examen
+    time heure_debut
+    time heure_fin
+    string session
+    int coefficient_numerateur
+    int coefficient_denominateur
+    string salle
+  }
+  NOTE {
+    uuid id_note PK
+    uuid id_etudiant FK
+    uuid id_examen FK
+    uuid id_utilisateur_saisie FK
+    decimal valeur
+    string statut
+    datetime date_saisie
+  }
+  HISTORIQUE_NOTE {
+    uuid id_historique PK
+    uuid id_note FK
+    uuid id_utilisateur FK
+    decimal ancienne_valeur
+    decimal nouvelle_valeur
+    datetime date_modification
+    text motif
+  }
+  RELEVE {
+    uuid id_releve PK
+    uuid id_etudiant FK
+    uuid id_annee FK
+    uuid id_semestre FK
+    string type
+    datetime date_generation
+    string url_s3
+    decimal moyenne_generale
+    int credits_obtenus
+    int credits_attendus
+    boolean annee_validee
+    boolean email_envoye
+    datetime date_envoi_email
+  }
+  DIPLOME {
+    uuid id_diplome PK
+    uuid id_etudiant FK
+    uuid id_promotion FK
+    uuid id_parcours FK
+    date date_obtention
+    decimal moyenne_generale
+    int rang
+    string mention
+  }
+  LISTE_DIPLOMES {
+    uuid id_liste PK
+    uuid id_promotion FK
+    uuid id_parcours FK
+    datetime date_generation
+    string url_s3
+  }
+  INSCRIPTION {
+    uuid id_inscription PK
+    uuid id_etudiant FK
+    uuid id_parcours FK
+    uuid id_groupe FK
+    date date_debut
+    date date_fin
+  }
+`;
+
+const { svg } = await mermaid.render("mcd-svg", src);
+document.getElementById("diagram").innerHTML = svg;
+</script>
+
+</body>
+</html>
