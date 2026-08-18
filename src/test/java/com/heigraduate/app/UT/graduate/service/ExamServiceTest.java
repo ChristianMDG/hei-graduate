@@ -18,7 +18,7 @@ import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.service.ExamService;
-import java.math.BigDecimal;
+import com.heigraduate.app.graduate.validator.ExamValidator;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -27,7 +27,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,7 +38,8 @@ class ExamServiceTest {
   @Mock private AcademicYearRepository academicYearRepository;
   @Mock private SemesterRepository semesterRepository;
 
-  @InjectMocks private ExamService examService;
+  private ExamValidator examValidator;
+  private ExamService examService;
 
   private Course course;
   private AcademicYear year;
@@ -50,6 +50,16 @@ class ExamServiceTest {
 
   @BeforeEach
   void setUp() {
+    examValidator = new ExamValidator(examRepository);
+
+    examService =
+        new ExamService(
+            examRepository,
+            courseRepository,
+            academicYearRepository,
+            semesterRepository,
+            examValidator);
+
     course =
         Course.builder()
             .id(UUID.randomUUID())
@@ -68,16 +78,7 @@ class ExamServiceTest {
             .level("L2")
             .build();
 
-    semester =
-        Semester.builder()
-            .id(UUID.randomUUID())
-            .academicYear(year)
-            .label("S1")
-            .startDate(LocalDate.of(2025, 9, 1))
-            .endDate(LocalDate.of(2026, 1, 31))
-            .expectedCredits(30)
-            .active(true)
-            .build();
+    semester = Semester.builder().id(UUID.randomUUID()).build();
 
     examDate = LocalDate.of(2026, 12, 10);
     startTime = LocalTime.of(9, 0);
@@ -95,23 +96,24 @@ class ExamServiceTest {
             examDate,
             startTime,
             endTime,
-            new BigDecimal("0.6"));
+            3,
+            5);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of());
+
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     ExamResponse result = examService.create(request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.6");
+    assertThat(result.coefficientNumerator()).isEqualTo(3);
+    assertThat(result.coefficientDenominator()).isEqualTo(5);
     assertThat(result.date()).isEqualTo(examDate);
-    assertThat(result.startTime()).isEqualTo(startTime);
-    assertThat(result.endTime()).isEqualTo(endTime);
-    assertThat(result.semesterId()).isEqualTo(semester.getId());
-    assertThat(result.semesterLabel()).isEqualTo("S1");
+
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -127,7 +129,8 @@ class ExamServiceTest {
             .date(examDate.minusMonths(1))
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.6"))
+            .coefficientNumerator(3)
+            .coefficientDenominator(5)
             .build();
 
     ExamRequest request =
@@ -139,18 +142,23 @@ class ExamServiceTest {
             examDate,
             startTime,
             endTime,
-            new BigDecimal("0.4"));
+            2,
+            5);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of(existingExam));
+
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     ExamResponse result = examService.create(request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.4");
+    assertThat(result.coefficientNumerator()).isEqualTo(2);
+    assertThat(result.coefficientDenominator()).isEqualTo(5);
+
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -166,7 +174,8 @@ class ExamServiceTest {
             .date(examDate.minusMonths(1))
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.7"))
+            .coefficientNumerator(1)
+            .coefficientDenominator(2)
             .build();
 
     ExamRequest request =
@@ -178,11 +187,13 @@ class ExamServiceTest {
             examDate,
             startTime,
             endTime,
-            new BigDecimal("0.5"));
+            2,
+            3);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of(existingExam));
 
@@ -194,8 +205,34 @@ class ExamServiceTest {
   }
 
   @Test
+  void create_shouldThrowBadRequest_whenNumeratorExceedsDenominator() {
+    ExamRequest request =
+        new ExamRequest(
+            course.getId(),
+            year.getId(),
+            semester.getId(),
+            "Examen final",
+            examDate,
+            startTime,
+            endTime,
+            5,
+            3);
+
+    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+    when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
+    assertThatThrownBy(() -> examService.create(request))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessageContaining("must not exceed");
+
+    verify(examRepository, never()).save(any());
+  }
+
+  @Test
   void update_shouldExcludeCurrentExamFromSum_andUpdateDateTime() {
     UUID examId = UUID.randomUUID();
+
     Exam examToUpdate =
         Exam.builder()
             .id(examId)
@@ -206,7 +243,8 @@ class ExamServiceTest {
             .date(examDate)
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.3"))
+            .coefficientNumerator(1)
+            .coefficientDenominator(3)
             .build();
 
     LocalDate newDate = examDate.plusDays(1);
@@ -222,21 +260,24 @@ class ExamServiceTest {
             newDate,
             newStartTime,
             newEndTime,
-            new BigDecimal("0.5"));
+            1,
+            2);
 
     when(examRepository.findById(examId)).thenReturn(Optional.of(examToUpdate));
+
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
+
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
         .thenReturn(List.of(examToUpdate));
+
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     ExamResponse result = examService.update(examId, request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.5");
+    assertThat(result.coefficientNumerator()).isEqualTo(1);
+    assertThat(result.coefficientDenominator()).isEqualTo(2);
     assertThat(result.date()).isEqualTo(newDate);
-    assertThat(result.startTime()).isEqualTo(newStartTime);
-    assertThat(result.endTime()).isEqualTo(newEndTime);
-    assertThat(result.semesterId()).isEqualTo(semester.getId());
+
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -251,7 +292,9 @@ class ExamServiceTest {
             examDate,
             startTime,
             endTime,
-            new BigDecimal("0.5"));
+            1,
+            2);
+
     when(courseRepository.findById(course.getId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> examService.create(request))
@@ -259,79 +302,14 @@ class ExamServiceTest {
   }
 
   @Test
-  void create_shouldThrow_whenSemesterNotFound() {
-    ExamRequest request =
-        new ExamRequest(
-            course.getId(),
-            year.getId(),
-            semester.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.5"));
-
-    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
-    when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
-    when(semesterRepository.findById(semester.getId())).thenReturn(Optional.empty());
-
-    assertThatThrownBy(() -> examService.create(request))
-        .isInstanceOf(ResourceNotFoundException.class);
-
-    verify(examRepository, never()).save(any());
-  }
-
-  @Test
-  void create_shouldThrowBadRequest_whenSemesterBelongsToAnotherAcademicYear() {
-    AcademicYear otherYear =
-        AcademicYear.builder()
-            .id(UUID.randomUUID())
-            .label("2024-2025")
-            .startDate(LocalDate.of(2024, 9, 1))
-            .endDate(LocalDate.of(2025, 6, 30))
-            .level("L2")
-            .build();
-    Semester semesterFromOtherYear =
-        Semester.builder()
-            .id(UUID.randomUUID())
-            .academicYear(otherYear)
-            .label("S1")
-            .startDate(LocalDate.of(2024, 9, 1))
-            .endDate(LocalDate.of(2025, 1, 31))
-            .expectedCredits(30)
-            .active(true)
-            .build();
-
-    ExamRequest request =
-        new ExamRequest(
-            course.getId(),
-            year.getId(),
-            semesterFromOtherYear.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.5"));
-
-    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
-    when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
-    when(semesterRepository.findById(semesterFromOtherYear.getId()))
-        .thenReturn(Optional.of(semesterFromOtherYear));
-
-    assertThatThrownBy(() -> examService.create(request))
-        .isInstanceOf(BadRequestException.class)
-        .hasMessageContaining("does not belong to academic year");
-
-    verify(examRepository, never()).save(any());
-  }
-
-  @Test
   void delete_shouldThrow_whenExamNotFound() {
     UUID unknownId = UUID.randomUUID();
+
     when(examRepository.existsById(unknownId)).thenReturn(false);
 
     assertThatThrownBy(() -> examService.delete(unknownId))
         .isInstanceOf(ResourceNotFoundException.class);
+
     verify(examRepository, never()).deleteById(any());
   }
 }

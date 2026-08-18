@@ -51,7 +51,7 @@ public class GradeController {
   @ResponseStatus(HttpStatus.CREATED)
   public GradeResponse create(
       @Valid @RequestBody GradeRequest request, @AuthenticationPrincipal User connectedUser) {
-    return gradeService.create(request, connectedUser.getId());
+    return gradeService.create(request, connectedUser);
   }
 
   @PutMapping("/{id}")
@@ -60,7 +60,7 @@ public class GradeController {
       @PathVariable UUID id,
       @Valid @RequestBody GradeUpdateRequest request,
       @AuthenticationPrincipal User connectedUser) {
-    return gradeService.update(id, request, connectedUser.getId());
+    return gradeService.update(id, request, connectedUser);
   }
 
   @PostMapping("/{id}/publish")

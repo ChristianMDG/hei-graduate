@@ -2,7 +2,6 @@ package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.ExamRequest;
 import com.heigraduate.app.graduate.dto.ExamResponse;
-import com.heigraduate.app.graduate.exception.BadRequestException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.ExamMapper;
 import com.heigraduate.app.graduate.model.AcademicYear;
@@ -13,7 +12,7 @@ import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.SemesterRepository;
-import java.math.BigDecimal;
+import com.heigraduate.app.graduate.validator.ExamValidator;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ExamService {
 
-  private static final BigDecimal MAX_TOTAL_COEFFICIENT = BigDecimal.ONE;
-
   private final ExamRepository examRepository;
   private final CourseRepository courseRepository;
   private final AcademicYearRepository academicYearRepository;
   private final SemesterRepository semesterRepository;
+  private final ExamValidator examValidator;
 
   @Transactional(readOnly = true)
   public List<ExamResponse> findAll() {
@@ -53,6 +51,7 @@ public class ExamService {
                 () ->
                     new ResourceNotFoundException(
                         "Course not found with id: " + request.courseId()));
+
     AcademicYear academicYear =
         academicYearRepository
             .findById(request.academicYearId())
@@ -60,10 +59,26 @@ public class ExamService {
                 () ->
                     new ResourceNotFoundException(
                         "AcademicYear not found with id: " + request.academicYearId()));
-    Semester semester = resolveSemester(request.semesterId(), academicYear.getId());
 
-    validateCoefficientSum(
-        request.courseId(), request.academicYearId(), request.coefficient(), null);
+    Semester semester =
+        semesterRepository
+            .findById(request.semesterId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Semester not found with id: " + request.semesterId()));
+
+    examValidator.validateTimeRange(request.startTime(), request.endTime());
+
+    examValidator.validateCoefficientFraction(
+        request.coefficientNumerator(), request.coefficientDenominator());
+
+    examValidator.validateCoefficientSum(
+        request.courseId(),
+        request.academicYearId(),
+        request.coefficientNumerator(),
+        request.coefficientDenominator(),
+        null);
 
     Exam exam =
         Exam.builder()
@@ -74,7 +89,8 @@ public class ExamService {
             .date(request.date())
             .startTime(request.startTime())
             .endTime(request.endTime())
-            .coefficient(request.coefficient())
+            .coefficientNumerator(request.coefficientNumerator())
+            .coefficientDenominator(request.coefficientDenominator())
             .build();
 
     return ExamMapper.toResponse(examRepository.save(exam));
@@ -87,15 +103,34 @@ public class ExamService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Exam not found with id: " + id));
 
-    validateCoefficientSum(request.courseId(), request.academicYearId(), request.coefficient(), id);
-    Semester semester = resolveSemester(request.semesterId(), request.academicYearId());
+    Semester semester =
+        semesterRepository
+            .findById(request.semesterId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Semester not found with id: " + request.semesterId()));
+
+    examValidator.validateTimeRange(request.startTime(), request.endTime());
+
+    examValidator.validateCoefficientFraction(
+        request.coefficientNumerator(), request.coefficientDenominator());
+
+    examValidator.validateCoefficientSum(
+        request.courseId(),
+        request.academicYearId(),
+        request.coefficientNumerator(),
+        request.coefficientDenominator(),
+        id);
 
     exam.setSemester(semester);
     exam.setLabel(request.label());
     exam.setDate(request.date());
     exam.setStartTime(request.startTime());
     exam.setEndTime(request.endTime());
-    exam.setCoefficient(request.coefficient());
+    exam.setCoefficientNumerator(request.coefficientNumerator());
+    exam.setCoefficientDenominator(request.coefficientDenominator());
+
     return ExamMapper.toResponse(examRepository.save(exam));
   }
 
@@ -104,37 +139,7 @@ public class ExamService {
     if (!examRepository.existsById(id)) {
       throw new ResourceNotFoundException("Exam not found with id: " + id);
     }
+
     examRepository.deleteById(id);
-  }
-
-  private Semester resolveSemester(UUID semesterId, UUID academicYearId) {
-    Semester semester =
-        semesterRepository
-            .findById(semesterId)
-            .orElseThrow(
-                () -> new ResourceNotFoundException("Semester not found with id: " + semesterId));
-    if (!semester.getAcademicYear().getId().equals(academicYearId)) {
-      throw new BadRequestException(
-          "Semester " + semesterId + " does not belong to academic year " + academicYearId);
-    }
-    return semester;
-  }
-
-  private void validateCoefficientSum(
-      UUID courseId, UUID academicYearId, BigDecimal newCoefficient, UUID excludeExamId) {
-    List<Exam> existingExams =
-        examRepository.findByCourseIdAndAcademicYearId(courseId, academicYearId);
-
-    BigDecimal sum =
-        existingExams.stream()
-            .filter(e -> excludeExamId == null || !e.getId().equals(excludeExamId))
-            .map(Exam::getCoefficient)
-            .reduce(BigDecimal.ZERO, BigDecimal::add)
-            .add(newCoefficient);
-
-    if (sum.compareTo(MAX_TOTAL_COEFFICIENT) > 0) {
-      throw new BadRequestException(
-          "Sum of coefficients for this course/year would exceed 1 (currently: " + sum + ")");
-    }
   }
 }

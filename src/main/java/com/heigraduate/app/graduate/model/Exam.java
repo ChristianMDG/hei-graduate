@@ -1,7 +1,6 @@
 package com.heigraduate.app.graduate.model;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -43,6 +42,9 @@ public class Exam {
   @Column(name = "end_time", nullable = false)
   private LocalTime endTime;
 
-  @Column(name = "coefficient", nullable = false, precision = 4, scale = 3)
-  private BigDecimal coefficient;
+  @Column(name = "coefficient_numerator", nullable = false)
+  private Integer coefficientNumerator;
+
+  @Column(name = "coefficient_denominator", nullable = false)
+  private Integer coefficientDenominator;
 }
