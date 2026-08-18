@@ -7,9 +7,11 @@ import com.heigraduate.app.graduate.mapper.ExamMapper;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Exam;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.validator.ExamValidator;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class ExamService {
   private final ExamRepository examRepository;
   private final CourseRepository courseRepository;
   private final AcademicYearRepository academicYearRepository;
+  private final SemesterRepository semesterRepository;
   private final ExamValidator examValidator;
 
   @Transactional(readOnly = true)
@@ -48,6 +51,7 @@ public class ExamService {
                 () ->
                     new ResourceNotFoundException(
                         "Course not found with id: " + request.courseId()));
+
     AcademicYear academicYear =
         academicYearRepository
             .findById(request.academicYearId())
@@ -56,9 +60,19 @@ public class ExamService {
                     new ResourceNotFoundException(
                         "AcademicYear not found with id: " + request.academicYearId()));
 
+    Semester semester =
+        semesterRepository
+            .findById(request.semesterId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Semester not found with id: " + request.semesterId()));
+
     examValidator.validateTimeRange(request.startTime(), request.endTime());
+
     examValidator.validateCoefficientFraction(
         request.coefficientNumerator(), request.coefficientDenominator());
+
     examValidator.validateCoefficientSum(
         request.courseId(),
         request.academicYearId(),
@@ -70,6 +84,7 @@ public class ExamService {
         Exam.builder()
             .course(course)
             .academicYear(academicYear)
+            .semester(semester)
             .label(request.label())
             .date(request.date())
             .startTime(request.startTime())
@@ -88,9 +103,19 @@ public class ExamService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Exam not found with id: " + id));
 
+    Semester semester =
+        semesterRepository
+            .findById(request.semesterId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Semester not found with id: " + request.semesterId()));
+
     examValidator.validateTimeRange(request.startTime(), request.endTime());
+
     examValidator.validateCoefficientFraction(
         request.coefficientNumerator(), request.coefficientDenominator());
+
     examValidator.validateCoefficientSum(
         request.courseId(),
         request.academicYearId(),
@@ -98,12 +123,14 @@ public class ExamService {
         request.coefficientDenominator(),
         id);
 
+    exam.setSemester(semester);
     exam.setLabel(request.label());
     exam.setDate(request.date());
     exam.setStartTime(request.startTime());
     exam.setEndTime(request.endTime());
     exam.setCoefficientNumerator(request.coefficientNumerator());
     exam.setCoefficientDenominator(request.coefficientDenominator());
+
     return ExamMapper.toResponse(examRepository.save(exam));
   }
 
@@ -112,6 +139,7 @@ public class ExamService {
     if (!examRepository.existsById(id)) {
       throw new ResourceNotFoundException("Exam not found with id: " + id);
     }
+
     examRepository.deleteById(id);
   }
 }

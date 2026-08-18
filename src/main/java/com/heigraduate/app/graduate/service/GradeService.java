@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class GradeService implements FinalGradeQuery {
   private final GradeHistoryRepository gradeHistoryRepository;
   private final StudentRepository studentRepository;
   private final ExamRepository examRepository;
+  private final AssignmentService assignmentService;
 
   @Transactional(readOnly = true)
   public List<GradeResponse> findAll() {
@@ -65,6 +67,7 @@ public class GradeService implements FinalGradeQuery {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("No student profile linked to user: " + userId));
+
     return findPublishedForStudent(student.getId());
   }
 
@@ -81,11 +84,14 @@ public class GradeService implements FinalGradeQuery {
                 () ->
                     new ResourceNotFoundException(
                         "Student not found with id: " + request.studentId()));
+
     Exam exam =
         examRepository
             .findById(request.examId())
             .orElseThrow(
                 () -> new ResourceNotFoundException("Exam not found with id: " + request.examId()));
+
+    validateTeacherCourseAssignment(actingUser, exam);
 
     Grade grade =
         Grade.builder()
@@ -106,6 +112,8 @@ public class GradeService implements FinalGradeQuery {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
 
+    validateTeacherCourseAssignment(actingUser, grade.getExam());
+
     BigDecimal oldValue = grade.getValue();
 
     GradeHistory history =
@@ -116,10 +124,29 @@ public class GradeService implements FinalGradeQuery {
             .reason(request.reason())
             .changedByUserId(actingUser.getId())
             .build();
+
     gradeHistoryRepository.save(history);
 
     grade.setValue(request.value());
+
     return GradeMapper.toResponse(gradeRepository.save(grade));
+  }
+
+  private void validateTeacherCourseAssignment(User actingUser, Exam exam) {
+    if ("ADMIN".equals(actingUser.getRole().name())) {
+      return;
+    }
+
+    if ("TEACHER".equals(actingUser.getRole().name())) {
+      boolean assigned =
+          assignmentService.isTeacherAssignedToCourse(
+              actingUser.getId(), exam.getCourse().getId(), exam.getAcademicYear().getId());
+
+      if (!assigned) {
+        throw new AccessDeniedException(
+            "Teacher is not assigned to this course for this academic year");
+      }
+    }
   }
 
   @Transactional(readOnly = true)
@@ -127,6 +154,7 @@ public class GradeService implements FinalGradeQuery {
     if (!gradeRepository.existsById(gradeId)) {
       throw new ResourceNotFoundException("Grade not found with id: " + gradeId);
     }
+
     return gradeHistoryRepository.findByGradeId(gradeId).stream()
         .map(GradeHistoryMapper::toResponse)
         .toList();
@@ -138,7 +166,9 @@ public class GradeService implements FinalGradeQuery {
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+
     grade.setStatus(GradeStatus.PUBLISHED);
+
     return GradeMapper.toResponse(gradeRepository.save(grade));
   }
 
@@ -147,6 +177,7 @@ public class GradeService implements FinalGradeQuery {
     if (!gradeRepository.existsById(id)) {
       throw new ResourceNotFoundException("Grade not found with id: " + id);
     }
+
     gradeRepository.deleteById(id);
   }
 
@@ -170,6 +201,7 @@ public class GradeService implements FinalGradeQuery {
                   BigDecimal.valueOf(g.getExam().getCoefficientDenominator()),
                   6,
                   RoundingMode.HALF_UP);
+
       weightedSum = weightedSum.add(g.getValue().multiply(weight));
       totalWeight = totalWeight.add(weight);
     }

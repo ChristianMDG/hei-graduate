@@ -20,7 +20,6 @@ import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
-import com.heigraduate.app.graduate.repository.TeacherRepository;
 import com.heigraduate.app.graduate.service.AssignmentService;
 import com.heigraduate.app.graduate.service.GradeService;
 import java.math.BigDecimal;
@@ -36,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class GradeHistoryServiceTest {
@@ -44,7 +44,6 @@ class GradeHistoryServiceTest {
   @Mock private GradeHistoryRepository gradeHistoryRepository;
   @Mock private StudentRepository studentRepository;
   @Mock private ExamRepository examRepository;
-  @Mock private TeacherRepository teacherRepository;
   @Mock private AssignmentService assignmentService;
 
   @InjectMocks private GradeService gradeService;
@@ -58,6 +57,7 @@ class GradeHistoryServiceTest {
   void setUp() {
     gradeId = UUID.randomUUID();
     actingUserId = UUID.randomUUID();
+
     actingUser = User.builder().id(actingUserId).email("admin@hei.mg").role(UserRole.ADMIN).build();
 
     Student student =
@@ -112,8 +112,10 @@ class GradeHistoryServiceTest {
             new BigDecimal("10.50"), "Erreur de saisie corrigee apres reclamation");
 
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
     when(gradeRepository.save(any(Grade.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+
     when(gradeHistoryRepository.save(any(GradeHistory.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -122,9 +124,11 @@ class GradeHistoryServiceTest {
     assertThat(result.value()).isEqualByComparingTo("10.50");
 
     ArgumentCaptor<GradeHistory> historyCaptor = ArgumentCaptor.forClass(GradeHistory.class);
+
     verify(gradeHistoryRepository).save(historyCaptor.capture());
 
     GradeHistory savedHistory = historyCaptor.getValue();
+
     assertThat(savedHistory.getOldValue()).isEqualByComparingTo("8.50");
     assertThat(savedHistory.getNewValue()).isEqualByComparingTo("10.50");
     assertThat(savedHistory.getReason()).isEqualTo("Erreur de saisie corrigee apres reclamation");
@@ -132,6 +136,7 @@ class GradeHistoryServiceTest {
     assertThat(savedHistory.getChangedAt()).isNotNull();
 
     var inOrder = inOrder(gradeHistoryRepository, gradeRepository);
+
     inOrder.verify(gradeHistoryRepository).save(any(GradeHistory.class));
     inOrder.verify(gradeRepository).save(any(Grade.class));
   }
@@ -139,6 +144,7 @@ class GradeHistoryServiceTest {
   @Test
   void update_shouldThrow_whenGradeNotFound() {
     UUID unknownId = UUID.randomUUID();
+
     GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
 
     when(gradeRepository.findById(unknownId)).thenReturn(Optional.empty());
@@ -148,6 +154,91 @@ class GradeHistoryServiceTest {
 
     verify(gradeHistoryRepository, never()).save(any());
     verify(gradeRepository, never()).save(any());
+  }
+
+  @Test
+  void update_shouldAllowTeacher_whenTeacherIsAssignedToCourse() {
+    User teacher =
+        User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
+
+    GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
+
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(assignmentService.isTeacherAssignedToCourse(
+            teacher.getId(),
+            grade.getExam().getCourse().getId(),
+            grade.getExam().getAcademicYear().getId()))
+        .thenReturn(true);
+
+    when(gradeHistoryRepository.save(any(GradeHistory.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    when(gradeRepository.save(any(Grade.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    GradeResponse result = gradeService.update(gradeId, request, teacher);
+
+    assertThat(result.value()).isEqualByComparingTo("12.00");
+
+    verify(assignmentService)
+        .isTeacherAssignedToCourse(
+            teacher.getId(),
+            grade.getExam().getCourse().getId(),
+            grade.getExam().getAcademicYear().getId());
+
+    verify(gradeHistoryRepository).save(any(GradeHistory.class));
+    verify(gradeRepository).save(any(Grade.class));
+  }
+
+  @Test
+  void update_shouldThrow403_whenTeacherIsNotAssignedToCourse() {
+    User teacher =
+        User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
+
+    GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
+
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(assignmentService.isTeacherAssignedToCourse(
+            teacher.getId(),
+            grade.getExam().getCourse().getId(),
+            grade.getExam().getAcademicYear().getId()))
+        .thenReturn(false);
+
+    Assertions.assertThrows(
+        AccessDeniedException.class, () -> gradeService.update(gradeId, request, teacher));
+
+    verify(assignmentService)
+        .isTeacherAssignedToCourse(
+            teacher.getId(),
+            grade.getExam().getCourse().getId(),
+            grade.getExam().getAcademicYear().getId());
+
+    verify(gradeHistoryRepository, never()).save(any());
+    verify(gradeRepository, never()).save(any());
+  }
+
+  @Test
+  void update_shouldAllowAdmin_evenWhenAdminIsNotAssignedToCourse() {
+    GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
+
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(gradeHistoryRepository.save(any(GradeHistory.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    when(gradeRepository.save(any(Grade.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    GradeResponse result = gradeService.update(gradeId, request, actingUser);
+
+    assertThat(result.value()).isEqualByComparingTo("12.00");
+
+    verify(assignmentService, never()).isTeacherAssignedToCourse(any(), any(), any());
+
+    verify(gradeHistoryRepository).save(any(GradeHistory.class));
+    verify(gradeRepository).save(any(Grade.class));
   }
 
   @Test
@@ -163,6 +254,7 @@ class GradeHistoryServiceTest {
             .build();
 
     when(gradeRepository.existsById(gradeId)).thenReturn(true);
+
     when(gradeHistoryRepository.findByGradeId(gradeId)).thenReturn(List.of(pastChange));
 
     var result = gradeService.getHistory(gradeId);
