@@ -1,56 +1,56 @@
 openapi: 3.0.3
 info:
-  title: HEI Graduate — API Spécification Complète
+  title: HEI Graduate — Complete API Specification
   description: >
-    Documentation OpenAPI complète pour l'application HEI Graduate.
-    Gère les étudiants, enseignants, cours, parcours (EL/TN), groupes, affectations, 
-    examens, notes, historisations, relevés PDF, classements de diplômés et exports Excel S3.
+    Complete OpenAPI documentation for the HEI Graduate application.
+    Manages students, teachers, courses, tracks (EL/TN), groups, assignments,
+    exams, grades, modification history, PDF transcripts, graduate rankings, and S3 Excel exports.
   version: 1.0.0
 
 servers:
   - url: http://localhost:8080
-    description: Serveur de Développement Local
+    description: Local Development Server
 
 tags:
   - name: Auth
-    description: Authentification JWT (Login, Profil)
+    description: JWT Authentication (Login, Profile)
   - name: Student
-    description: Gestion des étudiants
+    description: Student profile management
   - name: Teacher
-    description: Gestion des enseignants
+    description: Teacher profile management
   - name: Course
-    description: Gestion du catalogue de cours
+    description: Course catalog management
   - name: Parcours
-    description: Gestion des parcours (EL - Écosystème Logiciel, TN - Transformation Numérique)
+    description: Track management (EL - Software Ecosystem, TN - Digital Transformation)
   - name: Group
-    description: Gestion des groupes d'étudiants (K1, K2, K3)
+    description: Student group management (K1, K2, K3)
   - name: AcademicYear
-    description: Gestion des années universitaires (L1, L2, L3)
+    description: Academic year management (L1, L2, L3)
   - name: Semester
-    description: Gestion des semestres (30 crédits ECTS par semestre)
+    description: Semester management (30 ECTS credits per semester)
   - name: Assignment
-    description: Affectation des enseignants aux cours, années et groupes
+    description: Teacher assignments to courses, years, and groups
   - name: Enrollment
-    description: Inscriptions des étudiants, historique et changements de groupe/parcours
+    description: Student enrollments, track/group transfer history
   - name: Exam
-    description: Gestion des examens et validation de la somme des coefficients (=1 par semestre)
+    description: Exam management and coefficient sum validation (=1 per semester)
   - name: Grade
-    description: Saisie, consultation, publication des notes et historique des modifications
+    description: Grade entry, consultation, publication, and edit history
   - name: Transcript
-    description: Génération des relevés de notes PDF et envoi asynchrone par e-mail
+    description: PDF transcript generation and asynchronous email delivery
   - name: Ranking & Graduation
-    description: Détermination des diplômés sur 3 ans et classement par promotion et parcours
+    description: 3-year graduation determination and student ranking by promotion and track
   - name: DiplomaExcel
-    description: Export Excel de la liste des diplômés et récupération du lien S3 sauvegardé
+    description: Graduates Excel list export and saved S3 download URL retrieval
 
 paths:
   # ==========================================
-  # AUTHENTIFICATION
+  # AUTHENTICATION
   # ==========================================
   /api/auth/login:
     post:
       tags: [Auth]
-      summary: Authentification utilisateur (JWT)
+      summary: User authentication (JWT)
       requestBody:
         required: true
         content:
@@ -59,7 +59,7 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Connexion réussie, retourne le token JWT et le rôle
+          description: Authentication successful, returns JWT token and user role
           content:
             application/json:
               schema:
@@ -70,7 +70,7 @@ paths:
   /api/auth/me:
     get:
       tags: [Auth]
-      summary: Obtenir le profil de l'utilisateur connecté
+      summary: Get currently authenticated user profile
       security:
         - bearerAuth: []
       responses:
@@ -83,12 +83,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
 
   # ==========================================
-  # COURS
+  # COURSES
   # ==========================================
   /api/courses:
     get:
       tags: [Course]
-      summary: Lister tous les cours
+      summary: List all courses
       security:
         - bearerAuth: []
       responses:
@@ -104,7 +104,7 @@ paths:
 
     post:
       tags: [Course]
-      summary: Créer un cours (ADMIN)
+      summary: Create a new course (ADMIN)
       security:
         - bearerAuth: []
       requestBody:
@@ -127,7 +127,7 @@ paths:
   /api/courses/{id}:
     get:
       tags: [Course]
-      summary: Obtenir un cours par ID
+      summary: Get a course by ID
       security:
         - bearerAuth: []
       parameters:
@@ -143,7 +143,7 @@ paths:
 
     put:
       tags: [Course]
-      summary: Modifier un cours (ADMIN)
+      summary: Update a course (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -165,24 +165,24 @@ paths:
 
     delete:
       tags: [Course]
-      summary: Désactiver un cours (ADMIN)
+      summary: Deactivate a course (ADMIN)
       security:
         - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/PathId"
       responses:
         "204":
-          description: Cours désactivé avec succès
+          description: Course successfully deactivated
         "403":
           $ref: "#/components/responses/Forbidden"
 
   # ==========================================
-  # PARCOURS
+  # PARCOURS (TRACKS)
   # ==========================================
   /api/parcours:
     get:
       tags: [Parcours]
-      summary: Lister les parcours (EL, TN, etc.)
+      summary: List all tracks (EL, TN, etc.)
       security:
         - bearerAuth: []
       parameters:
@@ -202,7 +202,7 @@ paths:
 
     post:
       tags: [Parcours]
-      summary: Créer un parcours (ADMIN)
+      summary: Create a track (ADMIN)
       security:
         - bearerAuth: []
       requestBody:
@@ -219,12 +219,12 @@ paths:
                 $ref: "#/components/schemas/ParcoursResponse"
 
   # ==========================================
-  # EXAMENS
+  # EXAMS
   # ==========================================
   /api/exams:
     get:
       tags: [Exam]
-      summary: Lister les examens d'un cours et/ou semestre
+      summary: List exams for a given course and/or semester
       security:
         - bearerAuth: []
       parameters:
@@ -249,8 +249,8 @@ paths:
 
     post:
       tags: [Exam]
-      summary: Créer un examen (ADMIN)
-      description: Vérifie que la somme des coefficients des examens du cours/semestre ne dépasse pas 1.
+      summary: Create an exam (ADMIN)
+      description: Verifies that the sum of exam coefficients for a course/semester does not exceed 1.
       security:
         - bearerAuth: []
       requestBody:
@@ -266,15 +266,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamResponse"
         "400":
-          description: Somme des coefficients > 1 ou numérateur > dénominateur
+          description: Coefficient sum exceeds 1 or numerator > denominator
 
   # ==========================================
-  # NOTES
+  # GRADES
   # ==========================================
   /api/grades:
     get:
       tags: [Grade]
-      summary: Obtenir toutes les notes (ADMIN)
+      summary: Get all grades (ADMIN)
       security:
         - bearerAuth: []
       responses:
@@ -290,7 +290,7 @@ paths:
 
     post:
       tags: [Grade]
-      summary: Saisir une note (ADMIN ou TEACHER affecté)
+      summary: Enter a grade (ADMIN or assigned TEACHER)
       security:
         - bearerAuth: []
       requestBody:
@@ -306,14 +306,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/GradeResponse"
         "403":
-          description: Enseignant non affecté à ce cours
+          description: Teacher is not assigned to this course
         "409":
-          description: Note déjà saisie pour cet étudiant et cet examen
+          description: Grade already exists for this student and exam
 
   /api/grades/me:
     get:
       tags: [Grade]
-      summary: Obtenir ses propres notes publiées (STUDENT)
+      summary: Get authenticated student's published grades (STUDENT)
       security:
         - bearerAuth: []
       responses:
@@ -328,7 +328,7 @@ paths:
   /api/grades/student/{studentId}:
     get:
       tags: [Grade]
-      summary: Obtenir les notes d'un étudiant (ADMIN ou TEACHER pour ses cours)
+      summary: Get grades for a specific student (ADMIN or assigned TEACHER)
       security:
         - bearerAuth: []
       parameters:
@@ -350,8 +350,8 @@ paths:
   /api/grades/{id}:
     put:
       tags: [Grade]
-      summary: Modifier une note avec raison (ADMIN ou TEACHER affecté)
-      description: Conserve l'historique dans grade_history (§9).
+      summary: Update a grade with reason (ADMIN or assigned TEACHER)
+      description: Preserves edit history in grade_history (§9).
       security:
         - bearerAuth: []
       parameters:
@@ -372,8 +372,8 @@ paths:
   /api/grades/{id}/publish:
     post:
       tags: [Grade]
-      summary: Publier une note (ADMIN uniquement)
-      description: Bloqué si la somme des coefficients des examens du cours/semestre n'est pas égale à 1 (§7/§10).
+      summary: Publish a grade (ADMIN only)
+      description: Blocked if the sum of exam coefficients for the course/semester is not exactly equal to 1 (§7/§10).
       security:
         - bearerAuth: []
       parameters:
@@ -385,14 +385,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/GradeResponse"
         "400":
-          description: Somme des coefficients != 1
+          description: Coefficient sum != 1
         "403":
           $ref: "#/components/responses/Forbidden"
 
   /api/grades/{id}/history:
     get:
       tags: [Grade]
-      summary: Obtenir l'historique des modifications d'une note (ADMIN uniquement)
+      summary: Get grade modification history (ADMIN only)
       security:
         - bearerAuth: []
       parameters:
@@ -407,13 +407,13 @@ paths:
                   $ref: "#/components/schemas/GradeHistoryResponse"
 
   # ==========================================
-  # RELEVÉS DE NOTES (TRANSCRIPTS)
+  # TRANSCRIPTS
   # ==========================================
   /api/transcripts/{studentId}:
     get:
       tags: [Transcript]
-      summary: Générer le relevé de notes PDF d'un étudiant (ADMIN)
-      description: Génère le PDF, l'uploade sur AWS S3 et enregistre l'historique (§15).
+      summary: Generate a PDF academic transcript for a student (ADMIN)
+      description: Generates PDF, uploads to AWS S3, and records history (§15).
       security:
         - bearerAuth: []
       parameters:
@@ -431,7 +431,7 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Fichier PDF du relevé de notes
+          description: Binary PDF file of the transcript
           content:
             application/pdf:
               schema:
@@ -441,7 +441,7 @@ paths:
   /api/transcripts/me:
     get:
       tags: [Transcript]
-      summary: Télécharger son propre relevé de notes PDF (STUDENT)
+      summary: Download authenticated student's own PDF transcript (STUDENT)
       security:
         - bearerAuth: []
       responses:
@@ -455,7 +455,7 @@ paths:
   /api/transcripts/{studentId}/send-email:
     post:
       tags: [Transcript]
-      summary: Demander l'envoi asynchrone du relevé de notes par e-mail (ADMIN)
+      summary: Request asynchronous email delivery of transcript (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -473,16 +473,16 @@ paths:
             format: uuid
       responses:
         "222":
-          description: Événement d'envoi d'e-mail accepté (asynchrone)
+          description: Asynchronous email delivery event accepted
 
   # ==========================================
-  # CLASSEMENTS & DIPLÔMÉS
+  # RANKING & GRADUATION
   # ==========================================
   /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas/generate:
     post:
       tags: [Ranking & Graduation]
-      summary: Générer le classement et déterminer les diplômés (ADMIN)
-      description: Détermine les étudiants diplômés (moyenne >= 10/20 sur tous les cours obligatoires des 3 ans) et calcule le rang.
+      summary: Generate ranking and determine graduate students (ADMIN)
+      description: Determines graduates (overall average >= 10/20 on all mandatory courses over 3 years) and calculates rank.
       security:
         - bearerAuth: []
       parameters:
@@ -510,7 +510,7 @@ paths:
   /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas:
     get:
       tags: [Ranking & Graduation]
-      summary: Consulter la liste des diplômés et le classement
+      summary: Get graduates list and ranking for a track
       security:
         - bearerAuth: []
       parameters:
@@ -536,12 +536,12 @@ paths:
                   $ref: "#/components/schemas/DiplomaResponse"
 
   # ==========================================
-  # EXPORT EXCEL DIPLÔMÉS
+  # DIPLOMA EXCEL EXPORT
   # ==========================================
   /api/promotions/{promotionId}/diplomas/excel:
     get:
       tags: [DiplomaExcel]
-      summary: Obtenir l'URL S3 du fichier Excel déjà généré (ADMIN)
+      summary: Get pre-signed S3 download URL for an existing Excel file (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -558,12 +558,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/DiplomaExcelResponse"
         "404":
-          description: Fichier non encore généré
+          description: Excel file not generated yet
 
   /api/promotions/{promotionId}/diplomas/excel/generate:
     post:
       tags: [DiplomaExcel]
-      summary: Générer le fichier Excel des diplômés et persister sur S3 (ADMIN)
+      summary: Generate graduates Excel file and persist link on S3 (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -598,17 +598,17 @@ components:
 
   responses:
     BadRequest:
-      description: Requête invalide
+      description: Invalid request body or parameter
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
     Unauthorized:
-      description: Non authentifié
+      description: Authentication required or invalid token
     Forbidden:
-      description: Droits insuffisants (Accès restreint au rôle ADMIN ou TEACHER selon le cas)
+      description: Access denied (Requires ADMIN or assigned TEACHER role)
     NotFound:
-      description: Ressource non trouvée
+      description: Resource not found
       content:
         application/json:
           schema:
@@ -657,7 +657,7 @@ components:
           example: PROG4
         title:
           type: string
-          example: Programmation 4
+          example: Advanced Programming
         credits:
           type: integer
           example: 5
@@ -688,7 +688,7 @@ components:
           example: EL
         label:
           type: string
-          example: Écosystème Logiciel
+          example: Software Ecosystem
         active:
           type: boolean
 
@@ -790,7 +790,7 @@ components:
           maximum: 20
         reason:
           type: string
-          example: Correction après réclamation
+          example: Correction after student claim
 
     GradeHistoryResponse:
       type: object
@@ -838,7 +838,7 @@ components:
           example: 16.42
         mention:
           type: string
-          example: Très Bien
+          example: Distinction
 
     DiplomaExcelResponse:
       type: object
