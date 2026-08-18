@@ -2,17 +2,23 @@ package com.heigraduate.app.UT.graduate.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.heigraduate.app.file.bucket.BucketComponent;
+import com.heigraduate.app.file.hash.FileHash;
+import com.heigraduate.app.file.hash.FileHashAlgorithm;
 import com.heigraduate.app.graduate.contract.FinalGradeQuery;
 import com.heigraduate.app.graduate.dto.AnnualAverageResult;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Transcript;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TranscriptRepository;
 import com.heigraduate.app.graduate.service.AcademicAverageService;
 import com.heigraduate.app.graduate.service.TranscriptService;
 import java.math.BigDecimal;
@@ -37,6 +43,9 @@ class TranscriptServiceTest {
   @Mock private AcademicYearRepository academicYearRepository;
   @Mock private AcademicAverageService academicAverageService;
   @Mock private FinalGradeQuery finalGradeQuery;
+  // BUG-02 FIX : nouveaux champs injectés dans TranscriptService
+  @Mock private TranscriptRepository transcriptRepository;
+  @Mock private BucketComponent bucketComponent;
 
   @InjectMocks private TranscriptService transcriptService;
 
@@ -116,6 +125,11 @@ class TranscriptServiceTest {
     when(finalGradeQuery.getFinalGrade(student.getId(), course2.getId()))
         .thenReturn(Optional.of(new BigDecimal("12.00")));
 
+    // BUG-02 FIX : stubber upload S3 et persistence transcript
+    when(bucketComponent.upload(any(), any()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
+    when(transcriptRepository.save(any(Transcript.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
     byte[] pdf = transcriptService.generateTranscript(student.getId(), academicYear.getId());
 
     assertThat(pdf).isNotEmpty();
@@ -156,6 +170,12 @@ class TranscriptServiceTest {
         .thenReturn(Optional.empty());
 
     byte[] pdf = transcriptService.generateTranscript(student.getId(), academicYear.getId());
+
+    // BUG-02 FIX : stubber upload S3 et persistence transcript
+    when(bucketComponent.upload(any(), any()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
+    when(transcriptRepository.save(any(Transcript.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     String text = extractText(pdf);
     assertThat(text).contains("RELEVÉ DE NOTES PROVISOIRE");
@@ -200,6 +220,12 @@ class TranscriptServiceTest {
                 List.of(),
                 List.of(),
                 List.of()));
+
+    // BUG-02 FIX : stubber upload S3 et save transcript
+    when(bucketComponent.upload(any(), any()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
+    when(transcriptRepository.save(any(Transcript.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     byte[] pdf = transcriptService.generateTranscriptForUser(student.getUserId());
 

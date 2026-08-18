@@ -103,7 +103,7 @@ class ExamServiceTest {
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
 
-    when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+    when(examRepository.findByCourseIdAndSemesterId(course.getId(), semester.getId()))
         .thenReturn(List.of());
 
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -149,7 +149,7 @@ class ExamServiceTest {
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
 
-    when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+    when(examRepository.findByCourseIdAndSemesterId(course.getId(), semester.getId()))
         .thenReturn(List.of(existingExam));
 
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -194,7 +194,7 @@ class ExamServiceTest {
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
 
-    when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+    when(examRepository.findByCourseIdAndSemesterId(course.getId(), semester.getId()))
         .thenReturn(List.of(existingExam));
 
     assertThatThrownBy(() -> examService.create(request))
@@ -267,7 +267,7 @@ class ExamServiceTest {
 
     when(semesterRepository.findById(semester.getId())).thenReturn(Optional.of(semester));
 
-    when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
+    when(examRepository.findByCourseIdAndSemesterId(course.getId(), semester.getId()))
         .thenReturn(List.of(examToUpdate));
 
     when(examRepository.save(any(Exam.class))).thenAnswer(invocation -> invocation.getArgument(0));

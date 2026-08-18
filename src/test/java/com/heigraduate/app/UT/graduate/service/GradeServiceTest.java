@@ -19,11 +19,13 @@ import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
 import com.heigraduate.app.graduate.repository.TeacherRepository;
 import com.heigraduate.app.graduate.service.AssignmentService;
 import com.heigraduate.app.graduate.service.GradeService;
+import com.heigraduate.app.graduate.validator.ExamValidator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -41,10 +43,12 @@ import org.springframework.security.access.AccessDeniedException;
 class GradeServiceTest {
 
   @Mock private GradeRepository gradeRepository;
+  @Mock private GradeHistoryRepository gradeHistoryRepository;
   @Mock private StudentRepository studentRepository;
   @Mock private ExamRepository examRepository;
   @Mock private TeacherRepository teacherRepository;
   @Mock private AssignmentService assignmentService;
+  @Mock private ExamValidator examValidator;
 
   @InjectMocks private GradeService gradeService;
 
