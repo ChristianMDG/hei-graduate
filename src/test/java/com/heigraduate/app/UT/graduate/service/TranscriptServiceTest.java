@@ -169,13 +169,13 @@ class TranscriptServiceTest {
     when(finalGradeQuery.getFinalGrade(student.getId(), course2.getId()))
         .thenReturn(Optional.empty());
 
-    byte[] pdf = transcriptService.generateTranscript(student.getId(), academicYear.getId());
-
-    // BUG-02 FIX : stubber upload S3 et persistence transcript
+    // BUG-02 FIX : stubs upload S3 + persistence AVANT l'appel
     when(bucketComponent.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(transcriptRepository.save(any(Transcript.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+
+    byte[] pdf = transcriptService.generateTranscript(student.getId(), academicYear.getId());
 
     String text = extractText(pdf);
     assertThat(text).contains("RELEVÉ DE NOTES PROVISOIRE");

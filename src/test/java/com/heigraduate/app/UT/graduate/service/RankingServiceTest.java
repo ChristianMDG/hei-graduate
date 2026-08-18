@@ -100,14 +100,13 @@ class RankingServiceTest {
     UUID otherParcoursStudent = UUID.randomUUID();
 
     when(promotionRepository.findById(promotionId)).thenReturn(Optional.of(promotion));
-    when(enrollmentRepository.findAll())
+    when(enrollmentRepository.findByParcoursId(parcoursId))
         .thenReturn(
             List.of(
                 enrollment(studentJean, parcoursId),
                 enrollment(studentMarie, parcoursId),
                 enrollment(studentPaul, parcoursId),
-                enrollment(studentNonGraduated, parcoursId),
-                enrollment(otherParcoursStudent, UUID.randomUUID())));
+                enrollment(studentNonGraduated, parcoursId)));
 
     when(graduationService.determineGraduation(studentJean))
         .thenReturn(
@@ -150,6 +149,8 @@ class RankingServiceTest {
     assertThat(ranking.get(2).studentId()).isEqualTo(studentPaul);
     assertThat(ranking.get(2).rank()).isEqualTo(3);
 
+    // Le test vérifie que generateRanking ne filtre plus par parcours en mémoire
+    // mais via findByParcoursId() — les étudiants d'un autre parcours ne sont pas chargés.
     verify(graduationService, never()).determineGraduation(otherParcoursStudent);
     verify(diplomaRepository).deleteByPromotionIdAndParcoursId(promotionId, parcoursId);
   }
@@ -162,7 +163,7 @@ class RankingServiceTest {
     UUID passable = UUID.randomUUID();
 
     when(promotionRepository.findById(promotionId)).thenReturn(Optional.of(promotion));
-    when(enrollmentRepository.findAll())
+    when(enrollmentRepository.findByParcoursId(parcoursId))
         .thenReturn(
             List.of(
                 enrollment(excellent, parcoursId),
@@ -208,7 +209,8 @@ class RankingServiceTest {
     UUID studentId = UUID.randomUUID();
 
     when(promotionRepository.findById(promotionId)).thenReturn(Optional.of(promotion));
-    when(enrollmentRepository.findAll()).thenReturn(List.of(enrollment(studentId, parcoursId)));
+    when(enrollmentRepository.findByParcoursId(parcoursId))
+        .thenReturn(List.of(enrollment(studentId, parcoursId)));
     when(graduationService.determineGraduation(studentId))
         .thenReturn(
             new GraduationResult(
