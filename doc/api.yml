@@ -1,31 +1,98 @@
 openapi: 3.0.3
 info:
-  title: HEI Graduate — Course API
+  title: HEI Graduate — API Spécification Complète
   description: >
-    CRUD endpoints for the COURSE entity (unique reference, title, credits,
-    active status). Restricted to the ADMINISTRATOR role — see spec §2.1.
-    No physical deletion: DELETE deactivates the course (active=false).
+    Documentation OpenAPI complète pour l'application HEI Graduate.
+    Gère les étudiants, enseignants, cours, parcours (EL/TN), groupes, affectations, 
+    examens, notes, historisations, relevés PDF, classements de diplômés et exports Excel S3.
   version: 1.0.0
 
 servers:
   - url: http://localhost:8080
-    description: Local development
+    description: Serveur de Développement Local
 
 tags:
+  - name: Auth
+    description: Authentification JWT (Login, Profil)
+  - name: Student
+    description: Gestion des étudiants
+  - name: Teacher
+    description: Gestion des enseignants
   - name: Course
-    description: Course management (curriculum reference data)
+    description: Gestion du catalogue de cours
+  - name: Parcours
+    description: Gestion des parcours (EL - Écosystème Logiciel, TN - Transformation Numérique)
+  - name: Group
+    description: Gestion des groupes d'étudiants (K1, K2, K3)
+  - name: AcademicYear
+    description: Gestion des années universitaires (L1, L2, L3)
+  - name: Semester
+    description: Gestion des semestres (30 crédits ECTS par semestre)
+  - name: Assignment
+    description: Affectation des enseignants aux cours, années et groupes
+  - name: Enrollment
+    description: Inscriptions des étudiants, historique et changements de groupe/parcours
+  - name: Exam
+    description: Gestion des examens et validation de la somme des coefficients (=1 par semestre)
+  - name: Grade
+    description: Saisie, consultation, publication des notes et historique des modifications
+  - name: Transcript
+    description: Génération des relevés de notes PDF et envoi asynchrone par e-mail
+  - name: Ranking & Graduation
+    description: Détermination des diplômés sur 3 ans et classement par promotion et parcours
+  - name: DiplomaExcel
+    description: Export Excel de la liste des diplômés et récupération du lien S3 sauvegardé
 
 paths:
-  /api/courses:
+  # ==========================================
+  # AUTHENTIFICATION
+  # ==========================================
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Authentification utilisateur (JWT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Connexion réussie, retourne le token JWT et le rôle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/me:
     get:
-      tags: [Course]
-      operationId: getAllCourses
-      summary: List all courses
+      tags: [Auth]
+      summary: Obtenir le profil de l'utilisateur connecté
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: List of courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ==========================================
+  # COURS
+  # ==========================================
+  /api/courses:
+    get:
+      tags: [Course]
+      summary: Lister tous les cours
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
           content:
             application/json:
               schema:
@@ -34,13 +101,10 @@ paths:
                   $ref: "#/components/schemas/CourseResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
 
     post:
       tags: [Course]
-      operationId: createCourse
-      summary: Create a course
+      summary: Créer un cours (ADMIN)
       security:
         - bearerAuth: []
       requestBody:
@@ -51,53 +115,39 @@ paths:
               $ref: "#/components/schemas/CourseRequest"
       responses:
         "201":
-          description: Course created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CourseResponse"
         "400":
-          description: courseReference already exists, or invalid fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/BadRequest"
         "403":
           $ref: "#/components/responses/Forbidden"
 
   /api/courses/{id}:
     get:
       tags: [Course]
-      operationId: getCourseById
-      summary: Get a course by id
+      summary: Obtenir un cours par ID
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/CourseId"
+        - $ref: "#/components/parameters/PathId"
       responses:
         "200":
-          description: Course found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CourseResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Course]
-      operationId: updateCourse
-      summary: Update a course
+      summary: Modifier un cours (ADMIN)
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/CourseId"
+        - $ref: "#/components/parameters/PathId"
       requestBody:
         required: true
         content:
@@ -106,41 +156,429 @@ paths:
               $ref: "#/components/schemas/CourseRequest"
       responses:
         "200":
-          description: Course updated
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CourseResponse"
-        "400":
-          description: Invalid fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
 
     delete:
       tags: [Course]
-      operationId: deactivateCourse
-      summary: Deactivate a course (no physical deletion)
+      summary: Désactiver un cours (ADMIN)
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/CourseId"
+        - $ref: "#/components/parameters/PathId"
       responses:
         "204":
-          description: Course deactivated
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Cours désactivé avec succès
         "403":
           $ref: "#/components/responses/Forbidden"
+
+  # ==========================================
+  # PARCOURS
+  # ==========================================
+  /api/parcours:
+    get:
+      tags: [Parcours]
+      summary: Lister les parcours (EL, TN, etc.)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParcoursResponse"
+
+    post:
+      tags: [Parcours]
+      summary: Créer un parcours (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParcoursRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParcoursResponse"
+
+  # ==========================================
+  # EXAMENS
+  # ==========================================
+  /api/exams:
+    get:
+      tags: [Exam]
+      summary: Lister les examens d'un cours et/ou semestre
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: courseId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: semesterId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExamResponse"
+
+    post:
+      tags: [Exam]
+      summary: Créer un examen (ADMIN)
+      description: Vérifie que la somme des coefficients des examens du cours/semestre ne dépasse pas 1.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamResponse"
+        "400":
+          description: Somme des coefficients > 1 ou numérateur > dénominateur
+
+  # ==========================================
+  # NOTES
+  # ==========================================
+  /api/grades:
+    get:
+      tags: [Grade]
+      summary: Obtenir toutes les notes (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Grade]
+      summary: Saisir une note (ADMIN ou TEACHER affecté)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeResponse"
+        "403":
+          description: Enseignant non affecté à ce cours
+        "409":
+          description: Note déjà saisie pour cet étudiant et cet examen
+
+  /api/grades/me:
+    get:
+      tags: [Grade]
+      summary: Obtenir ses propres notes publiées (STUDENT)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeResponse"
+
+  /api/grades/student/{studentId}:
+    get:
+      tags: [Grade]
+      summary: Obtenir les notes d'un étudiant (ADMIN ou TEACHER pour ses cours)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeResponse"
+
+  /api/grades/{id}:
+    put:
+      tags: [Grade]
+      summary: Modifier une note avec raison (ADMIN ou TEACHER affecté)
+      description: Conserve l'historique dans grade_history (§9).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeUpdateRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeResponse"
+
+  /api/grades/{id}/publish:
+    post:
+      tags: [Grade]
+      summary: Publier une note (ADMIN uniquement)
+      description: Bloqué si la somme des coefficients des examens du cours/semestre n'est pas égale à 1 (§7/§10).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeResponse"
+        "400":
+          description: Somme des coefficients != 1
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/grades/{id}/history:
+    get:
+      tags: [Grade]
+      summary: Obtenir l'historique des modifications d'une note (ADMIN uniquement)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeHistoryResponse"
+
+  # ==========================================
+  # RELEVÉS DE NOTES (TRANSCRIPTS)
+  # ==========================================
+  /api/transcripts/{studentId}:
+    get:
+      tags: [Transcript]
+      summary: Générer le relevé de notes PDF d'un étudiant (ADMIN)
+      description: Génère le PDF, l'uploade sur AWS S3 et enregistre l'historique (§15).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Fichier PDF du relevé de notes
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/transcripts/me:
+    get:
+      tags: [Transcript]
+      summary: Télécharger son propre relevé de notes PDF (STUDENT)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/transcripts/{studentId}/send-email:
+    post:
+      tags: [Transcript]
+      summary: Demander l'envoi asynchrone du relevé de notes par e-mail (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "222":
+          description: Événement d'envoi d'e-mail accepté (asynchrone)
+
+  # ==========================================
+  # CLASSEMENTS & DIPLÔMÉS
+  # ==========================================
+  /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas/generate:
+    post:
+      tags: [Ranking & Graduation]
+      summary: Générer le classement et déterminer les diplômés (ADMIN)
+      description: Détermine les étudiants diplômés (moyenne >= 10/20 sur tous les cours obligatoires des 3 ans) et calcule le rang.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: parcoursId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiplomaResponse"
+
+  /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas:
+    get:
+      tags: [Ranking & Graduation]
+      summary: Consulter la liste des diplômés et le classement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: parcoursId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiplomaResponse"
+
+  # ==========================================
+  # EXPORT EXCEL DIPLÔMÉS
+  # ==========================================
+  /api/promotions/{promotionId}/diplomas/excel:
+    get:
+      tags: [DiplomaExcel]
+      summary: Obtenir l'URL S3 du fichier Excel déjà généré (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiplomaExcelResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Fichier non encore généré
+
+  /api/promotions/{promotionId}/diplomas/excel/generate:
+    post:
+      tags: [DiplomaExcel]
+      summary: Générer le fichier Excel des diplômés et persister sur S3 (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiplomaExcelResponse"
 
 components:
   securitySchemes:
@@ -150,7 +588,7 @@ components:
       bearerFormat: JWT
 
   parameters:
-    CourseId:
+    PathId:
       name: id
       in: path
       required: true
@@ -159,22 +597,57 @@ components:
         format: uuid
 
   responses:
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
     Unauthorized:
-      description: Not authenticated
+      description: Non authentifié
     Forbidden:
-      description: Authenticated but ADMINISTRATOR role required (spec §2.1)
+      description: Droits insuffisants (Accès restreint au rôle ADMIN ou TEACHER selon le cas)
     NotFound:
-      description: No course found for this id
+      description: Ressource non trouvée
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
 
   schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: admin@hei.mg
+        password:
+          type: string
+          example: password123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        role:
+          type: string
+          example: ADMIN
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        role:
+          type: string
+
     CourseResponse:
       type: object
-      description: Output representation of a course.
-      required: [id, courseReference, title, credits, active]
       properties:
         id:
           type: string
@@ -184,31 +657,195 @@ components:
           example: PROG4
         title:
           type: string
-          example: Advanced Programming
+          example: Programmation 4
         credits:
           type: integer
           example: 5
         active:
           type: boolean
-          example: true
 
     CourseRequest:
       type: object
-      description: Expected request body to create/update a course.
       required: [courseReference, title, credits]
       properties:
         courseReference:
           type: string
-          minLength: 1
-          example: PROG4
         title:
           type: string
-          minLength: 1
-          example: Advanced Programming
         credits:
           type: integer
           minimum: 1
-          example: 5
+          maximum: 30
+
+    ParcoursResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: EL
+        label:
+          type: string
+          example: Écosystème Logiciel
+        active:
+          type: boolean
+
+    ParcoursRequest:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+
+    ExamResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        semesterId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        coefficientNumerator:
+          type: integer
+          example: 1
+        coefficientDenominator:
+          type: integer
+          example: 2
+
+    ExamRequest:
+      type: object
+      required: [courseId, academicYearId, semesterId, label, coefficientNumerator, coefficientDenominator]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        semesterId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        coefficientNumerator:
+          type: integer
+        coefficientDenominator:
+          type: integer
+
+    GradeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        examId:
+          type: string
+          format: uuid
+        value:
+          type: number
+          format: float
+          example: 15.5
+        status:
+          type: string
+          example: DRAFT
+        enteredAt:
+          type: string
+          format: date-time
+
+    GradeRequest:
+      type: object
+      required: [studentId, examId, value]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        examId:
+          type: string
+          format: uuid
+        value:
+          type: number
+          minimum: 0
+          maximum: 20
+
+    GradeUpdateRequest:
+      type: object
+      required: [value, reason]
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 20
+        reason:
+          type: string
+          example: Correction après réclamation
+
+    GradeHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        gradeId:
+          type: string
+          format: uuid
+        oldValue:
+          type: number
+        newValue:
+          type: number
+        reason:
+          type: string
+        changedByUserId:
+          type: string
+          format: uuid
+        changedAt:
+          type: string
+          format: date-time
+
+    DiplomaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        studentNumber:
+          type: string
+          example: STD24049
+        lastName:
+          type: string
+        firstName:
+          type: string
+        rank:
+          type: integer
+          example: 1
+        overallAverage:
+          type: number
+          example: 16.42
+        mention:
+          type: string
+          example: Très Bien
+
+    DiplomaExcelResponse:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+          example: https://s3.amazonaws.com/bucket/diplomas/generated.xlsx
 
     ApiError:
       type: object
