@@ -41,6 +41,7 @@ public class GradeService implements FinalGradeQuery {
   private final ExamRepository examRepository;
   private final TeacherRepository teacherRepository;
   private final AssignmentService assignmentService;
+  private final com.heigraduate.app.graduate.validator.ExamValidator examValidator;
 
   @Transactional(readOnly = true)
   public List<GradeResponse> findAll() {
@@ -72,6 +73,38 @@ public class GradeService implements FinalGradeQuery {
                     new ResourceNotFoundException("No student profile linked to user: " + userId));
 
     return findPublishedForStudent(student.getId());
+  }
+
+  /**
+   * BUG-08 FIX — Retourne les notes d'un étudiant donné, filtrées aux cours de l'enseignant.
+   *
+   * <p>Un enseignant ne voit que les notes des cours auxquels il est affecté (§6/§18). L'ADMIN voit
+   * toutes les notes sans restriction.
+   */
+  @Transactional(readOnly = true)
+  public List<GradeResponse> findGradesForStudent(UUID studentId, User actingUser) {
+    if ("ADMIN".equals(actingUser.getRole().name())) {
+      return gradeRepository.findByStudentId(studentId).stream()
+          .map(GradeMapper::toResponse)
+          .toList();
+    }
+
+    // TEACHER : on filtre aux cours où il est affecté
+    Teacher teacher =
+        teacherRepository
+            .findByUserId(actingUser.getId())
+            .orElseThrow(
+                () -> new AccessDeniedException("No teacher profile linked to this account"));
+
+    return gradeRepository.findByStudentId(studentId).stream()
+        .filter(
+            grade ->
+                assignmentService.isTeacherAssignedToCourse(
+                    teacher.getId(),
+                    grade.getExam().getCourse().getId(),
+                    grade.getExam().getAcademicYear().getId()))
+        .map(GradeMapper::toResponse)
+        .toList();
   }
 
   @Transactional
@@ -173,12 +206,30 @@ public class GradeService implements FinalGradeQuery {
         .toList();
   }
 
+  /**
+   * BUG-09/10 FIX — publish() publie une note (la rend visible aux étudiants).
+   *
+   * <p>BUG-09 : Cette méthode est uniquement accessible à l'ADMIN (cf. GradeController). Un
+   * enseignant ne peut pas publier les notes d'un cours auquel il n'est pas affecté.
+   *
+   * <p>BUG-10 : Avant de publier, on vérifie que la somme des coefficients des examens du cours +
+   * semestre concerné est exactement égale à 1 (§7 cahier des charges). Si un examen manque encore,
+   * la publication est bloquée.
+   */
   @Transactional
   public GradeResponse publish(UUID id) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+
+    Exam exam = grade.getExam();
+
+    // BUG-10 FIX : vérifier que la somme des coefficients = 1 avant publication
+    if (exam.getSemester() != null) {
+      examValidator.validateCoefficientSumEqualsOne(
+          exam.getCourse().getId(), exam.getSemester().getId());
+    }
 
     grade.setStatus(GradeStatus.PUBLISHED);
 

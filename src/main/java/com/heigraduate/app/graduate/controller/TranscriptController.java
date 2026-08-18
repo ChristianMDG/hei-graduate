@@ -43,7 +43,9 @@ public class TranscriptController {
   }
 
   @PostMapping("/{studentId}/send-email")
-  @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+  // BUG-11 FIX: l'envoi du relevé est une action administrative (§15/§6).
+  // Un enseignant ne doit pas pouvoir déclencher l'envoi du relevé d'un étudiant.
+  @PreAuthorize("hasRole('ADMIN')")
   @ResponseStatus(HttpStatus.ACCEPTED)
   public void sendByEmail(@PathVariable UUID studentId, @RequestParam UUID academicYearId) {
     var event =
