@@ -10,6 +10,7 @@ import java.util.UUID;
 public record ExamRequest(
     @NotNull UUID courseId,
     @NotNull UUID academicYearId,
+    @NotNull UUID semesterId,
     @NotBlank String label,
     @NotNull LocalDate date,
     @NotNull LocalTime startTime,
