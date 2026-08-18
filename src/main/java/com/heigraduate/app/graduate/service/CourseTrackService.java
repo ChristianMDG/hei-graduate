@@ -62,6 +62,24 @@ public class CourseTrackService implements CourseRequirementQuery {
                     new ResourceNotFoundException(
                         "Semester not found with id: " + request.semesterId()));
 
+    // NC-12 FIX (§2.1) — Règle LMD : un semestre représente 30 crédits ECTS.
+    // La somme des crédits des cours d'un semestre pour un parcours ne peut dépasser 30 ECTS.
+    List<CourseTrack> existingTracks =
+        courseTrackRepository.findByTrackIdAndSemesterId(request.trackId(), request.semesterId());
+    int currentCredits = existingTracks.stream().mapToInt(ct -> ct.getCourse().getCredits()).sum();
+    int newTotal = currentCredits + course.getCredits();
+
+    if (newTotal > 30) {
+      throw new com.heigraduate.app.graduate.exception.BadRequestException(
+          "Adding this course ("
+              + course.getCredits()
+              + " ECTS) would exceed the 30 ECTS limit per semester for track "
+              + track.getCode()
+              + " (current: "
+              + currentCredits
+              + " ECTS)");
+    }
+
     CourseTrack courseTrack =
         CourseTrack.builder()
             .course(course)
