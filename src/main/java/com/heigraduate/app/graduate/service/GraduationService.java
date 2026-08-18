@@ -71,6 +71,7 @@ public class GraduationService {
       // NC-02 FIX (§12) : dédupliquer les cours obligatoires par courseId.
       // Un cours commun à deux parcours (ex : commun → EL dans la même année) ne doit
       // être évalué qu'une seule fois. LinkedHashMap.put() écrase silencieusement les doublons.
+      Map<UUID, Integer> mandatoryCoursesThisYear = new LinkedHashMap<>();
       for (UUID parcoursId : parcoursIdsThisYear) {
         List<UUID> mandatoryCourseIds =
             courseRequirementQuery.getMandatoryCourseIds(parcoursId, year.getId());
