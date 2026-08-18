@@ -31,6 +31,21 @@ FROM (
 WHERE e.semester_id IS NULL
   AND e.academic_year_id = sub.academic_year_id;
 
+-- Backfill (pass 3, dernier repli) : si l'academic_year_id de l'examen ne
+-- correspond a AUCUN semestre existant (donnee orpheline), rattacher au
+-- semestre dont la start_date est la plus proche de la date de l'examen,
+-- toutes annees confondues. Sans ce filet, l'ALTER COLUMN ... SET NOT NULL
+-- ci-dessous echoue avec SQLSTATE 23502 des qu'une seule ligne reste NULL.
+UPDATE exam e
+SET semester_id = closest.id
+FROM LATERAL (
+    SELECT s.id
+    FROM semester s
+    ORDER BY ABS(EXTRACT(EPOCH FROM (e.date - s.start_date)))
+    LIMIT 1
+) closest
+WHERE e.semester_id IS NULL;
+
 ALTER TABLE exam
     ALTER COLUMN semester_id SET NOT NULL;
 
