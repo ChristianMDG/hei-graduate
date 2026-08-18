@@ -58,6 +58,15 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers("/api/users", "/api/users/**")
                     .hasRole("ADMIN")
+                    .requestMatchers(
+                        "/login",
+                        "/promotions",
+                        "/promotions/**",
+                        "/notes",
+                        "/notes/**",
+                        "/releves",
+                        "/releves/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(bearerAuthFilter, UsernamePasswordAuthenticationFilter.class)
