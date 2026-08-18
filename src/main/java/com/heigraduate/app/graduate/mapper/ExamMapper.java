@@ -14,6 +14,8 @@ public class ExamMapper {
         exam.getCourse().getCourseReference(),
         exam.getAcademicYear().getId(),
         exam.getAcademicYear().getLabel(),
+        exam.getSemester().getId(),
+        exam.getSemester().getLabel(),
         exam.getLabel(),
         exam.getDate(),
         exam.getStartTime(),
