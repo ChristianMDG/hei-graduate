@@ -33,6 +33,9 @@ public class Grade {
   @Column(nullable = false, precision = 4, scale = 2)
   private BigDecimal value;
 
+  @Column(name = "entered_by_user_id")
+  private UUID enteredByUserId;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   @Builder.Default

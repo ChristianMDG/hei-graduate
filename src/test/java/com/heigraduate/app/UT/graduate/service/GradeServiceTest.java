@@ -158,7 +158,8 @@ class GradeServiceTest {
     when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
         .thenReturn(true);
 
-    assertThatThrownBy(() -> gradeService.create(request)).isInstanceOf(ConflictException.class);
+    assertThatThrownBy(() -> gradeService.create(request, UUID.randomUUID()))
+        .isInstanceOf(ConflictException.class);
 
     verify(gradeRepository, never()).save(any());
   }
@@ -176,9 +177,11 @@ class GradeServiceTest {
     when(gradeRepository.save(any(Grade.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    GradeResponse result = gradeService.create(request);
+    UUID teacherUserId = UUID.randomUUID();
+    GradeResponse result = gradeService.create(request, teacherUserId);
 
     assertThat(result.status()).isEqualTo(GradeStatus.DRAFT);
+    assertThat(result.enteredByUserId()).isEqualTo(teacherUserId);
   }
 
   @Test
@@ -246,7 +249,7 @@ class GradeServiceTest {
         .thenReturn(false);
     when(studentRepository.findById(student.getId())).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> gradeService.create(request))
+    assertThatThrownBy(() -> gradeService.create(request, UUID.randomUUID()))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 }

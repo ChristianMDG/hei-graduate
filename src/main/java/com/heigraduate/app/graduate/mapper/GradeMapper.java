@@ -17,6 +17,7 @@ public class GradeMapper {
         grade.getExam().getCourse().getId(),
         grade.getExam().getCourse().getCourseReference(),
         grade.getValue(),
-        grade.getStatus());
+        grade.getStatus(),
+        grade.getEnteredByUserId());
   }
 }

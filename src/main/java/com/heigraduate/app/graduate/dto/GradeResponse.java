@@ -13,4 +13,5 @@ public record GradeResponse(
     UUID courseId,
     String courseReference,
     BigDecimal value,
-    GradeStatus status) {}
+    GradeStatus status,
+    UUID enteredByUserId) {}
