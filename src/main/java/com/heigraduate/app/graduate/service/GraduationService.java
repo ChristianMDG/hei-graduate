@@ -15,10 +15,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -73,23 +71,16 @@ public class GraduationService {
       // NC-02 FIX (§12) : dédupliquer les cours obligatoires par courseId.
       // Un cours commun à deux parcours (ex : commun → EL dans la même année) ne doit
       // être évalué qu'une seule fois. LinkedHashMap.put() écrase silencieusement les doublons.
-      Map<UUID, Integer> mandatoryCoursesThisYear = new LinkedHashMap<>();
       for (UUID parcoursId : parcoursIdsThisYear) {
         List<UUID> mandatoryCourseIds =
             courseRequirementQuery.getMandatoryCourseIds(parcoursId, year.getId());
         for (UUID courseId : mandatoryCourseIds) {
-          Course course =
-              courseRepository
-                  .findById(courseId)
-                  .orElseThrow(
-                      () -> new ResourceNotFoundException("Course not found: " + courseId));
-          mandatoryCoursesThisYear.put(courseId, course.getCredits());
+          // Stocker temporairement 0 crédits si on ne fait pas encore le findById
+          mandatoryCoursesThisYear.putIfAbsent(courseId, 0);
         }
       }
 
-      for (Map.Entry<UUID, Integer> entry : mandatoryCoursesThisYear.entrySet()) {
-        UUID courseId = entry.getKey();
-        int credits = entry.getValue();
+      for (UUID courseId : mandatoryCoursesThisYear.keySet()) {
         mandatoryCourseCount++;
 
         Optional<BigDecimal> finalGrade = finalGradeQuery.getFinalGrade(studentId, courseId);
@@ -98,6 +89,12 @@ public class GraduationService {
           unvalidatedMandatoryCourses.add(courseId);
           continue;
         }
+
+        Course course =
+            courseRepository
+                .findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + courseId));
+        int credits = course.getCredits();
 
         weightedSum = weightedSum.add(finalGrade.get().multiply(BigDecimal.valueOf(credits)));
         gradedCredits += credits;
