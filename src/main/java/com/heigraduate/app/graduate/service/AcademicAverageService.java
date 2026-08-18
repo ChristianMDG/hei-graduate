@@ -110,10 +110,14 @@ public class AcademicAverageService {
       }
     }
 
+    // NC-01 FIX (§11) : la moyenne est pondérée par TOUS les crédits du parcours (expectedCredits),
+    // pas seulement les crédits des cours déjà notés (gradedCredits). Un cours sans note contribue
+    // 0 à la somme pondérée mais son poids reste dans le dénominateur. Cela évite de surestimer
+    // la moyenne quand tous les examens ne sont pas encore publiés.
     BigDecimal average =
-        gradedCredits == 0
+        expectedCredits == 0
             ? null
-            : weightedSum.divide(BigDecimal.valueOf(gradedCredits), 2, RoundingMode.HALF_UP);
+            : weightedSum.divide(BigDecimal.valueOf(expectedCredits), 2, RoundingMode.HALF_UP);
 
     return new AnnualAverageResult(
         studentId,

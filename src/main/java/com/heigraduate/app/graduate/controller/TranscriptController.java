@@ -28,7 +28,10 @@ public class TranscriptController {
   private final EventProducer<TranscriptEmailRequested> eventProducer;
 
   @GetMapping("/{studentId}")
-  @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+  // NC-10 FIX (§18) : génération du relevé d'un étudiant réservée à l'ADMIN.
+  // Un enseignant n'a accès qu'aux cours qui lui sont affectés, pas au relevé complet d'un
+  // étudiant.
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<byte[]> generate(
       @PathVariable UUID studentId, @RequestParam UUID academicYearId) {
     byte[] pdf = transcriptService.generateTranscript(studentId, academicYearId);
