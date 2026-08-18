@@ -18,6 +18,7 @@ public class ExamMapper {
         exam.getDate(),
         exam.getStartTime(),
         exam.getEndTime(),
-        exam.getCoefficient());
+        exam.getCoefficientNumerator(),
+        exam.getCoefficientDenominator());
   }
 }
