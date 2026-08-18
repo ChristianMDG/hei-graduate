@@ -14,11 +14,13 @@ import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TeacherRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -37,6 +39,7 @@ public class GradeService implements FinalGradeQuery {
   private final GradeHistoryRepository gradeHistoryRepository;
   private final StudentRepository studentRepository;
   private final ExamRepository examRepository;
+  private final TeacherRepository teacherRepository;
   private final AssignmentService assignmentService;
 
   @Transactional(readOnly = true)
@@ -138,9 +141,19 @@ public class GradeService implements FinalGradeQuery {
     }
 
     if ("TEACHER".equals(actingUser.getRole().name())) {
+      // BUG corrige : Assignment.teacher_id reference Teacher.id, pas User.id
+      // (ce sont deux UUID distincts - cf. Teacher.userId). Utiliser
+      // actingUser.getId() directement ici bloquait TOUS les enseignants,
+      // meme correctement affectes.
+      Teacher teacher =
+          teacherRepository
+              .findByUserId(actingUser.getId())
+              .orElseThrow(
+                  () -> new AccessDeniedException("No teacher profile linked to this account"));
+
       boolean assigned =
           assignmentService.isTeacherAssignedToCourse(
-              actingUser.getId(), exam.getCourse().getId(), exam.getAcademicYear().getId());
+              teacher.getId(), exam.getCourse().getId(), exam.getAcademicYear().getId());
 
       if (!assigned) {
         throw new AccessDeniedException(

@@ -1,0 +1,185 @@
+diff --git a/src/main/java/com/heigraduate/app/graduate/service/GradeService.java b/src/main/java/com/heigraduate/app/graduate/service/GradeService.java
+index 589b1aa..fc4a5ce 100644
+--- a/src/main/java/com/heigraduate/app/graduate/service/GradeService.java
++++ b/src/main/java/com/heigraduate/app/graduate/service/GradeService.java
+@@ -14,11 +14,13 @@ import com.heigraduate.app.graduate.model.Grade;
+ import com.heigraduate.app.graduate.model.GradeHistory;
+ import com.heigraduate.app.graduate.model.GradeStatus;
+ import com.heigraduate.app.graduate.model.Student;
++import com.heigraduate.app.graduate.model.Teacher;
+ import com.heigraduate.app.graduate.model.User;
+ import com.heigraduate.app.graduate.repository.ExamRepository;
+ import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
+ import com.heigraduate.app.graduate.repository.GradeRepository;
+ import com.heigraduate.app.graduate.repository.StudentRepository;
++import com.heigraduate.app.graduate.repository.TeacherRepository;
+ import java.math.BigDecimal;
+ import java.math.RoundingMode;
+ import java.util.List;
+@@ -37,6 +39,7 @@ public class GradeService implements FinalGradeQuery {
+   private final GradeHistoryRepository gradeHistoryRepository;
+   private final StudentRepository studentRepository;
+   private final ExamRepository examRepository;
++  private final TeacherRepository teacherRepository;
+   private final AssignmentService assignmentService;
+ 
+   @Transactional(readOnly = true)
+@@ -138,9 +141,19 @@ public class GradeService implements FinalGradeQuery {
+     }
+ 
+     if ("TEACHER".equals(actingUser.getRole().name())) {
++      // BUG corrige : Assignment.teacher_id reference Teacher.id, pas User.id
++      // (ce sont deux UUID distincts - cf. Teacher.userId). Utiliser
++      // actingUser.getId() directement ici bloquait TOUS les enseignants,
++      // meme correctement affectes.
++      Teacher teacher =
++          teacherRepository
++              .findByUserId(actingUser.getId())
++              .orElseThrow(
++                  () -> new AccessDeniedException("No teacher profile linked to this account"));
++
+       boolean assigned =
+           assignmentService.isTeacherAssignedToCourse(
+-              actingUser.getId(), exam.getCourse().getId(), exam.getAcademicYear().getId());
++              teacher.getId(), exam.getCourse().getId(), exam.getAcademicYear().getId());
+ 
+       if (!assigned) {
+         throw new AccessDeniedException(
+diff --git a/src/main/resources/db/migration/V42_28__add_semester_fk_on_exam.sql b/src/main/resources/db/migration/V42_30__add_semester_fk_on_exam.sql
+similarity index 71%
+rename from src/main/resources/db/migration/V42_28__add_semester_fk_on_exam.sql
+rename to src/main/resources/db/migration/V42_30__add_semester_fk_on_exam.sql
+index 06d74de..7768b0c 100644
+--- a/src/main/resources/db/migration/V42_28__add_semester_fk_on_exam.sql
++++ b/src/main/resources/db/migration/V42_30__add_semester_fk_on_exam.sql
+@@ -31,6 +31,21 @@ FROM (
+ WHERE e.semester_id IS NULL
+   AND e.academic_year_id = sub.academic_year_id;
+ 
++-- Backfill (pass 3, dernier repli) : si l'academic_year_id de l'examen ne
++-- correspond a AUCUN semestre existant (donnee orpheline), rattacher au
++-- semestre dont la start_date est la plus proche de la date de l'examen,
++-- toutes annees confondues. Sans ce filet, l'ALTER COLUMN ... SET NOT NULL
++-- ci-dessous echoue avec SQLSTATE 23502 des qu'une seule ligne reste NULL.
++UPDATE exam e
++SET semester_id = closest.id
++FROM LATERAL (
++    SELECT s.id
++    FROM semester s
++    ORDER BY ABS(EXTRACT(EPOCH FROM (e.date - s.start_date)))
++    LIMIT 1
++) closest
++WHERE e.semester_id IS NULL;
++
+ ALTER TABLE exam
+     ALTER COLUMN semester_id SET NOT NULL;
+ 
+diff --git a/src/test/java/com/heigraduate/app/UT/graduate/service/GradeServiceTest.java b/src/test/java/com/heigraduate/app/UT/graduate/service/GradeServiceTest.java
+index 50050b7..5433088 100644
+--- a/src/test/java/com/heigraduate/app/UT/graduate/service/GradeServiceTest.java
++++ b/src/test/java/com/heigraduate/app/UT/graduate/service/GradeServiceTest.java
+@@ -15,11 +15,13 @@ import com.heigraduate.app.graduate.model.Exam;
+ import com.heigraduate.app.graduate.model.Grade;
+ import com.heigraduate.app.graduate.model.GradeStatus;
+ import com.heigraduate.app.graduate.model.Student;
++import com.heigraduate.app.graduate.model.Teacher;
+ import com.heigraduate.app.graduate.model.User;
+ import com.heigraduate.app.graduate.model.UserRole;
+ import com.heigraduate.app.graduate.repository.ExamRepository;
+ import com.heigraduate.app.graduate.repository.GradeRepository;
+ import com.heigraduate.app.graduate.repository.StudentRepository;
++import com.heigraduate.app.graduate.repository.TeacherRepository;
+ import com.heigraduate.app.graduate.service.AssignmentService;
+ import com.heigraduate.app.graduate.service.GradeService;
+ import java.math.BigDecimal;
+@@ -41,6 +43,7 @@ class GradeServiceTest {
+   @Mock private GradeRepository gradeRepository;
+   @Mock private StudentRepository studentRepository;
+   @Mock private ExamRepository examRepository;
++  @Mock private TeacherRepository teacherRepository;
+   @Mock private AssignmentService assignmentService;
+ 
+   @InjectMocks private GradeService gradeService;
+@@ -51,6 +54,7 @@ class GradeServiceTest {
+   private Exam continuousControl;
+   private Exam finalExam;
+   private User actingUser;
++  private Teacher teacher;
+ 
+   @BeforeEach
+   void setUp() {
+@@ -105,6 +109,14 @@ class GradeServiceTest {
+ 
+     actingUser =
+         User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
++
++    teacher =
++        Teacher.builder()
++            .id(UUID.randomUUID())
++            .userId(actingUser.getId())
++            .lastName("Rakoto")
++            .firstName("Jean")
++            .build();
+   }
+ 
+   @Test
+@@ -190,8 +202,10 @@ class GradeServiceTest {
+     when(examRepository.findById(continuousControl.getId()))
+         .thenReturn(Optional.of(continuousControl));
+ 
++    when(teacherRepository.findByUserId(actingUser.getId())).thenReturn(Optional.of(teacher));
++
+     when(assignmentService.isTeacherAssignedToCourse(
+-            actingUser.getId(), course.getId(), year.getId()))
++            teacher.getId(), course.getId(), year.getId()))
+         .thenReturn(true);
+ 
+     when(gradeRepository.save(any(Grade.class)))
+@@ -202,11 +216,34 @@ class GradeServiceTest {
+     assertThat(result.status()).isEqualTo(GradeStatus.DRAFT);
+ 
+     verify(assignmentService)
+-        .isTeacherAssignedToCourse(actingUser.getId(), course.getId(), year.getId());
++        .isTeacherAssignedToCourse(teacher.getId(), course.getId(), year.getId());
+ 
+     verify(gradeRepository).save(any(Grade.class));
+   }
+ 
++  @Test
++  void create_shouldThrow403_whenTeacherHasNoTeacherProfileLinkedToUser() {
++    GradeRequest request =
++        new GradeRequest(student.getId(), continuousControl.getId(), new BigDecimal("15"));
++
++    when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
++        .thenReturn(false);
++
++    when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
++
++    when(examRepository.findById(continuousControl.getId()))
++        .thenReturn(Optional.of(continuousControl));
++
++    when(teacherRepository.findByUserId(actingUser.getId())).thenReturn(Optional.empty());
++
++    assertThatThrownBy(() -> gradeService.create(request, actingUser))
++        .isInstanceOf(AccessDeniedException.class);
++
++    // Regression guard: Assignment.teacherId references Teacher.id, never User.id.
++    verify(assignmentService, never()).isTeacherAssignedToCourse(any(), any(), any());
++    verify(gradeRepository, never()).save(any());
++  }
++
+   @Test
+   void create_shouldThrow403_whenTeacherIsNotAssignedToCourse() {
+     GradeRequest request =
+@@ -220,8 +257,10 @@ class GradeServiceTest {
+     when(examRepository.findById(continuousControl.getId()))
+         .thenReturn(Optional.of(continuousControl));
+ 
++    when(teacherRepository.findByUserId(actingUser.getId())).thenReturn(Optional.of(teacher));
++
+     when(assignmentService.isTeacherAssignedToCourse(
+-            actingUser.getId(), course.getId(), year.getId()))
++            teacher.getId(), course.getId(), year.getId()))
+         .thenReturn(false);
+ 
+     assertThatThrownBy(() -> gradeService.create(request, actingUser))
