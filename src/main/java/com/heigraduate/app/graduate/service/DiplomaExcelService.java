@@ -43,13 +43,6 @@ public class DiplomaExcelService {
   private final RankingService rankingService;
   private final BucketComponent bucketComponent;
 
-  /**
-   * Génère le fichier Excel des diplômés, l'uploade sur S3 et persiste le lien dans {@code
-   * diploma_list} (MCD LISTE_DIPLOMES, §14).
-   *
-   * <p>BUG-06 FIX — avant ce correctif, le lien S3 n'était jamais sauvegardé en base, rendant
-   * impossible le re-téléchargement sans recalculer tout le classement.
-   */
   @Transactional
   public DiplomaExcelResponse generateExcel(UUID promotionId) {
     Promotion promotion =
@@ -68,8 +61,6 @@ public class DiplomaExcelService {
     String bucketKey = BUCKET_KEY_PREFIX + promotionId + "/" + UUID.randomUUID() + ".xlsx";
     bucketComponent.upload(workbookFile, bucketKey);
 
-    // BUG-06 FIX — Persister le lien S3 dans diploma_list (MCD LISTE_DIPLOMES §14).
-    // On crée une entrée par parcours pour correspondre au MCD (id_promotion FK + id_parcours FK).
     for (UUID parcoursId : parcoursIds) {
       diplomaListRepository
           .findByPromotionIdAndParcoursId(promotionId, parcoursId)
@@ -84,6 +75,18 @@ public class DiplomaExcelService {
                           .build()));
     }
 
+    var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
+    return new DiplomaExcelResponse(downloadUrl.toString());
+  }
+
+  @Transactional(readOnly = true)
+  public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
+    List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
+    if (lists.isEmpty() || lists.get(0).getUrlS3() == null) {
+      throw new ResourceNotFoundException(
+          "No Excel file has been generated yet for promotion: " + promotionId);
+    }
+    String bucketKey = lists.get(0).getUrlS3();
     var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
     return new DiplomaExcelResponse(downloadUrl.toString());
   }
