@@ -69,7 +69,7 @@ public class GradeService implements FinalGradeQuery {
   }
 
   @Transactional
-  public GradeResponse create(GradeRequest request) {
+  public GradeResponse create(GradeRequest request, User actingUser) {
     if (gradeRepository.existsByStudentIdAndExamId(request.studentId(), request.examId())) {
       throw new ConflictException("A grade already exists for this student and this exam");
     }
@@ -92,6 +92,7 @@ public class GradeService implements FinalGradeQuery {
             .student(student)
             .exam(exam)
             .value(request.value())
+            .enteredByUserId(actingUser.getId())
             .status(GradeStatus.DRAFT)
             .build();
 

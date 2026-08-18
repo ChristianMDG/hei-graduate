@@ -16,7 +16,7 @@ import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.service.ExamService;
-import java.math.BigDecimal;
+import com.heigraduate.app.graduate.validator.ExamValidator;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -25,7 +25,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -36,7 +35,8 @@ class ExamServiceTest {
   @Mock private CourseRepository courseRepository;
   @Mock private AcademicYearRepository academicYearRepository;
 
-  @InjectMocks private ExamService examService;
+  private ExamValidator examValidator;
+  private ExamService examService;
 
   private Course course;
   private AcademicYear year;
@@ -46,6 +46,10 @@ class ExamServiceTest {
 
   @BeforeEach
   void setUp() {
+    examValidator = new ExamValidator(examRepository);
+    examService =
+        new ExamService(examRepository, courseRepository, academicYearRepository, examValidator);
+
     course =
         Course.builder()
             .id(UUID.randomUUID())
@@ -73,13 +77,7 @@ class ExamServiceTest {
   void create_shouldSaveExam_whenCoefficientSumStaysUnderOne() {
     ExamRequest request =
         new ExamRequest(
-            course.getId(),
-            year.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.6"));
+            course.getId(), year.getId(), "Examen final", examDate, startTime, endTime, 3, 5);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
@@ -89,10 +87,9 @@ class ExamServiceTest {
 
     ExamResponse result = examService.create(request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.6");
+    assertThat(result.coefficientNumerator()).isEqualTo(3);
+    assertThat(result.coefficientDenominator()).isEqualTo(5);
     assertThat(result.date()).isEqualTo(examDate);
-    assertThat(result.startTime()).isEqualTo(startTime);
-    assertThat(result.endTime()).isEqualTo(endTime);
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -107,18 +104,13 @@ class ExamServiceTest {
             .date(examDate.minusMonths(1))
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.6"))
+            .coefficientNumerator(3)
+            .coefficientDenominator(5)
             .build();
 
     ExamRequest request =
         new ExamRequest(
-            course.getId(),
-            year.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.4"));
+            course.getId(), year.getId(), "Examen final", examDate, startTime, endTime, 2, 5);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
@@ -128,7 +120,8 @@ class ExamServiceTest {
 
     ExamResponse result = examService.create(request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.4");
+    assertThat(result.coefficientNumerator()).isEqualTo(2);
+    assertThat(result.coefficientDenominator()).isEqualTo(5);
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -143,18 +136,13 @@ class ExamServiceTest {
             .date(examDate.minusMonths(1))
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.7"))
+            .coefficientNumerator(1)
+            .coefficientDenominator(2)
             .build();
 
     ExamRequest request =
         new ExamRequest(
-            course.getId(),
-            year.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.5"));
+            course.getId(), year.getId(), "Examen final", examDate, startTime, endTime, 2, 3);
 
     when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
     when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
@@ -164,6 +152,22 @@ class ExamServiceTest {
     assertThatThrownBy(() -> examService.create(request))
         .isInstanceOf(BadRequestException.class)
         .hasMessageContaining("exceed 1");
+
+    verify(examRepository, never()).save(any());
+  }
+
+  @Test
+  void create_shouldThrowBadRequest_whenNumeratorExceedsDenominator() {
+    ExamRequest request =
+        new ExamRequest(
+            course.getId(), year.getId(), "Examen final", examDate, startTime, endTime, 5, 3);
+
+    when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
+    when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+
+    assertThatThrownBy(() -> examService.create(request))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessageContaining("must not exceed");
 
     verify(examRepository, never()).save(any());
   }
@@ -180,7 +184,8 @@ class ExamServiceTest {
             .date(examDate)
             .startTime(startTime)
             .endTime(endTime)
-            .coefficient(new BigDecimal("0.3"))
+            .coefficientNumerator(1)
+            .coefficientDenominator(3)
             .build();
 
     LocalDate newDate = examDate.plusDays(1);
@@ -195,7 +200,8 @@ class ExamServiceTest {
             newDate,
             newStartTime,
             newEndTime,
-            new BigDecimal("0.5"));
+            1,
+            2);
 
     when(examRepository.findById(examId)).thenReturn(Optional.of(examToUpdate));
     when(examRepository.findByCourseIdAndAcademicYearId(course.getId(), year.getId()))
@@ -204,10 +210,9 @@ class ExamServiceTest {
 
     ExamResponse result = examService.update(examId, request);
 
-    assertThat(result.coefficient()).isEqualByComparingTo("0.5");
+    assertThat(result.coefficientNumerator()).isEqualTo(1);
+    assertThat(result.coefficientDenominator()).isEqualTo(2);
     assertThat(result.date()).isEqualTo(newDate);
-    assertThat(result.startTime()).isEqualTo(newStartTime);
-    assertThat(result.endTime()).isEqualTo(newEndTime);
     verify(examRepository).save(any(Exam.class));
   }
 
@@ -215,13 +220,7 @@ class ExamServiceTest {
   void create_shouldThrow_whenCourseNotFound() {
     ExamRequest request =
         new ExamRequest(
-            course.getId(),
-            year.getId(),
-            "Examen final",
-            examDate,
-            startTime,
-            endTime,
-            new BigDecimal("0.5"));
+            course.getId(), year.getId(), "Examen final", examDate, startTime, endTime, 1, 2);
     when(courseRepository.findById(course.getId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> examService.create(request))

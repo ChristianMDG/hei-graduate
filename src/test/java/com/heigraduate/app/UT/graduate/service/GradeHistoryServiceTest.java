@@ -91,7 +91,8 @@ class GradeHistoryServiceTest {
                     .level("L2")
                     .build())
             .label("Controle continu")
-            .coefficient(new BigDecimal("0.4"))
+            .coefficientNumerator(2)
+            .coefficientDenominator(5)
             .build();
 
     grade =
