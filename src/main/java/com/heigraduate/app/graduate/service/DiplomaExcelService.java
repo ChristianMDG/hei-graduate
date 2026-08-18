@@ -43,8 +43,6 @@ public class DiplomaExcelService {
   private final RankingService rankingService;
   private final BucketComponent bucketComponent;
 
-le le re-téléchargement sans recalculer tout le classement.
-
   @Transactional
   public DiplomaExcelResponse generateExcel(UUID promotionId) {
     Promotion promotion =
