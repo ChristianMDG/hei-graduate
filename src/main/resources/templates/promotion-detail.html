@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>HEI Graduate — Diplômés</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        a { color: #1a5fb4; }
+        #top-bar { display: flex; justify-content: space-between; align-items: center; }
+        .track-section { margin-top: 32px; }
+        .track-header { display: flex; justify-content: space-between; align-items: center; }
+        .empty { color: #666; margin-top: 8px; }
+        button { padding: 6px 12px; cursor: pointer; }
+        .actions { display: flex; gap: 8px; }
+        #status { margin-top: 12px; color: #1a5fb4; }
+        .error { color: #b00020; }
+    </style>
+</head>
+<body th:attr="data-promotion-id=${promotionId}">
+<div id="top-bar">
+    <div>
+        <a href="/promotions">&larr; Promotions</a>
+        <h1 id="promotion-title">Diplômés</h1>
+    </div>
+    <button id="logout-btn">Se déconnecter</button>
+</div>
+
+<p id="status"></p>
+
+<div id="tracks-container"></div>
+
+<script th:src="@{/js/auth.js}"></script>
+<script>
+    window.heiAuth.requireAuth();
+
+    const promotionId = document.body.getAttribute("data-promotion-id");
+    const isAdmin = window.heiAuth.isAdmin();
+
+    document.getElementById("logout-btn").addEventListener("click", function () {
+      window.heiAuth.logout();
+    });
+
+    function setStatus(message, isError) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = isError ? "error" : "";
+    }
+
+    function renderDiplomaTable(diplomas) {
+      if (diplomas.length === 0) {
+        const p = document.createElement("p");
+        p.className = "empty";
+        p.textContent = "Aucun diplômé généré pour ce parcours.";
+        return p;
+      }
+      const table = document.createElement("table");
+      table.innerHTML =
+        "<thead><tr><th>Rang</th><th>STD</th><th>Nom</th><th>Prénom</th><th>Moyenne générale</th></tr></thead>" +
+        "<tbody></tbody>";
+      const body = table.querySelector("tbody");
+      diplomas.forEach(function (d) {
+        const row = document.createElement("tr");
+        row.innerHTML =
+          "<td>" + (d.rank != null ? d.rank : "-") + "</td>" +
+          "<td>" + d.studentNumber + "</td>" +
+          "<td>" + d.lastName + "</td>" +
+          "<td>" + d.firstName + "</td>" +
+          "<td>" + (d.overallAverage != null ? Number(d.overallAverage).toFixed(2) : "-") + "</td>";
+        body.appendChild(row);
+      });
+      return table;
+    }
+
+    async function loadRanking(parcours, container) {
+      const response = await window.heiAuth.authFetch(
+        "/api/promotions/" + promotionId + "/parcours/" + parcours.id + "/diplomas"
+      );
+      const diplomas = await response.json();
+      container.appendChild(renderDiplomaTable(diplomas));
+    }
+
+    async function generateRanking(parcours, container) {
+      setStatus("Génération du classement pour " + parcours.label + "...");
+      try {
+        const response = await window.heiAuth.authFetch(
+          "/api/promotions/" + promotionId + "/parcours/" + parcours.id + "/diplomas/generate",
+          { method: "POST" }
+        );
+        if (!response.ok) {
+          setStatus("Impossible de générer le classement pour " + parcours.label + ".", true);
+          return;
+        }
+        container.innerHTML = "";
+        await loadRanking(parcours, container);
+        setStatus("Classement généré pour " + parcours.label + ".");
+      } catch (err) {
+        setStatus("Erreur lors de la génération du classement.", true);
+      }
+    }
+
+    async function downloadExcel() {
+      setStatus("Génération du fichier Excel...");
+      try {
+        const response = await window.heiAuth.authFetch(
+          "/api/promotions/" + promotionId + "/diplomas/excel/generate",
+          { method: "POST" }
+        );
+        if (!response.ok) {
+          setStatus("Impossible de générer le fichier Excel.", true);
+          return;
+        }
+        const data = await response.json();
+        window.open(data.downloadUrl, "_blank");
+        setStatus("Fichier Excel généré.");
+      } catch (err) {
+        setStatus("Erreur lors de la génération du fichier Excel.", true);
+      }
+    }
+
+    function buildTrackSection(parcours) {
+      const section = document.createElement("div");
+      section.className = "track-section";
+
+      const header = document.createElement("div");
+      header.className = "track-header";
+
+      const title = document.createElement("h2");
+      title.textContent = parcours.label + " (" + parcours.code + ")";
+      header.appendChild(title);
+
+      if (isAdmin) {
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const generateBtn = document.createElement("button");
+        generateBtn.textContent = "Générer le classement";
+        generateBtn.addEventListener("click", function () {
+          tableHolder.innerHTML = "";
+          generateRanking(parcours, tableHolder);
+        });
+        actions.appendChild(generateBtn);
+
+        header.appendChild(actions);
+      }
+
+      section.appendChild(header);
+
+      const tableHolder = document.createElement("div");
+      section.appendChild(tableHolder);
+      loadRanking(parcours, tableHolder);
+
+      return section;
+    }
+
+    async function loadPromotion() {
+      const response = await window.heiAuth.authFetch("/api/promotions/" + promotionId);
+      const promotion = await response.json();
+      document.getElementById("promotion-title").textContent = "Diplômés — " + promotion.label;
+    }
+
+    async function loadTracks() {
+      const container = document.getElementById("tracks-container");
+      const response = await window.heiAuth.authFetch("/api/parcours?activeOnly=true");
+      const tracks = await response.json();
+      tracks.forEach(function (parcours) {
+        container.appendChild(buildTrackSection(parcours));
+      });
+
+      if (isAdmin) {
+        const excelBtn = document.createElement("button");
+        excelBtn.textContent = "Télécharger la liste des diplômés (Excel)";
+        excelBtn.style.marginTop = "24px";
+        excelBtn.addEventListener("click", downloadExcel);
+        container.appendChild(excelBtn);
+      }
+    }
+
+    loadPromotion();
+    loadTracks();
+</script>
+</body>
+</html>
