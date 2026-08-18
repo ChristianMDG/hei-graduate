@@ -88,6 +88,19 @@ public class DiplomaExcelService {
     return new DiplomaExcelResponse(downloadUrl.toString());
   }
 
+  /** NC-06 FIX — Récupère l'URL pré-signée S3 du fichier Excel de la promotion déjà généré. */
+  @Transactional(readOnly = true)
+  public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
+    List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
+    if (lists.isEmpty() || lists.get(0).getUrlS3() == null) {
+      throw new ResourceNotFoundException(
+          "No Excel file has been generated yet for promotion: " + promotionId);
+    }
+    String bucketKey = lists.get(0).getUrlS3();
+    var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
+    return new DiplomaExcelResponse(downloadUrl.toString());
+  }
+
   private File writeWorkbook(Promotion promotion, List<UUID> parcoursIds) {
     try (XSSFWorkbook workbook = new XSSFWorkbook()) {
       for (UUID parcoursId : parcoursIds) {

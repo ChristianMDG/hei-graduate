@@ -3,6 +3,7 @@ package com.heigraduate.app.UT.graduate.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.heigraduate.app.file.bucket.BucketComponent;
@@ -177,5 +178,32 @@ class DiplomaExcelServiceTest {
         ResourceNotFoundException.class, () -> diplomaExcelService.generateExcel(promotionId));
 
     verifyNoInteractions(bucketComponent);
+  }
+
+  @Test
+  void getExistingExcel_shouldReturnPresignedUrl_whenExcelExists() throws Exception {
+    com.heigraduate.app.graduate.model.DiplomaList diplomaList =
+        com.heigraduate.app.graduate.model.DiplomaList.builder()
+            .promotionId(promotionId)
+            .parcoursId(UUID.randomUUID())
+            .urlS3("diplomas/existing.xlsx")
+            .build();
+
+    when(diplomaListRepository.findByPromotionId(promotionId)).thenReturn(List.of(diplomaList));
+    when(bucketComponent.presign(eq("diplomas/existing.xlsx"), any()))
+        .thenReturn(new URL("https://bucket.s3.amazonaws.com/diplomas/existing.xlsx"));
+
+    DiplomaExcelResponse response = diplomaExcelService.getExistingExcel(promotionId);
+
+    assertThat(response.downloadUrl())
+        .isEqualTo("https://bucket.s3.amazonaws.com/diplomas/existing.xlsx");
+  }
+
+  @Test
+  void getExistingExcel_shouldThrow_whenNoExcelExistsYet() {
+    when(diplomaListRepository.findByPromotionId(promotionId)).thenReturn(List.of());
+
+    Assertions.assertThrows(
+        ResourceNotFoundException.class, () -> diplomaExcelService.getExistingExcel(promotionId));
   }
 }

@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface DiplomaListRepository extends JpaRepository<DiplomaList, UUID> {
 
   Optional<DiplomaList> findByPromotionIdAndParcoursId(UUID promotionId, UUID parcoursId);
+
+  java.util.List<DiplomaList> findByPromotionId(UUID promotionId);
 }
