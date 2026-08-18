@@ -11,6 +11,8 @@ public record ExamResponse(
     String courseReference,
     UUID academicYearId,
     String academicYearLabel,
+    UUID semesterId,
+    String semesterLabel,
     String label,
     LocalDate date,
     LocalTime startTime,
