@@ -46,9 +46,11 @@ public class RankingService {
 
     AcademicYear finalYear = promotion.getFinalAcademicYear();
 
+    // BUG-04 FIX: findAll() chargeait tous les enrollments de tous les étudiants en mémoire.
+    // On utilise maintenant une requête ciblée par parcours, puis on filtre sur la période
+    // de l'année finale de promotion — conforme au §13 (classement par parcours).
     List<UUID> candidateStudentIds =
-        enrollmentRepository.findAll().stream()
-            .filter(e -> e.getParcoursId().equals(parcoursId))
+        enrollmentRepository.findByParcoursId(parcoursId).stream()
             .filter(e -> overlaps(e, finalYear.getStartDate(), finalYear.getEndDate()))
             .map(Enrollment::getStudentId)
             .distinct()

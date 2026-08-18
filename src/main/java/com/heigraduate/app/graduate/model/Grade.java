@@ -2,6 +2,7 @@ package com.heigraduate.app.graduate.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.*;
 
@@ -35,6 +36,14 @@ public class Grade {
 
   @Column(name = "entered_by_user_id")
   private UUID enteredByUserId;
+
+  /**
+   * BUG-05 FIX — date_saisie exigée par le MCD (entité NOTE, §8 cahier des charges). "Une note est
+   * associée à… une valeur, une date de saisie ou de modification."
+   */
+  @Column(name = "entered_at", nullable = false)
+  @Builder.Default
+  private LocalDateTime enteredAt = LocalDateTime.now();
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)

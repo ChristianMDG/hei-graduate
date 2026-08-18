@@ -15,8 +15,10 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class GraduationService {
+
+  private static final int REQUIRED_YEARS = 3;
 
   private final EnrollmentRepository enrollmentRepository;
   private final AcademicYearRepository academicYearRepository;
@@ -42,6 +46,8 @@ public class GraduationService {
       throw new ResourceNotFoundException("No enrollment history for student: " + studentId);
     }
 
+    // NC-05 FIX (§12) : limiter aux 3 premières années universitaires de l'étudiant.
+    // Un étudiant ayant redoublé avec 4 années ne peut être diplômé que sur les 3 premières.
     List<AcademicYear> studentYears =
         academicYearRepository.findAll().stream()
             .filter(
@@ -49,6 +55,7 @@ public class GraduationService {
                     history.stream()
                         .anyMatch(e -> overlaps(e, year.getStartDate(), year.getEndDate())))
             .sorted(Comparator.comparing(AcademicYear::getStartDate))
+            .limit(REQUIRED_YEARS)
             .toList();
 
     List<UUID> unvalidatedMandatoryCourses = new ArrayList<>();
@@ -63,32 +70,41 @@ public class GraduationService {
               .map(Enrollment::getParcoursId)
               .collect(Collectors.toCollection(LinkedHashSet::new));
 
+      // NC-02 FIX (§12) : dédupliquer les cours obligatoires par courseId.
+      // Un cours commun à deux parcours (ex : commun → EL dans la même année) ne doit
+      // être évalué qu'une seule fois. LinkedHashMap.put() écrase silencieusement les doublons.
+      Map<UUID, Integer> mandatoryCoursesThisYear = new LinkedHashMap<>();
       for (UUID parcoursId : parcoursIdsThisYear) {
         List<UUID> mandatoryCourseIds =
             courseRequirementQuery.getMandatoryCourseIds(parcoursId, year.getId());
-
         for (UUID courseId : mandatoryCourseIds) {
-          mandatoryCourseCount++;
-          Optional<BigDecimal> finalGrade = finalGradeQuery.getFinalGrade(studentId, courseId);
-
-          if (finalGrade.isEmpty() || finalGrade.get().compareTo(BigDecimal.TEN) < 0) {
-            unvalidatedMandatoryCourses.add(courseId);
-            continue;
-          }
-
-          Course course =
-              courseRepository
-                  .findById(courseId)
-                  .orElseThrow(
-                      () -> new ResourceNotFoundException("Course not found: " + courseId));
-          int credits = course.getCredits();
-          weightedSum = weightedSum.add(finalGrade.get().multiply(BigDecimal.valueOf(credits)));
-          gradedCredits += credits;
+          // Stocker temporairement 0 crédits si on ne fait pas encore le findById
+          mandatoryCoursesThisYear.putIfAbsent(courseId, 0);
         }
+      }
+
+      for (UUID courseId : mandatoryCoursesThisYear.keySet()) {
+        mandatoryCourseCount++;
+
+        Optional<BigDecimal> finalGrade = finalGradeQuery.getFinalGrade(studentId, courseId);
+
+        if (finalGrade.isEmpty() || finalGrade.get().compareTo(BigDecimal.TEN) < 0) {
+          unvalidatedMandatoryCourses.add(courseId);
+          continue;
+        }
+
+        Course course =
+            courseRepository
+                .findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + courseId));
+        int credits = course.getCredits();
+
+        weightedSum = weightedSum.add(finalGrade.get().multiply(BigDecimal.valueOf(credits)));
+        gradedCredits += credits;
       }
     }
 
-    boolean completedThreeYears = studentYears.size() >= 3;
+    boolean completedThreeYears = studentYears.size() >= REQUIRED_YEARS;
     boolean graduated =
         completedThreeYears && mandatoryCourseCount > 0 && unvalidatedMandatoryCourses.isEmpty();
     BigDecimal overallAverage =

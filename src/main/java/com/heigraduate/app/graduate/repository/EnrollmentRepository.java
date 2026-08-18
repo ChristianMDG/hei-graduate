@@ -13,6 +13,12 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
 
   Optional<Enrollment> findByStudentIdAndEndDateIsNull(UUID studentId);
 
+  /**
+   * BUG-04 FIX — Remplace {@code findAll()} dans RankingService. Charge uniquement les enrollments
+   * du parcours demandé au lieu de toute la table.
+   */
+  List<Enrollment> findByParcoursId(UUID parcoursId);
+
   @org.springframework.data.jpa.repository.Query(
       "SELECT e FROM Enrollment e WHERE e.studentId = :studentId "
           + "AND e.startDate <= :date "
