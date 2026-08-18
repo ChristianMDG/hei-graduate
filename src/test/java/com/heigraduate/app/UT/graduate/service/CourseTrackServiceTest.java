@@ -146,4 +146,40 @@ class CourseTrackServiceTest {
 
     assertThat(elCourseIdsYear1).containsExactly(course.getId());
   }
+
+  @Test
+  void create_shouldThrowBadRequest_whenSemesterCreditsExceed30() {
+    com.heigraduate.app.graduate.dto.CourseTrackRequest request =
+        new com.heigraduate.app.graduate.dto.CourseTrackRequest(
+            course.getId(), el.getId(), semesterYear1.getId(), true);
+
+    Course existingCourse =
+        Course.builder()
+            .id(UUID.randomUUID())
+            .courseReference("PROG3")
+            .title("Prog")
+            .credits(25)
+            .build();
+    CourseTrack existingCT =
+        CourseTrack.builder()
+            .course(existingCourse)
+            .track(el)
+            .semester(semesterYear1)
+            .mandatory(true)
+            .build();
+
+    when(courseTrackRepository.existsByCourseIdAndTrackIdAndSemesterId(
+            course.getId(), el.getId(), semesterYear1.getId()))
+        .thenReturn(false);
+    when(courseRepository.findById(course.getId())).thenReturn(java.util.Optional.of(course));
+    when(trackRepository.findById(el.getId())).thenReturn(java.util.Optional.of(el));
+    when(semesterRepository.findById(semesterYear1.getId()))
+        .thenReturn(java.util.Optional.of(semesterYear1));
+    when(courseTrackRepository.findByTrackIdAndSemesterId(el.getId(), semesterYear1.getId()))
+        .thenReturn(List.of(existingCT));
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> courseTrackService.create(request))
+        .isInstanceOf(com.heigraduate.app.graduate.exception.BadRequestException.class)
+        .hasMessageContaining("would exceed the 30 ECTS limit");
+  }
 }
