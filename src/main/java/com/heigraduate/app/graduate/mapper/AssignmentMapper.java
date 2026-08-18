@@ -18,6 +18,8 @@ public class AssignmentMapper {
         assignment.getTeacher().getLastName(),
         assignment.getAcademicYear().getId(),
         assignment.getAcademicYear().getLabel(),
+        assignment.getSemester() != null ? assignment.getSemester().getId() : null,
+        assignment.getSemester() != null ? assignment.getSemester().getLabel() : null,
         assignment.getGroups().stream()
             .map(AssignmentMapper::toGroupSummary)
             .collect(Collectors.toSet()));

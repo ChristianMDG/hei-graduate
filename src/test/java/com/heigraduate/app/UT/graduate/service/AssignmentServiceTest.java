@@ -1,4 +1,4 @@
-package com.heigraduate.app.graduate.service;
+package com.heigraduate.app.UT.graduate.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,18 +7,22 @@ import static org.mockito.Mockito.*;
 
 import com.heigraduate.app.graduate.dto.AssignmentRequest;
 import com.heigraduate.app.graduate.dto.AssignmentResponse;
+import com.heigraduate.app.graduate.exception.BadRequestException;
 import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Assignment;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Group;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.AssignmentRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.GroupRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.repository.TeacherRepository;
+import com.heigraduate.app.graduate.service.AssignmentService;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +41,7 @@ class AssignmentServiceTest {
   @Mock private CourseRepository courseRepository;
   @Mock private TeacherRepository teacherRepository;
   @Mock private AcademicYearRepository academicYearRepository;
+  @Mock private SemesterRepository semesterRepository;
   @Mock private GroupRepository groupRepository;
 
   @InjectMocks private AssignmentService assignmentService;
@@ -85,7 +90,7 @@ class AssignmentServiceTest {
   void create_shouldAssignProg4ToK1AndK2ButNotK3() {
     AssignmentRequest request =
         new AssignmentRequest(
-            prog4.getId(), teacher.getId(), year.getId(), Set.of(k1.getId(), k2.getId()));
+            prog4.getId(), teacher.getId(), year.getId(), null, Set.of(k1.getId(), k2.getId()));
 
     when(assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
             prog4.getId(), teacher.getId(), year.getId()))
@@ -112,7 +117,8 @@ class AssignmentServiceTest {
   @Test
   void create_shouldThrowConflict_whenTeacherAlreadyAssignedToCourseForYear() {
     AssignmentRequest request =
-        new AssignmentRequest(prog4.getId(), teacher.getId(), year.getId(), Set.of(k1.getId()));
+        new AssignmentRequest(
+            prog4.getId(), teacher.getId(), year.getId(), null, Set.of(k1.getId()));
 
     when(assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
             prog4.getId(), teacher.getId(), year.getId()))
@@ -126,9 +132,55 @@ class AssignmentServiceTest {
   }
 
   @Test
+  void create_shouldThrowBadRequest_whenSemesterBelongsToAnotherAcademicYear() {
+    AcademicYear otherYear =
+        AcademicYear.builder()
+            .id(UUID.randomUUID())
+            .label("2024-2025")
+            .startDate(LocalDate.of(2024, 9, 1))
+            .endDate(LocalDate.of(2025, 6, 30))
+            .level("L1")
+            .build();
+    Semester semesterFromOtherYear =
+        Semester.builder()
+            .id(UUID.randomUUID())
+            .academicYear(otherYear)
+            .label("Semestre 1 (autre annee)")
+            .startDate(LocalDate.of(2024, 9, 1))
+            .endDate(LocalDate.of(2025, 1, 31))
+            .expectedCredits(30)
+            .active(true)
+            .build();
+
+    AssignmentRequest request =
+        new AssignmentRequest(
+            prog4.getId(),
+            teacher.getId(),
+            year.getId(),
+            semesterFromOtherYear.getId(),
+            Set.of(k1.getId()));
+
+    when(assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
+            prog4.getId(), teacher.getId(), year.getId()))
+        .thenReturn(false);
+    when(courseRepository.findById(prog4.getId())).thenReturn(Optional.of(prog4));
+    when(teacherRepository.findById(teacher.getId())).thenReturn(Optional.of(teacher));
+    when(academicYearRepository.findById(year.getId())).thenReturn(Optional.of(year));
+    when(semesterRepository.findById(semesterFromOtherYear.getId()))
+        .thenReturn(Optional.of(semesterFromOtherYear));
+
+    assertThatThrownBy(() -> assignmentService.create(request))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessageContaining("does not belong to academic year");
+
+    verify(assignmentRepository, never()).save(any());
+  }
+
+  @Test
   void create_shouldThrow_whenCourseNotFound() {
     AssignmentRequest request =
-        new AssignmentRequest(prog4.getId(), teacher.getId(), year.getId(), Set.of(k1.getId()));
+        new AssignmentRequest(
+            prog4.getId(), teacher.getId(), year.getId(), null, Set.of(k1.getId()));
 
     when(assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
             prog4.getId(), teacher.getId(), year.getId()))
@@ -144,7 +196,8 @@ class AssignmentServiceTest {
   void create_shouldThrow_whenGroupNotFound() {
     UUID unknownGroupId = UUID.randomUUID();
     AssignmentRequest request =
-        new AssignmentRequest(prog4.getId(), teacher.getId(), year.getId(), Set.of(unknownGroupId));
+        new AssignmentRequest(
+            prog4.getId(), teacher.getId(), year.getId(), null, Set.of(unknownGroupId));
 
     when(assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
             prog4.getId(), teacher.getId(), year.getId()))

@@ -9,4 +9,5 @@ public record AssignmentRequest(
     @NotNull UUID courseId,
     @NotNull UUID teacherId,
     @NotNull UUID academicYearId,
+    UUID semesterId,
     @NotEmpty Set<UUID> groupIds) {}
