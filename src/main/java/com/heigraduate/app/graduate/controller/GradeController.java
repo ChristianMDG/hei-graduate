@@ -49,8 +49,9 @@ public class GradeController {
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
   @ResponseStatus(HttpStatus.CREATED)
-  public GradeResponse create(@Valid @RequestBody GradeRequest request) {
-    return gradeService.create(request);
+  public GradeResponse create(
+      @Valid @RequestBody GradeRequest request, @AuthenticationPrincipal User connectedUser) {
+    return gradeService.create(request, connectedUser.getId());
   }
 
   @PutMapping("/{id}")
