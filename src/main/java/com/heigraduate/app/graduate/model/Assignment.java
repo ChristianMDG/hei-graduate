@@ -35,6 +35,10 @@ public class Assignment {
   @JoinColumn(name = "academic_year_id", nullable = false)
   private AcademicYear academicYear;
 
+  @ManyToOne
+  @JoinColumn(name = "semester_id")
+  private Semester semester;
+
   @ManyToMany
   @JoinTable(
       name = "assignment_group",

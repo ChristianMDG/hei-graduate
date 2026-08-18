@@ -2,6 +2,7 @@ package com.heigraduate.app.graduate.service;
 
 import com.heigraduate.app.graduate.dto.AssignmentRequest;
 import com.heigraduate.app.graduate.dto.AssignmentResponse;
+import com.heigraduate.app.graduate.exception.BadRequestException;
 import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.mapper.AssignmentMapper;
@@ -9,11 +10,13 @@ import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Assignment;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Group;
+import com.heigraduate.app.graduate.model.Semester;
 import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.AssignmentRepository;
 import com.heigraduate.app.graduate.repository.CourseRepository;
 import com.heigraduate.app.graduate.repository.GroupRepository;
+import com.heigraduate.app.graduate.repository.SemesterRepository;
 import com.heigraduate.app.graduate.repository.TeacherRepository;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +34,7 @@ public class AssignmentService {
   private final CourseRepository courseRepository;
   private final TeacherRepository teacherRepository;
   private final AcademicYearRepository academicYearRepository;
+  private final SemesterRepository semesterRepository;
   private final GroupRepository groupRepository;
 
   @Transactional(readOnly = true)
@@ -75,6 +79,7 @@ public class AssignmentService {
                 () ->
                     new ResourceNotFoundException(
                         "AcademicYear not found with id: " + request.academicYearId()));
+    Semester semester = resolveOptionalSemester(request.semesterId(), academicYear.getId());
 
     Set<Group> groups = new HashSet<>();
     for (UUID groupId : request.groupIds()) {
@@ -91,6 +96,7 @@ public class AssignmentService {
             .course(course)
             .teacher(teacher)
             .academicYear(academicYear)
+            .semester(semester)
             .groups(groups)
             .build();
 
@@ -109,5 +115,21 @@ public class AssignmentService {
   public boolean isTeacherAssignedToCourse(UUID teacherId, UUID courseId, UUID academicYearId) {
     return assignmentRepository.existsByCourseIdAndTeacherIdAndAcademicYearId(
         courseId, teacherId, academicYearId);
+  }
+
+  private Semester resolveOptionalSemester(UUID semesterId, UUID academicYearId) {
+    if (semesterId == null) {
+      return null;
+    }
+    Semester semester =
+        semesterRepository
+            .findById(semesterId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Semester not found with id: " + semesterId));
+    if (!semester.getAcademicYear().getId().equals(academicYearId)) {
+      throw new BadRequestException(
+          "Semester " + semesterId + " does not belong to academic year " + academicYearId);
+    }
+    return semester;
   }
 }

@@ -11,6 +11,8 @@ public record AssignmentResponse(
     String teacherLastName,
     UUID academicYearId,
     String academicYearLabel,
+    UUID semesterId,
+    String semesterLabel,
     Set<GroupSummary> groups) {
 
   public record GroupSummary(UUID id, String reference) {}
