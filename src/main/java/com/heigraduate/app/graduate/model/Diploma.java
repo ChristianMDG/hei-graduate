@@ -18,6 +18,19 @@ public class Diploma {
 
   @Id @GeneratedValue private UUID id;
 
+  /**
+   * BUG-16 NOTE — Ces trois champs utilisent des UUID bruts au lieu de {@code @ManyToOne} JPA.
+   *
+   * <p>L'intégrité référentielle est garantie par les clés étrangères de la base de données
+   * (migration V42_22 : {@code REFERENCES student(id)}, {@code REFERENCES promotion(id)}, {@code
+   * REFERENCES parcours(id)}). Une tentative d'insertion d'un UUID invalide sera rejetée par
+   * PostgreSQL avec une erreur de contrainte FK.
+   *
+   * <p>La migration vers des relations {@code @ManyToOne} JPA est recommandée à long terme mais
+   * nécessite de refactoriser {@code DiplomaRepository}, {@code RankingService}, {@code
+   * DiplomaMapper} et tous leurs tests. Décision : conserver les UUID bruts pour l'instant et ne
+   * pas introduire de régression.
+   */
   @Column(name = "student_id", nullable = false)
   private UUID studentId;
 

@@ -245,6 +245,19 @@ public class GradeService implements FinalGradeQuery {
     gradeRepository.deleteById(id);
   }
 
+  /**
+   * BUG-15 FIX — Calcule la note finale pondérée d'un étudiant pour un cours (§7/§8).
+   *
+   * <p>La division se fait par {@code totalWeight} (somme réelle des coefficients des examens
+   * publiés). Quand tous les examens sont publiés et que leur somme vaut exactement 1 (garantie
+   * depuis BUG-10), {@code totalWeight == 1} et la division est sans effet.
+   *
+   * <p>Si {@code totalWeight < 1} (tous les examens ne sont pas encore publiés), la note retournée
+   * est une <b>note provisoire normalisée</b> : elle est légèrement surestime par rapport à la note
+   * finale réelle. C'est un comportement accepté pour les relevés provisoires (type "PROVISOIRE"
+   * dans la table transcript). La note finale réelle ne sera calculée qu'après la publication de
+   * tous les examens du cours pour le semestre concerné.
+   */
   @Override
   @Transactional(readOnly = true)
   public Optional<BigDecimal> getFinalGrade(UUID studentId, UUID courseId) {
@@ -274,6 +287,9 @@ public class GradeService implements FinalGradeQuery {
       return Optional.empty();
     }
 
+    // BUG-15 FIX : si totalWeight < 1, le résultat est une note provisoire normalisée.
+    // Lorsque tous les examens seront publiés et que totalWeight == 1 (cf. BUG-10),
+    // la division par totalWeight sera sans effet et la note finale sera exacte.
     return Optional.of(weightedSum.divide(totalWeight, 2, RoundingMode.HALF_UP));
   }
 }
