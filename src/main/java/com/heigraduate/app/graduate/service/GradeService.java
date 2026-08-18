@@ -14,16 +14,21 @@ import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Teacher;
+import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TeacherRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +40,8 @@ public class GradeService implements FinalGradeQuery {
   private final GradeHistoryRepository gradeHistoryRepository;
   private final StudentRepository studentRepository;
   private final ExamRepository examRepository;
+  private final TeacherRepository teacherRepository;
+  private final AssignmentService assignmentService;
 
   @Transactional(readOnly = true)
   public List<GradeResponse> findAll() {
@@ -57,7 +64,7 @@ public class GradeService implements FinalGradeQuery {
   }
 
   @Transactional
-  public GradeResponse create(GradeRequest request, UUID currentUserId) {
+  public GradeResponse create(GradeRequest request, User connectedUser) {
     if (gradeRepository.existsByStudentIdAndExamId(request.studentId(), request.examId())) {
       throw new ConflictException("A grade already exists for this student and this exam");
     }
@@ -75,24 +82,31 @@ public class GradeService implements FinalGradeQuery {
             .orElseThrow(
                 () -> new ResourceNotFoundException("Exam not found with id: " + request.examId()));
 
+    enforceTeacherAssignedToCourse(
+        connectedUser, exam.getCourse().getId(), exam.getAcademicYear().getId());
+
     Grade grade =
         Grade.builder()
             .student(student)
             .exam(exam)
             .value(request.value())
             .status(GradeStatus.DRAFT)
-            .enteredByUserId(currentUserId)
             .build();
 
     return GradeMapper.toResponse(gradeRepository.save(grade));
   }
 
   @Transactional
-  public GradeResponse update(UUID id, GradeUpdateRequest request, UUID currentUserId) {
+  public GradeResponse update(UUID id, GradeUpdateRequest request, User connectedUser) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+
+    enforceTeacherAssignedToCourse(
+        connectedUser,
+        grade.getExam().getCourse().getId(),
+        grade.getExam().getAcademicYear().getId());
 
     BigDecimal oldValue = grade.getValue();
 
@@ -102,12 +116,29 @@ public class GradeService implements FinalGradeQuery {
             .oldValue(oldValue)
             .newValue(request.value())
             .reason(request.reason())
-            .changedByUserId(currentUserId)
+            .changedByUserId(connectedUser.getId())
             .build();
     gradeHistoryRepository.save(history);
 
     grade.setValue(request.value());
     return GradeMapper.toResponse(gradeRepository.save(grade));
+  }
+
+  private void enforceTeacherAssignedToCourse(
+      User connectedUser, UUID courseId, UUID academicYearId) {
+    if (connectedUser.getRole() != UserRole.TEACHER) {
+      return;
+    }
+
+    Teacher teacher =
+        teacherRepository
+            .findByUserId(connectedUser.getId())
+            .orElseThrow(
+                () -> new AccessDeniedException("No teacher profile linked to this account"));
+
+    if (!assignmentService.isTeacherAssignedToCourse(teacher.getId(), courseId, academicYearId)) {
+      throw new AccessDeniedException("You are not assigned to this course for this academic year");
+    }
   }
 
   @Transactional(readOnly = true)

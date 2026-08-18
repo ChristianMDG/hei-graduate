@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.heigraduate.app.graduate.dto.GradeRequest;
 import com.heigraduate.app.graduate.dto.GradeResponse;
+import com.heigraduate.app.graduate.dto.GradeUpdateRequest;
 import com.heigraduate.app.graduate.exception.ConflictException;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
@@ -15,9 +16,15 @@ import com.heigraduate.app.graduate.model.Exam;
 import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Teacher;
+import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
+import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TeacherRepository;
+import com.heigraduate.app.graduate.service.AssignmentService;
 import com.heigraduate.app.graduate.service.GradeService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,13 +37,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class GradeServiceTest {
 
   @Mock private GradeRepository gradeRepository;
+  @Mock private GradeHistoryRepository gradeHistoryRepository;
   @Mock private StudentRepository studentRepository;
   @Mock private ExamRepository examRepository;
+  @Mock private TeacherRepository teacherRepository;
+  @Mock private AssignmentService assignmentService;
 
   @InjectMocks private GradeService gradeService;
 
@@ -45,6 +56,9 @@ class GradeServiceTest {
   private AcademicYear year;
   private Exam continuousControl;
   private Exam finalExam;
+  private User admin;
+  private User teacherUser;
+  private Teacher teacher;
 
   @BeforeEach
   void setUp() {
@@ -94,6 +108,12 @@ class GradeServiceTest {
             .label("Examen final")
             .coefficient(new BigDecimal("0.6"))
             .build();
+
+    admin = User.builder().id(UUID.randomUUID()).email("admin@hei.mg").role(UserRole.ADMIN).build();
+
+    teacherUser =
+        User.builder().id(UUID.randomUUID()).email("prof@hei.mg").role(UserRole.TEACHER).build();
+    teacher = Teacher.builder().id(UUID.randomUUID()).userId(teacherUser.getId()).build();
   }
 
   @Test
@@ -158,7 +178,7 @@ class GradeServiceTest {
     when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
         .thenReturn(true);
 
-    assertThatThrownBy(() -> gradeService.create(request, UUID.randomUUID()))
+    assertThatThrownBy(() -> gradeService.create(request, admin))
         .isInstanceOf(ConflictException.class);
 
     verify(gradeRepository, never()).save(any());
@@ -177,11 +197,68 @@ class GradeServiceTest {
     when(gradeRepository.save(any(Grade.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    UUID teacherUserId = UUID.randomUUID();
-    GradeResponse result = gradeService.create(request, teacherUserId);
+    GradeResponse result = gradeService.create(request, admin);
 
     assertThat(result.status()).isEqualTo(GradeStatus.DRAFT);
-    assertThat(result.enteredByUserId()).isEqualTo(teacherUserId);
+  }
+
+  @Test
+  void create_shouldSucceed_whenTeacherIsAssignedToCourse() {
+    GradeRequest request =
+        new GradeRequest(student.getId(), continuousControl.getId(), new BigDecimal("15"));
+
+    when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
+        .thenReturn(false);
+    when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+    when(examRepository.findById(continuousControl.getId()))
+        .thenReturn(Optional.of(continuousControl));
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.of(teacher));
+    when(assignmentService.isTeacherAssignedToCourse(teacher.getId(), course.getId(), year.getId()))
+        .thenReturn(true);
+    when(gradeRepository.save(any(Grade.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    GradeResponse result = gradeService.create(request, teacherUser);
+
+    assertThat(result.status()).isEqualTo(GradeStatus.DRAFT);
+  }
+
+  @Test
+  void create_shouldThrowAccessDenied_whenTeacherNotAssignedToCourse() {
+    GradeRequest request =
+        new GradeRequest(student.getId(), continuousControl.getId(), new BigDecimal("15"));
+
+    when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
+        .thenReturn(false);
+    when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+    when(examRepository.findById(continuousControl.getId()))
+        .thenReturn(Optional.of(continuousControl));
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.of(teacher));
+    when(assignmentService.isTeacherAssignedToCourse(teacher.getId(), course.getId(), year.getId()))
+        .thenReturn(false);
+
+    assertThatThrownBy(() -> gradeService.create(request, teacherUser))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(gradeRepository, never()).save(any());
+  }
+
+  @Test
+  void create_shouldThrowAccessDenied_whenNoTeacherProfileLinkedToAccount() {
+    GradeRequest request =
+        new GradeRequest(student.getId(), continuousControl.getId(), new BigDecimal("15"));
+
+    when(gradeRepository.existsByStudentIdAndExamId(student.getId(), continuousControl.getId()))
+        .thenReturn(false);
+    when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+    when(examRepository.findById(continuousControl.getId()))
+        .thenReturn(Optional.of(continuousControl));
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> gradeService.create(request, teacherUser))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(gradeRepository, never()).save(any());
   }
 
   @Test
@@ -202,6 +279,31 @@ class GradeServiceTest {
     GradeResponse result = gradeService.publish(draftGrade.getId());
 
     assertThat(result.status()).isEqualTo(GradeStatus.PUBLISHED);
+  }
+
+  @Test
+  void update_shouldThrowAccessDenied_whenTeacherNotAssignedToCourse() {
+    Grade grade =
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .exam(continuousControl)
+            .value(new BigDecimal("8.5"))
+            .status(GradeStatus.PUBLISHED)
+            .build();
+
+    GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("10.5"), "Correction");
+
+    when(gradeRepository.findById(grade.getId())).thenReturn(Optional.of(grade));
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.of(teacher));
+    when(assignmentService.isTeacherAssignedToCourse(teacher.getId(), course.getId(), year.getId()))
+        .thenReturn(false);
+
+    assertThatThrownBy(() -> gradeService.update(grade.getId(), request, teacherUser))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(gradeHistoryRepository, never()).save(any());
+    verify(gradeRepository, never()).save(any());
   }
 
   @Test
@@ -249,7 +351,7 @@ class GradeServiceTest {
         .thenReturn(false);
     when(studentRepository.findById(student.getId())).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> gradeService.create(request, UUID.randomUUID()))
+    assertThatThrownBy(() -> gradeService.create(request, admin))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 }

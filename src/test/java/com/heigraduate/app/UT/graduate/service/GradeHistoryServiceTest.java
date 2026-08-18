@@ -13,10 +13,14 @@ import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TeacherRepository;
+import com.heigraduate.app.graduate.service.AssignmentService;
 import com.heigraduate.app.graduate.service.GradeService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,17 +43,21 @@ class GradeHistoryServiceTest {
   @Mock private GradeHistoryRepository gradeHistoryRepository;
   @Mock private StudentRepository studentRepository;
   @Mock private ExamRepository examRepository;
+  @Mock private TeacherRepository teacherRepository;
+  @Mock private AssignmentService assignmentService;
 
   @InjectMocks private GradeService gradeService;
 
   private Grade grade;
   private UUID gradeId;
   private UUID actingUserId;
+  private User actingUser;
 
   @BeforeEach
   void setUp() {
     gradeId = UUID.randomUUID();
     actingUserId = UUID.randomUUID();
+    actingUser = User.builder().id(actingUserId).email("admin@hei.mg").role(UserRole.ADMIN).build();
 
     Student student =
         Student.builder()
@@ -99,7 +107,7 @@ class GradeHistoryServiceTest {
     when(gradeHistoryRepository.save(any(GradeHistory.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    GradeResponse result = gradeService.update(gradeId, request, actingUserId);
+    GradeResponse result = gradeService.update(gradeId, request, actingUser);
 
     assertThat(result.value()).isEqualByComparingTo("10.50");
 
@@ -126,8 +134,7 @@ class GradeHistoryServiceTest {
     when(gradeRepository.findById(unknownId)).thenReturn(Optional.empty());
 
     Assertions.assertThrows(
-        ResourceNotFoundException.class,
-        () -> gradeService.update(unknownId, request, actingUserId));
+        ResourceNotFoundException.class, () -> gradeService.update(unknownId, request, actingUser));
 
     verify(gradeHistoryRepository, never()).save(any());
     verify(gradeRepository, never()).save(any());
