@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.heigraduate.app.graduate.dto.GradeResponse;
 import com.heigraduate.app.graduate.dto.GradeUpdateRequest;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Course;
 import com.heigraduate.app.graduate.model.Exam;
 import com.heigraduate.app.graduate.model.Grade;
@@ -80,6 +81,14 @@ class GradeHistoryServiceTest {
                     .title("Programmation 4")
                     .credits(5)
                     .active(true)
+                    .build())
+            .academicYear(
+                AcademicYear.builder()
+                    .id(UUID.randomUUID())
+                    .label("2025-2026")
+                    .startDate(LocalDate.of(2025, 9, 1))
+                    .endDate(LocalDate.of(2026, 6, 30))
+                    .level("L2")
                     .build())
             .label("Controle continu")
             .coefficient(new BigDecimal("0.4"))
