@@ -14,12 +14,14 @@ import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.model.User;
 import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TeacherRepository;
 import com.heigraduate.app.graduate.service.AssignmentService;
 import com.heigraduate.app.graduate.service.GradeService;
 import java.math.BigDecimal;
@@ -44,6 +46,7 @@ class GradeHistoryServiceTest {
   @Mock private GradeHistoryRepository gradeHistoryRepository;
   @Mock private StudentRepository studentRepository;
   @Mock private ExamRepository examRepository;
+  @Mock private TeacherRepository teacherRepository;
   @Mock private AssignmentService assignmentService;
 
   @InjectMocks private GradeService gradeService;
@@ -158,12 +161,21 @@ class GradeHistoryServiceTest {
 
   @Test
   void update_shouldAllowTeacher_whenTeacherIsAssignedToCourse() {
-    User teacher =
+    User teacherUser =
         User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
+    Teacher teacher =
+        Teacher.builder()
+            .id(UUID.randomUUID())
+            .userId(teacherUser.getId())
+            .lastName("Rakoto")
+            .firstName("Jean")
+            .build();
 
     GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
 
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.of(teacher));
 
     when(assignmentService.isTeacherAssignedToCourse(
             teacher.getId(),
@@ -177,7 +189,7 @@ class GradeHistoryServiceTest {
     when(gradeRepository.save(any(Grade.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    GradeResponse result = gradeService.update(gradeId, request, teacher);
+    GradeResponse result = gradeService.update(gradeId, request, teacherUser);
 
     assertThat(result.value()).isEqualByComparingTo("12.00");
 
@@ -193,12 +205,21 @@ class GradeHistoryServiceTest {
 
   @Test
   void update_shouldThrow403_whenTeacherIsNotAssignedToCourse() {
-    User teacher =
+    User teacherUser =
         User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
+    Teacher teacher =
+        Teacher.builder()
+            .id(UUID.randomUUID())
+            .userId(teacherUser.getId())
+            .lastName("Rakoto")
+            .firstName("Jean")
+            .build();
 
     GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
 
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.of(teacher));
 
     when(assignmentService.isTeacherAssignedToCourse(
             teacher.getId(),
@@ -207,7 +228,7 @@ class GradeHistoryServiceTest {
         .thenReturn(false);
 
     Assertions.assertThrows(
-        AccessDeniedException.class, () -> gradeService.update(gradeId, request, teacher));
+        AccessDeniedException.class, () -> gradeService.update(gradeId, request, teacherUser));
 
     verify(assignmentService)
         .isTeacherAssignedToCourse(
@@ -215,6 +236,26 @@ class GradeHistoryServiceTest {
             grade.getExam().getCourse().getId(),
             grade.getExam().getAcademicYear().getId());
 
+    verify(gradeHistoryRepository, never()).save(any());
+    verify(gradeRepository, never()).save(any());
+  }
+
+  @Test
+  void update_shouldThrow403_whenTeacherHasNoTeacherProfileLinkedToUser() {
+    User teacherUser =
+        User.builder().id(UUID.randomUUID()).email("teacher@hei.mg").role(UserRole.TEACHER).build();
+
+    GradeUpdateRequest request = new GradeUpdateRequest(new BigDecimal("12.00"), "Correction");
+
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
+
+    when(teacherRepository.findByUserId(teacherUser.getId())).thenReturn(Optional.empty());
+
+    Assertions.assertThrows(
+        AccessDeniedException.class, () -> gradeService.update(gradeId, request, teacherUser));
+
+    // Regression guard: Assignment.teacherId references Teacher.id, never User.id.
+    verify(assignmentService, never()).isTeacherAssignedToCourse(any(), any(), any());
     verify(gradeHistoryRepository, never()).save(any());
     verify(gradeRepository, never()).save(any());
   }
