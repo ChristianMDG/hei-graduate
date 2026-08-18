@@ -14,21 +14,17 @@ import com.heigraduate.app.graduate.model.Grade;
 import com.heigraduate.app.graduate.model.GradeHistory;
 import com.heigraduate.app.graduate.model.GradeStatus;
 import com.heigraduate.app.graduate.model.Student;
-import com.heigraduate.app.graduate.model.Teacher;
 import com.heigraduate.app.graduate.model.User;
-import com.heigraduate.app.graduate.model.UserRole;
 import com.heigraduate.app.graduate.repository.ExamRepository;
 import com.heigraduate.app.graduate.repository.GradeHistoryRepository;
 import com.heigraduate.app.graduate.repository.GradeRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
-import com.heigraduate.app.graduate.repository.TeacherRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +36,6 @@ public class GradeService implements FinalGradeQuery {
   private final GradeHistoryRepository gradeHistoryRepository;
   private final StudentRepository studentRepository;
   private final ExamRepository examRepository;
-  private final TeacherRepository teacherRepository;
-  private final AssignmentService assignmentService;
 
   @Transactional(readOnly = true)
   public List<GradeResponse> findAll() {
@@ -63,8 +57,19 @@ public class GradeService implements FinalGradeQuery {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<GradeResponse> findMyPublishedGrades(UUID userId) {
+    Student student =
+        studentRepository
+            .findByUserId(userId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException("No student profile linked to user: " + userId));
+    return findPublishedForStudent(student.getId());
+  }
+
   @Transactional
-  public GradeResponse create(GradeRequest request, User connectedUser) {
+  public GradeResponse create(GradeRequest request) {
     if (gradeRepository.existsByStudentIdAndExamId(request.studentId(), request.examId())) {
       throw new ConflictException("A grade already exists for this student and this exam");
     }
@@ -82,9 +87,6 @@ public class GradeService implements FinalGradeQuery {
             .orElseThrow(
                 () -> new ResourceNotFoundException("Exam not found with id: " + request.examId()));
 
-    enforceTeacherAssignedToCourse(
-        connectedUser, exam.getCourse().getId(), exam.getAcademicYear().getId());
-
     Grade grade =
         Grade.builder()
             .student(student)
@@ -97,16 +99,11 @@ public class GradeService implements FinalGradeQuery {
   }
 
   @Transactional
-  public GradeResponse update(UUID id, GradeUpdateRequest request, User connectedUser) {
+  public GradeResponse update(UUID id, GradeUpdateRequest request, User actingUser) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
-
-    enforceTeacherAssignedToCourse(
-        connectedUser,
-        grade.getExam().getCourse().getId(),
-        grade.getExam().getAcademicYear().getId());
 
     BigDecimal oldValue = grade.getValue();
 
@@ -116,29 +113,12 @@ public class GradeService implements FinalGradeQuery {
             .oldValue(oldValue)
             .newValue(request.value())
             .reason(request.reason())
-            .changedByUserId(connectedUser.getId())
+            .changedByUserId(actingUser.getId())
             .build();
     gradeHistoryRepository.save(history);
 
     grade.setValue(request.value());
     return GradeMapper.toResponse(gradeRepository.save(grade));
-  }
-
-  private void enforceTeacherAssignedToCourse(
-      User connectedUser, UUID courseId, UUID academicYearId) {
-    if (connectedUser.getRole() != UserRole.TEACHER) {
-      return;
-    }
-
-    Teacher teacher =
-        teacherRepository
-            .findByUserId(connectedUser.getId())
-            .orElseThrow(
-                () -> new AccessDeniedException("No teacher profile linked to this account"));
-
-    if (!assignmentService.isTeacherAssignedToCourse(teacher.getId(), courseId, academicYearId)) {
-      throw new AccessDeniedException("You are not assigned to this course for this academic year");
-    }
   }
 
   @Transactional(readOnly = true)
@@ -179,31 +159,24 @@ public class GradeService implements FinalGradeQuery {
       return Optional.empty();
     }
 
-    BigDecimal weightedSum =
-        publishedGrades.stream()
-            .map(g -> g.getValue().multiply(g.getExam().getCoefficient()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal weightedSum = BigDecimal.ZERO;
+    BigDecimal totalWeight = BigDecimal.ZERO;
 
-    BigDecimal totalCoefficient =
-        publishedGrades.stream()
-            .map(g -> g.getExam().getCoefficient())
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    for (Grade g : publishedGrades) {
+      BigDecimal weight =
+          BigDecimal.valueOf(g.getExam().getCoefficientNumerator())
+              .divide(
+                  BigDecimal.valueOf(g.getExam().getCoefficientDenominator()),
+                  6,
+                  RoundingMode.HALF_UP);
+      weightedSum = weightedSum.add(g.getValue().multiply(weight));
+      totalWeight = totalWeight.add(weight);
+    }
 
-    if (totalCoefficient.compareTo(BigDecimal.ZERO) == 0) {
+    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
       return Optional.empty();
     }
 
-    return Optional.of(weightedSum.divide(totalCoefficient, 2, RoundingMode.HALF_UP));
-  }
-
-  @Transactional(readOnly = true)
-  public List<GradeResponse> findMyPublishedGrades(UUID userId) {
-    Student student =
-        studentRepository
-            .findByUserId(userId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException("No student profile linked to user: " + userId));
-    return findPublishedForStudent(student.getId());
+    return Optional.of(weightedSum.divide(totalWeight, 2, RoundingMode.HALF_UP));
   }
 }
