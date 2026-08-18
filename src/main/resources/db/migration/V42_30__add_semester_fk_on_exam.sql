@@ -23,7 +23,7 @@ UPDATE exam e
 SET semester_id = (
     SELECT s.id
     FROM semester s
-    ORDER BY ABS(EXTRACT(EPOCH FROM (e.date - s.start_date)))
+    ORDER BY ABS(e.date::date - s.start_date::date)
     LIMIT 1
 )
 WHERE e.semester_id IS NULL;
