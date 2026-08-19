@@ -10,7 +10,12 @@ import org.springframework.data.jpa.repository.Query;
 public interface SemesterRepository extends JpaRepository<Semester, UUID> {
 
   @Query(
+      "SELECT s FROM Semester s WHERE s.startDate <= :endDate AND s.endDate >= :startDate")
+  List<Semester> findOverlapping(LocalDate startDate, LocalDate endDate);
+
+  @Query(
       "SELECT s FROM Semester s WHERE s.startDate <= :endDate AND s.endDate >= :startDate "
-          + "AND (:excludeId IS NULL OR s.id <> :excludeId)")
-  List<Semester> findOverlapping(LocalDate startDate, LocalDate endDate, UUID excludeId);
+          + "AND s.id <> :excludeId")
+  List<Semester> findOverlappingExcluding(
+      LocalDate startDate, LocalDate endDate, UUID excludeId);
 }
