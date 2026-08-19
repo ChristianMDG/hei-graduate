@@ -4,11 +4,17 @@ import static java.io.File.createTempFile;
 
 import com.heigraduate.app.endpoint.event.model.TranscriptEmailRequested;
 import com.heigraduate.app.file.bucket.BucketComponent;
+import com.heigraduate.app.graduate.dto.AnnualAverageResult;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Student;
+import com.heigraduate.app.graduate.model.Transcript;
 import com.heigraduate.app.graduate.model.User;
+import com.heigraduate.app.graduate.repository.AcademicYearRepository;
 import com.heigraduate.app.graduate.repository.StudentRepository;
+import com.heigraduate.app.graduate.repository.TranscriptRepository;
 import com.heigraduate.app.graduate.repository.UserRepository;
+import com.heigraduate.app.graduate.service.AcademicAverageService;
 import com.heigraduate.app.graduate.service.TranscriptService;
 import com.heigraduate.app.mail.Email;
 import com.heigraduate.app.mail.Mailer;
@@ -17,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +39,9 @@ public class TranscriptEmailRequestedService implements Consumer<TranscriptEmail
   private final TranscriptService transcriptService;
   private final StudentRepository studentRepository;
   private final UserRepository userRepository;
+  private final AcademicYearRepository academicYearRepository;
+  private final AcademicAverageService academicAverageService;
+  private final TranscriptRepository transcriptRepository;
   private final BucketComponent bucketComponent;
   private final Mailer mailer;
 
@@ -54,6 +64,14 @@ public class TranscriptEmailRequestedService implements Consumer<TranscriptEmail
                     new ResourceNotFoundException(
                         "User not found with id: " + student.getUserId()));
 
+    AcademicYear academicYear =
+        academicYearRepository
+            .findById(event.getAcademicYearId())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "AcademicYear not found with id: " + event.getAcademicYearId()));
+
     byte[] pdf =
         transcriptService.generateTranscript(event.getStudentId(), event.getAcademicYearId());
 
@@ -70,6 +88,26 @@ public class TranscriptEmailRequestedService implements Consumer<TranscriptEmail
     }
 
     var downloadUri = bucketComponent.presign(bucketKey, LINK_VALIDITY);
+
+    AnnualAverageResult summary =
+        academicAverageService.computeAnnualAverage(
+            event.getStudentId(), event.getAcademicYearId());
+
+    Transcript transcript =
+        Transcript.builder()
+            .student(student)
+            .academicYear(academicYear)
+            .semester(null)
+            .type(summary.missingGradeCourseIds().isEmpty() ? "COMPLET" : "PROVISOIRE")
+            .urlS3(bucketKey)
+            .averageGrade(summary.average())
+            .obtainedCredits(summary.obtainedCredits())
+            .expectedCredits(summary.expectedCredits())
+            .yearValidated(summary.isYearValidated())
+            .emailSent(true)
+            .emailSentAt(LocalDateTime.now())
+            .build();
+    transcriptRepository.save(transcript);
 
     var recipient = new InternetAddress(user.getEmail());
     var email =

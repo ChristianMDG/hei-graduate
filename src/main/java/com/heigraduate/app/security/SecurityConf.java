@@ -54,7 +54,7 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers("/login", "/promotions", "/promotions/**")
                     .permitAll()
-                    .requestMatchers("/js/**", "/css/**")
+                    .requestMatchers("/js/**", "/css/**", "/favicon.ico")
                     .permitAll()
                     .requestMatchers("/api/users", "/api/users/**")
                     .hasRole("ADMIN")

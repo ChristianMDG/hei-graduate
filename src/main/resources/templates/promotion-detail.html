@@ -101,21 +101,27 @@
     }
 
     async function downloadExcel() {
-      setStatus("Génération du fichier Excel...");
+      setStatus("Récupération du fichier Excel...");
       try {
-        const response = await window.heiAuth.authFetch(
-          "/api/promotions/" + promotionId + "/diplomas/excel/generate",
-          { method: "POST" }
+        let response = await window.heiAuth.authFetch(
+          "/api/promotions/" + promotionId + "/diplomas/excel"
         );
+        if (response.status === 404) {
+          setStatus("Fichier non trouvé. Génération du fichier Excel...");
+          response = await window.heiAuth.authFetch(
+            "/api/promotions/" + promotionId + "/diplomas/excel/generate",
+            { method: "POST" }
+          );
+        }
         if (!response.ok) {
-          setStatus("Impossible de générer le fichier Excel.", true);
+          setStatus("Impossible de télécharger le fichier Excel.", true);
           return;
         }
         const data = await response.json();
         window.open(data.downloadUrl, "_blank");
-        setStatus("Fichier Excel généré.");
+        setStatus("Fichier Excel prêt pour le téléchargement.");
       } catch (err) {
-        setStatus("Erreur lors de la génération du fichier Excel.", true);
+        setStatus("Erreur lors du téléchargement du fichier Excel.", true);
       }
     }
 

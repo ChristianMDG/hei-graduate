@@ -3,6 +3,7 @@ package com.heigraduate.app.UT.graduate.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.heigraduate.app.file.bucket.BucketComponent;
@@ -14,6 +15,7 @@ import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
 import com.heigraduate.app.graduate.model.AcademicYear;
 import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.model.Promotion;
+import com.heigraduate.app.graduate.repository.DiplomaListRepository;
 import com.heigraduate.app.graduate.repository.DiplomaRepository;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
 import com.heigraduate.app.graduate.repository.PromotionRepository;
@@ -44,6 +46,8 @@ class DiplomaExcelServiceTest {
   @Mock private PromotionRepository promotionRepository;
   @Mock private ParcoursRepository parcoursRepository;
   @Mock private DiplomaRepository diplomaRepository;
+  // BUG-06 FIX : DiplomaExcelService persiste maintenant dans diploma_list
+  @Mock private DiplomaListRepository diplomaListRepository;
   @Mock private RankingService rankingService;
   @Mock private BucketComponent bucketComponent;
 
@@ -113,6 +117,10 @@ class DiplomaExcelServiceTest {
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(bucketComponent.presign(anyString(), any()))
         .thenReturn(new URL("https://bucket.s3.amazonaws.com/diplomas/generated.xlsx"));
+    // BUG-06 FIX : stubber diplomaListRepository (upsert après upload S3)
+    when(diplomaListRepository.findByPromotionIdAndParcoursId(any(), any()))
+        .thenReturn(java.util.Optional.empty());
+    when(diplomaListRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     DiplomaExcelResponse response = diplomaExcelService.generateExcel(promotionId);
 
@@ -170,5 +178,32 @@ class DiplomaExcelServiceTest {
         ResourceNotFoundException.class, () -> diplomaExcelService.generateExcel(promotionId));
 
     verifyNoInteractions(bucketComponent);
+  }
+
+  @Test
+  void getExistingExcel_shouldReturnPresignedUrl_whenExcelExists() throws Exception {
+    com.heigraduate.app.graduate.model.DiplomaList diplomaList =
+        com.heigraduate.app.graduate.model.DiplomaList.builder()
+            .promotionId(promotionId)
+            .parcoursId(UUID.randomUUID())
+            .urlS3("diplomas/existing.xlsx")
+            .build();
+
+    when(diplomaListRepository.findByPromotionId(promotionId)).thenReturn(List.of(diplomaList));
+    when(bucketComponent.presign(eq("diplomas/existing.xlsx"), any()))
+        .thenReturn(new URL("https://bucket.s3.amazonaws.com/diplomas/existing.xlsx"));
+
+    DiplomaExcelResponse response = diplomaExcelService.getExistingExcel(promotionId);
+
+    assertThat(response.downloadUrl())
+        .isEqualTo("https://bucket.s3.amazonaws.com/diplomas/existing.xlsx");
+  }
+
+  @Test
+  void getExistingExcel_shouldThrow_whenNoExcelExistsYet() {
+    when(diplomaListRepository.findByPromotionId(promotionId)).thenReturn(List.of());
+
+    Assertions.assertThrows(
+        ResourceNotFoundException.class, () -> diplomaExcelService.getExistingExcel(promotionId));
   }
 }

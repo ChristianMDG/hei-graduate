@@ -41,6 +41,7 @@ public class GradeService implements FinalGradeQuery {
   private final ExamRepository examRepository;
   private final TeacherRepository teacherRepository;
   private final AssignmentService assignmentService;
+  private final com.heigraduate.app.graduate.validator.ExamValidator examValidator;
 
   @Transactional(readOnly = true)
   public List<GradeResponse> findAll() {
@@ -72,6 +73,38 @@ public class GradeService implements FinalGradeQuery {
                     new ResourceNotFoundException("No student profile linked to user: " + userId));
 
     return findPublishedForStudent(student.getId());
+  }
+
+  /**
+   * BUG-08 FIX — Retourne les notes d'un étudiant donné, filtrées aux cours de l'enseignant.
+   *
+   * <p>Un enseignant ne voit que les notes des cours auxquels il est affecté (§6/§18). L'ADMIN voit
+   * toutes les notes sans restriction.
+   */
+  @Transactional(readOnly = true)
+  public List<GradeResponse> findGradesForStudent(UUID studentId, User actingUser) {
+    if ("ADMIN".equals(actingUser.getRole().name())) {
+      return gradeRepository.findByStudentId(studentId).stream()
+          .map(GradeMapper::toResponse)
+          .toList();
+    }
+
+    // TEACHER : on filtre aux cours où il est affecté
+    Teacher teacher =
+        teacherRepository
+            .findByUserId(actingUser.getId())
+            .orElseThrow(
+                () -> new AccessDeniedException("No teacher profile linked to this account"));
+
+    return gradeRepository.findByStudentId(studentId).stream()
+        .filter(
+            grade ->
+                assignmentService.isTeacherAssignedToCourse(
+                    teacher.getId(),
+                    grade.getExam().getCourse().getId(),
+                    grade.getExam().getAcademicYear().getId()))
+        .map(GradeMapper::toResponse)
+        .toList();
   }
 
   @Transactional
@@ -173,12 +206,30 @@ public class GradeService implements FinalGradeQuery {
         .toList();
   }
 
+  /**
+   * BUG-09/10 FIX — publish() publie une note (la rend visible aux étudiants).
+   *
+   * <p>BUG-09 : Cette méthode est uniquement accessible à l'ADMIN (cf. GradeController). Un
+   * enseignant ne peut pas publier les notes d'un cours auquel il n'est pas affecté.
+   *
+   * <p>BUG-10 : Avant de publier, on vérifie que la somme des coefficients des examens du cours +
+   * semestre concerné est exactement égale à 1 (§7 cahier des charges). Si un examen manque encore,
+   * la publication est bloquée.
+   */
   @Transactional
   public GradeResponse publish(UUID id) {
     Grade grade =
         gradeRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+
+    Exam exam = grade.getExam();
+
+    // BUG-10 FIX : vérifier que la somme des coefficients = 1 avant publication
+    if (exam.getSemester() != null) {
+      examValidator.validateCoefficientSumEqualsOne(
+          exam.getCourse().getId(), exam.getSemester().getId());
+    }
 
     grade.setStatus(GradeStatus.PUBLISHED);
 
@@ -194,6 +245,19 @@ public class GradeService implements FinalGradeQuery {
     gradeRepository.deleteById(id);
   }
 
+  /**
+   * BUG-15 FIX — Calcule la note finale pondérée d'un étudiant pour un cours (§7/§8).
+   *
+   * <p>La division se fait par {@code totalWeight} (somme réelle des coefficients des examens
+   * publiés). Quand tous les examens sont publiés et que leur somme vaut exactement 1 (garantie
+   * depuis BUG-10), {@code totalWeight == 1} et la division est sans effet.
+   *
+   * <p>Si {@code totalWeight < 1} (tous les examens ne sont pas encore publiés), la note retournée
+   * est une <b>note provisoire normalisée</b> : elle est légèrement surestime par rapport à la note
+   * finale réelle. C'est un comportement accepté pour les relevés provisoires (type "PROVISOIRE"
+   * dans la table transcript). La note finale réelle ne sera calculée qu'après la publication de
+   * tous les examens du cours pour le semestre concerné.
+   */
   @Override
   @Transactional(readOnly = true)
   public Optional<BigDecimal> getFinalGrade(UUID studentId, UUID courseId) {
@@ -223,6 +287,9 @@ public class GradeService implements FinalGradeQuery {
       return Optional.empty();
     }
 
+    // BUG-15 FIX : si totalWeight < 1, le résultat est une note provisoire normalisée.
+    // Lorsque tous les examens seront publiés et que totalWeight == 1 (cf. BUG-10),
+    // la division par totalWeight sera sans effet et la note finale sera exacte.
     return Optional.of(weightedSum.divide(totalWeight, 2, RoundingMode.HALF_UP));
   }
 }

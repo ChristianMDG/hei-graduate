@@ -19,4 +19,10 @@ public class DiplomaExcelController {
   public DiplomaExcelResponse generate(@PathVariable UUID promotionId) {
     return diplomaExcelService.generateExcel(promotionId);
   }
+
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public DiplomaExcelResponse getExisting(@PathVariable UUID promotionId) {
+    return diplomaExcelService.getExistingExcel(promotionId);
+  }
 }

@@ -4,8 +4,10 @@ import com.heigraduate.app.file.bucket.BucketComponent;
 import com.heigraduate.app.graduate.dto.DiplomaExcelResponse;
 import com.heigraduate.app.graduate.dto.DiplomaResponse;
 import com.heigraduate.app.graduate.exception.ResourceNotFoundException;
+import com.heigraduate.app.graduate.model.DiplomaList;
 import com.heigraduate.app.graduate.model.Parcours;
 import com.heigraduate.app.graduate.model.Promotion;
+import com.heigraduate.app.graduate.repository.DiplomaListRepository;
 import com.heigraduate.app.graduate.repository.DiplomaRepository;
 import com.heigraduate.app.graduate.repository.ParcoursRepository;
 import com.heigraduate.app.graduate.repository.PromotionRepository;
@@ -23,6 +25,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,9 +39,11 @@ public class DiplomaExcelService {
   private final PromotionRepository promotionRepository;
   private final ParcoursRepository parcoursRepository;
   private final DiplomaRepository diplomaRepository;
+  private final DiplomaListRepository diplomaListRepository;
   private final RankingService rankingService;
   private final BucketComponent bucketComponent;
 
+  @Transactional
   public DiplomaExcelResponse generateExcel(UUID promotionId) {
     Promotion promotion =
         promotionRepository
@@ -56,6 +61,32 @@ public class DiplomaExcelService {
     String bucketKey = BUCKET_KEY_PREFIX + promotionId + "/" + UUID.randomUUID() + ".xlsx";
     bucketComponent.upload(workbookFile, bucketKey);
 
+    for (UUID parcoursId : parcoursIds) {
+      diplomaListRepository
+          .findByPromotionIdAndParcoursId(promotionId, parcoursId)
+          .ifPresentOrElse(
+              existing -> existing.setUrlS3(bucketKey),
+              () ->
+                  diplomaListRepository.save(
+                      DiplomaList.builder()
+                          .promotionId(promotionId)
+                          .parcoursId(parcoursId)
+                          .urlS3(bucketKey)
+                          .build()));
+    }
+
+    var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
+    return new DiplomaExcelResponse(downloadUrl.toString());
+  }
+
+  @Transactional(readOnly = true)
+  public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
+    List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
+    if (lists.isEmpty() || lists.get(0).getUrlS3() == null) {
+      throw new ResourceNotFoundException(
+          "No Excel file has been generated yet for promotion: " + promotionId);
+    }
+    String bucketKey = lists.get(0).getUrlS3();
     var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
     return new DiplomaExcelResponse(downloadUrl.toString());
   }
