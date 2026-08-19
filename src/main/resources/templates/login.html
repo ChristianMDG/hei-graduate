@@ -41,7 +41,7 @@
         }
         const data = await response.json();
         window.heiAuth.setSession(data.token, data.user);
-        window.location.href = "/promotions";
+        window.location.href = data.user.role === "STUDENT" ? "/notes" : "/promotions";
       } catch (err) {
         document.getElementById("error").textContent = "Erreur de connexion au serveur.";
       }
