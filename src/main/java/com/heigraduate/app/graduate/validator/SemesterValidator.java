@@ -23,7 +23,11 @@ public class SemesterValidator {
   }
 
   public void validateNoOverlap(LocalDate startDate, LocalDate endDate, UUID excludedId) {
-    List<Semester> overlapping = semesterRepository.findOverlapping(startDate, endDate, excludedId);
+    List<Semester> overlapping =
+        excludedId == null
+            ? semesterRepository.findOverlapping(startDate, endDate)
+            : semesterRepository.findOverlappingExcluding(startDate, endDate, excludedId);
+
     if (!overlapping.isEmpty()) {
       throw new ConflictException(
           "This date range overlaps with an existing semester: " + overlapping.get(0).getLabel());
