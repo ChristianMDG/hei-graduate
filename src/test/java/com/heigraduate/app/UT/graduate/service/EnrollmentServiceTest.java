@@ -109,18 +109,11 @@ class EnrollmentServiceTest {
 
     TransferRequest transfer1 = new TransferRequest(null, groupK1, transferDate1);
 
-    Enrollment enrollment2 =
-        Enrollment.builder()
-            .id(UUID.randomUUID())
-            .studentId(studentId)
-            .parcoursId(parcoursId)
-            .groupId(groupK1)
-            .startDate(transferDate1)
-            .endDate(null)
-            .build();
-
     when(enrollmentRepository.findByStudentIdAndEndDateIsNull(studentId))
         .thenReturn(Optional.of(enrollment1));
+
+    when(enrollmentRepository.saveAndFlush(any(Enrollment.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     when(enrollmentRepository.save(any(Enrollment.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -132,6 +125,8 @@ class EnrollmentServiceTest {
     assertThat(result.getEndDate()).isNull();
     assertThat(enrollment1.getEndDate()).isEqualTo(transferDate1);
     verify(enrollmentValidator).validateTransferDate(enrollment1, transferDate1);
+    verify(enrollmentRepository).saveAndFlush(enrollment1);
+    verify(enrollmentRepository).save(any(Enrollment.class));
   }
 
   @Test
