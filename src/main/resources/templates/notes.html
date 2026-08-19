@@ -1,408 +1,82 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
     <title>HEI Graduate — Mes notes</title>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #2563eb;
-            --primary-light: #eff6ff;
-            --background: #f6f8fc;
-            --surface: #ffffff;
-            --text: #172033;
-            --muted: #667085;
-            --border: #e6eaf0;
-            --danger: #b42318;
-            --danger-bg: #fef3f2;
-            --sidebar: #111827;
-        }
-
-        body {
-            margin: 0;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-                         BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: var(--background);
-            color: var(--text);
-        }
-
-        .layout {
-            min-height: 100vh;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: var(--sidebar);
-            color: white;
-            padding: 26px 18px;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            inset: 0 auto 0 0;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 0 12px;
-            margin-bottom: 42px;
-            font-size: 19px;
-            font-weight: 800;
-        }
-
-        .brand-icon {
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            border-radius: 11px;
-            background: var(--primary);
-        }
-
-        .nav {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .nav a {
-            color: #cbd5e1;
-            text-decoration: none;
-            padding: 12px 14px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .nav a:hover,
-        .nav a.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.09);
-        }
-
-        .nav a.active {
-            background: var(--primary);
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
-        }
-
-        .logout {
-            width: 100%;
-            border: 0;
-            background: transparent;
-            color: #cbd5e1;
-            padding: 12px 14px;
-            text-align: left;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .logout:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-        }
-
-        .main {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            padding: 36px 42px;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .eyebrow {
-            color: var(--primary);
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 7px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 30px;
-            letter-spacing: -0.8px;
-        }
-
-        .top-description {
-            margin: 7px 0 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow: 0 5px 20px rgba(15, 23, 42, 0.03);
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 22px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card-title {
-            margin: 0;
-            font-size: 17px;
-        }
-
-        .card-subtitle {
-            margin: 4px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #f8fafc;
-            color: #475467;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            font-weight: 700;
-        }
-
-        th,
-        td {
-            padding: 16px 24px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        td {
-            font-size: 14px;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: 0;
-        }
-
-        tbody tr:hover {
-            background: #fafcff;
-        }
-
-        .grade {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 66px;
-            padding: 7px 10px;
-            border-radius: 8px;
-            background: #ecfdf3;
-            color: #027a48;
-            font-weight: 800;
-        }
-
-        .grade.low {
-            background: var(--danger-bg);
-            color: var(--danger);
-        }
-
-        #empty {
-            padding: 48px 24px;
-            text-align: center;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .empty-icon {
-            font-size: 34px;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 800px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                inset: auto;
-            }
-
-            .layout {
-                display: block;
-            }
-
-            .brand {
-                margin-bottom: 20px;
-            }
-
-            .nav {
-                flex-direction: row;
-            }
-
-            .sidebar-bottom {
-                margin-top: 15px;
-            }
-
-            .main {
-                width: 100%;
-                margin-left: 0;
-                padding: 25px 18px;
-            }
-        }
+        body { font-family: sans-serif; max-width: 720px; margin: 40px auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        a { color: #1a5fb4; }
+        #top-bar { display: flex; justify-content: space-between; align-items: center; }
+        nav { margin-top: 8px; }
+        nav a { margin-right: 16px; }
+        #empty { color: #666; margin-top: 16px; }
+        .value { font-weight: bold; }
+        .value.low { color: #b00020; }
     </style>
 </head>
-
 <body>
-
-<div class="layout">
-
-    <aside class="sidebar">
-
-        <div class="brand">
-            <div class="brand-icon">🎓</div>
-            <span>HEI Graduate</span>
-        </div>
-
-        <nav class="nav">
-            <a href="/notes" class="active">📊 &nbsp; Mes notes</a>
-            <a href="/releves">📄 &nbsp; Mes relevés</a>
+<div id="top-bar">
+    <div>
+        <h1>Mes notes</h1>
+        <nav>
+            <a href="/notes">Mes notes</a>
+            <a href="/releves">Mes relevés</a>
         </nav>
-
-        <div class="sidebar-bottom">
-            <button id="logout-btn" class="logout">
-                ↪ &nbsp; Se déconnecter
-            </button>
-        </div>
-
-    </aside>
-
-    <main class="main">
-
-        <div class="topbar">
-            <div>
-                <div class="eyebrow">ESPACE ÉTUDIANT</div>
-                <h1>Mes notes</h1>
-                <p class="top-description">
-                    Consultez vos résultats académiques publiés.
-                </p>
-            </div>
-        </div>
-
-        <section class="card">
-
-            <div class="card-header">
-                <div>
-                    <h2 class="card-title">Résultats académiques</h2>
-                    <p class="card-subtitle">
-                        Vos notes par cours et par examen
-                    </p>
-                </div>
-            </div>
-
-            <div class="table-wrapper">
-                <table id="grades-table" style="display:none;">
-                    <thead>
-                    <tr>
-                        <th>Cours</th>
-                        <th>Examen</th>
-                        <th>Note</th>
-                    </tr>
-                    </thead>
-                    <tbody id="grades-body"></tbody>
-                </table>
-            </div>
-
-            <div id="empty" style="display:none;">
-                <div class="empty-icon">📚</div>
-                <div>Aucune note publiée pour le moment.</div>
-            </div>
-
-        </section>
-
-    </main>
-
+    </div>
+    <button id="logout-btn">Se déconnecter</button>
 </div>
 
-<script th:src="@{/js/auth.js}"></script>
+<table id="grades-table" style="display:none;">
+    <thead>
+    <tr><th>Cours</th><th>Examen</th><th>Note</th></tr>
+    </thead>
+    <tbody id="grades-body"></tbody>
+</table>
+<p id="empty" style="display:none;">Aucune note publiée pour le moment.</p>
 
+<script th:src="@{/js/auth.js}"></script>
 <script>
     window.heiAuth.requireAuth();
 
     document.getElementById("logout-btn").addEventListener("click", function () {
-        window.heiAuth.logout();
+      window.heiAuth.logout();
     });
 
     function renderRow(grade) {
-        const row = document.createElement("tr");
-
-        const value = Number(grade.value);
-
-        const valueClass =
-            value < 10
-                ? "grade low"
-                : "grade";
-
-        row.innerHTML =
-            "<td><strong>" + grade.courseReference + "</strong></td>" +
-            "<td>" + grade.examLabel + "</td>" +
-            "<td><span class='" + valueClass + "'>" +
-            value.toFixed(2) +
-            "</span></td>";
-
-        return row;
+      const row = document.createElement("tr");
+      const value = Number(grade.value);
+      const valueClass = value < 10 ? "value low" : "value";
+      row.innerHTML =
+        "<td>" + grade.courseReference + "</td>" +
+        "<td>" + grade.examLabel + "</td>" +
+        "<td class='" + valueClass + "'>" + value.toFixed(2) + "</td>";
+      return row;
     }
 
     async function loadMyGrades() {
+      const response = await window.heiAuth.authFetch("/api/grades/me");
+      if (!response.ok) {
+        document.getElementById("empty").textContent = "Impossible de charger vos notes.";
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
+      const grades = await response.json();
 
-        const response =
-            await window.heiAuth.authFetch("/api/grades/me");
+      if (grades.length === 0) {
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
 
-        if (!response.ok) {
-            document.getElementById("empty").textContent =
-                "Impossible de charger vos notes.";
-
-            document.getElementById("empty").style.display = "block";
-            return;
-        }
-
-        const grades = await response.json();
-
-        if (grades.length === 0) {
-            document.getElementById("empty").style.display = "block";
-            return;
-        }
-
-        const body = document.getElementById("grades-body");
-
-        grades.forEach(function (grade) {
-            body.appendChild(renderRow(grade));
-        });
-
-        document.getElementById("grades-table").style.display = "table";
+      const body = document.getElementById("grades-body");
+      grades.forEach(function (grade) {
+        body.appendChild(renderRow(grade));
+      });
+      document.getElementById("grades-table").style.display = "table";
     }
 
     loadMyGrades();
 </script>
-
 </body>
 </html>
