@@ -52,7 +52,7 @@ public class StudentController {
   }
 
   @GetMapping("/me")
-  @PreAuthorize("hasRole('STUDENT')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
   public ResponseEntity<StudentResponse> getCurrentStudent(
       @AuthenticationPrincipal User connectedUser) {
     Student self = studentService.getByCurrentUser(connectedUser.getId());

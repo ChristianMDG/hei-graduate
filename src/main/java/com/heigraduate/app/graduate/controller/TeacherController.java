@@ -52,7 +52,7 @@ public class TeacherController {
   }
 
   @GetMapping("/me")
-  @PreAuthorize("hasRole('TEACHER')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
   public ResponseEntity<TeacherResponse> getCurrentTeacher(
       @AuthenticationPrincipal User connectedUser) {
     Teacher self = teacherService.getByCurrentUser(connectedUser.getId());
