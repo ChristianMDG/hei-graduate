@@ -1,51 +1,326 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
-  <title>HEI Graduate — Connexion</title>
-  <style>
-    body { font-family: sans-serif; max-width: 360px; margin: 80px auto; }
-    label { display: block; margin-top: 12px; }
-    input { width: 100%; padding: 6px; box-sizing: border-box; }
-    button { margin-top: 16px; padding: 8px 16px; }
-    #error { color: #b00020; margin-top: 12px; }
-  </style>
-</head>
-<body>
-  <h1>Connexion</h1>
-  <form id="login-form">
-    <label for="email">E-mail</label>
-    <input type="email" id="email" required />
-    <label for="password">Mot de passe</label>
-    <input type="password" id="password" required />
-    <button type="submit">Se connecter</button>
-    <p id="error"></p>
-  </form>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEI Graduate — Connexion</title>
 
-  <script th:src="@{/js/auth.js}"></script>
-  <script>
-    document.getElementById("login-form").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      document.getElementById("error").textContent = "";
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        const response = await fetch("/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email, password: password }),
-        });
-        if (!response.ok) {
-          document.getElementById("error").textContent = "Identifiants invalides.";
-          return;
+    <style>
+        * {
+            box-sizing: border-box;
         }
-        const data = await response.json();
-        window.heiAuth.setSession(data.token, data.user);
-        window.location.href = data.user.role === "STUDENT" ? "/notes" : "/promotions";
-      } catch (err) {
-        document.getElementById("error").textContent = "Erreur de connexion au serveur.";
-      }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --background: #f4f7fb;
+            --surface: #ffffff;
+            --text: #172033;
+            --muted: #667085;
+            --border: #e4e7ec;
+            --danger: #b42318;
+            --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 35%),
+                var(--background);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 1050px;
+            min-height: 620px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--surface);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .brand-panel {
+            padding: 64px;
+            background: linear-gradient(145deg, #1d4ed8, #2563eb 55%, #3b82f6);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 22px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 20px;
+        }
+
+        .brand-content {
+            max-width: 420px;
+        }
+
+        .brand-content h1 {
+            margin: 0 0 20px;
+            font-size: 44px;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+        }
+
+        .brand-content p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .brand-footer {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 13px;
+        }
+
+        .form-panel {
+            padding: 64px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 390px;
+            margin: auto;
+        }
+
+        .form-container h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            letter-spacing: -0.7px;
+        }
+
+        .subtitle {
+            margin: 0 0 34px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            height: 50px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0 15px;
+            font-size: 15px;
+            color: var(--text);
+            outline: none;
+            background: #fff;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+        }
+
+        button {
+            width: 100%;
+            height: 50px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        #error {
+            min-height: 20px;
+            margin: 14px 0 0;
+            color: var(--danger);
+            font-size: 14px;
+        }
+
+        @media (max-width: 800px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-panel {
+                padding: 40px;
+                min-height: 300px;
+            }
+
+            .brand-content h1 {
+                font-size: 34px;
+            }
+
+            .brand-footer {
+                display: none;
+            }
+
+            .form-panel {
+                padding: 40px 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+    <section class="brand-panel">
+        <div class="brand">
+            <div class="brand-icon">🎓</div>
+            <span>HEI Graduate</span>
+        </div>
+
+        <div class="brand-content">
+            <h1>Votre parcours académique, simplement.</h1>
+            <p>
+                Consultez vos notes, téléchargez vos relevés
+                et accédez aux informations relatives aux promotions
+                et aux diplômés.
+            </p>
+        </div>
+
+        <div class="brand-footer">
+            Plateforme de gestion académique — HEI Graduate
+        </div>
+    </section>
+
+    <section class="form-panel">
+        <div class="form-container">
+
+            <h2>Bienvenue 👋</h2>
+            <p class="subtitle">
+                Connectez-vous à votre espace.
+            </p>
+
+            <form id="login-form">
+
+                <div class="field">
+                    <label for="email">Adresse e-mail</label>
+                    <input
+                            type="email"
+                            id="email"
+                            placeholder="exemple@email.com"
+                            autocomplete="email"
+                            required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="password">Mot de passe</label>
+                    <input
+                            type="password"
+                            id="password"
+                            placeholder="Votre mot de passe"
+                            autocomplete="current-password"
+                            required
+                    >
+                </div>
+
+                <button type="submit">
+                    Se connecter
+                </button>
+
+                <p id="error"></p>
+
+            </form>
+        </div>
+    </section>
+
+</div>
+
+<script th:src="@{/js/auth.js}"></script>
+
+<script>
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const error = document.getElementById("error");
+        const button = this.querySelector("button");
+
+        error.textContent = "";
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        button.disabled = true;
+        button.textContent = "Connexion...";
+
+        try {
+            const response = await fetch("/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            if (!response.ok) {
+                error.textContent = "Identifiants invalides.";
+                return;
+            }
+
+            const data = await response.json();
+
+            window.heiAuth.setSession(data.token, data.user);
+
+            window.location.href =
+                data.user.role === "STUDENT"
+                    ? "/notes"
+                    : "/promotions";
+
+        } catch (err) {
+            error.textContent = "Erreur de connexion au serveur.";
+        } finally {
+            button.disabled = false;
+            button.textContent = "Se connecter";
+        }
     });
-  </script>
+</script>
+
 </body>
 </html>
