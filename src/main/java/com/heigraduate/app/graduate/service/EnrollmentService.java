@@ -46,8 +46,8 @@ public class EnrollmentService {
 
     enrollmentValidator.validateTransferDate(currentActive, request.effectiveDate());
 
-    currentActive.setEndDate(request.effectiveDate().minusDays(1));
-    enrollmentRepository.saveAndFlush(currentActive);
+    currentActive.setEndDate(request.effectiveDate());
+    enrollmentRepository.saveAndFlush(currentActive); // flush AVANT insert
 
     Enrollment newEnrollment =
         Enrollment.builder()
