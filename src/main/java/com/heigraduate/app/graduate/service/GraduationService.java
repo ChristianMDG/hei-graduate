@@ -46,8 +46,6 @@ public class GraduationService {
       throw new ResourceNotFoundException("No enrollment history for student: " + studentId);
     }
 
-    // NC-05 FIX (§12) : limiter aux 3 premières années universitaires de l'étudiant.
-    // Un étudiant ayant redoublé avec 4 années ne peut être diplômé que sur les 3 premières.
     List<AcademicYear> studentYears =
         academicYearRepository.findAll().stream()
             .filter(
@@ -70,15 +68,12 @@ public class GraduationService {
               .map(Enrollment::getParcoursId)
               .collect(Collectors.toCollection(LinkedHashSet::new));
 
-      // NC-02 FIX (§12) : dédupliquer les cours obligatoires par courseId.
-      // Un cours commun à deux parcours (ex : commun → EL dans la même année) ne doit
-      // être évalué qu'une seule fois. LinkedHashMap.put() écrase silencieusement les doublons.
       Map<UUID, Integer> mandatoryCoursesThisYear = new LinkedHashMap<>();
       for (UUID parcoursId : parcoursIdsThisYear) {
         List<UUID> mandatoryCourseIds =
             courseRequirementQuery.getMandatoryCourseIds(parcoursId, year.getId());
         for (UUID courseId : mandatoryCourseIds) {
-          // Stocker temporairement 0 crédits si on ne fait pas encore le findById
+
           mandatoryCoursesThisYear.putIfAbsent(courseId, 0);
         }
       }

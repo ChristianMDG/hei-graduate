@@ -23,27 +23,17 @@ public class GradeController {
   private final GradeService gradeService;
 
   @GetMapping
-  // BUG-08 FIX: un TEACHER ne doit accéder qu'aux notes de ses propres cours (§6/§18).
-  // La liste complète de toutes les notes n'est accessible qu'à l'ADMIN.
   @PreAuthorize("hasRole('ADMIN')")
   public List<GradeResponse> findAll() {
     return gradeService.findAll();
   }
 
   @GetMapping("/{id}")
-  // BUG-08 FIX: accès à une note arbitraire par UUID restreint à ADMIN.
-  // Un enseignant consulte les notes via /api/grades/student/{studentId}
-  // uniquement pour les étudiants de ses propres cours (vérification côté service).
   @PreAuthorize("hasRole('ADMIN')")
   public GradeResponse findById(@PathVariable UUID id) {
     return gradeService.findById(id);
   }
 
-  /**
-   * BUG-08 FIX — Route dédiée pour qu'un enseignant consulte les notes d'un étudiant donné. La
-   * vérification d'affectation est faite côté service (§6/§18) : un enseignant ne voit que les
-   * notes des cours auxquels il est affecté.
-   */
   @GetMapping("/student/{studentId}")
   @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
   public List<GradeResponse> findByStudent(
@@ -58,9 +48,6 @@ public class GradeController {
   }
 
   @GetMapping("/{id}/history")
-  // BUG-12 FIX: l'historique complet des modifications est réservé à l'ADMIN.
-  // Un enseignant ne doit pas consulter l'historique de modifications de notes
-  // d'un cours qu'il n'enseigne pas (§6/§18).
   @PreAuthorize("hasRole('ADMIN')")
   public List<GradeHistoryResponse> getHistory(@PathVariable UUID id) {
     return gradeService.getHistory(id);
@@ -84,9 +71,6 @@ public class GradeController {
   }
 
   @PostMapping("/{id}/publish")
-  // BUG-03 FIX: la publication est une action administrative (§6/§18).
-  // Un enseignant peut saisir et modifier les notes de ses cours, mais seul
-  // l'administrateur peut publier (rendre visibles) les notes aux étudiants.
   @PreAuthorize("hasRole('ADMIN')")
   public GradeResponse publish(@PathVariable UUID id) {
     return gradeService.publish(id);

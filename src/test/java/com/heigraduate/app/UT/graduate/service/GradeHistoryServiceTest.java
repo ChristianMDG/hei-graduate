@@ -254,7 +254,6 @@ class GradeHistoryServiceTest {
     Assertions.assertThrows(
         AccessDeniedException.class, () -> gradeService.update(gradeId, request, teacherUser));
 
-    // Regression guard: Assignment.teacherId references Teacher.id, never User.id.
     verify(assignmentService, never()).isTeacherAssignedToCourse(any(), any(), any());
     verify(gradeHistoryRepository, never()).save(any());
     verify(gradeRepository, never()).save(any());

@@ -37,10 +37,6 @@ public class Grade {
   @Column(name = "entered_by_user_id")
   private UUID enteredByUserId;
 
-  /**
-   * BUG-05 FIX — date_saisie exigée par le MCD (entité NOTE, §8 cahier des charges). "Une note est
-   * associée à… une valeur, une date de saisie ou de modification."
-   */
   @Column(name = "entered_at", nullable = false)
   @Builder.Default
   private LocalDateTime enteredAt = LocalDateTime.now();

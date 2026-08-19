@@ -62,19 +62,13 @@ public class AcademicAverageService {
       parcoursIdsThisYear.add(e.getParcoursId());
     }
 
-    // BUG-07 FIX : un étudiant qui a changé de parcours dans la même année
-    // (ex : common → EL) peut se retrouver avec plusieurs parcoursId dans parcoursIdsThisYear.
-    // Si un cours est commun aux deux parcours, findByTrackIdAndAcademicYearId le retourne deux
-    // fois. Le LinkedHashMap.put() garantit la déduplication par courseId : le deuxième put()
-    // sur le même UUID écrase silencieusement le premier sans modifier la valeur (les crédits
-    // sont les mêmes pour le même cours). Résultat : chaque cours est compté exactement une fois.
     Map<UUID, Integer> creditsByCourse = new LinkedHashMap<>();
     for (UUID parcoursId : parcoursIdsThisYear) {
       List<CourseTrack> tracks =
           courseTrackRepository.findByTrackIdAndAcademicYearId(parcoursId, academicYearId);
       for (CourseTrack ct : tracks) {
         Course course = ct.getCourse();
-        // put() écrase les doublons — un cours commun à EL et TN n'est jamais compté deux fois.
+
         creditsByCourse.put(course.getId(), course.getCredits());
       }
     }
@@ -110,10 +104,6 @@ public class AcademicAverageService {
       }
     }
 
-    // NC-01 FIX (§11) : la moyenne est pondérée par TOUS les crédits du parcours (expectedCredits),
-    // pas seulement les crédits des cours déjà notés (gradedCredits). Un cours sans note contribue
-    // 0 à la somme pondérée mais son poids reste dans le dénominateur. Cela évite de surestimer
-    // la moyenne quand tous les examens ne sont pas encore publiés.
     BigDecimal average =
         expectedCredits == 0
             ? null

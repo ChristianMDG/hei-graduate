@@ -29,16 +29,6 @@ public class ExamValidator {
     }
   }
 
-  /**
-   * BUG-01 FIX — Valide que la somme des coefficients du cours pour ce semestre ne dépasse pas 1.
-   *
-   * <p>La somme est calculée par (cours, semestre) et non par (cours, année) — un même cours peut
-   * figurer en S1 et en S2 via COURS_PARCOURS ; agréger sur toute l'année mélangeait les deux pools
-   * et rejetait des configurations valides.
-   *
-   * @param excludeExamId UUID de l'examen à exclure du cumul (cas de la mise à jour, null à la
-   *     création).
-   */
   public void validateCoefficientSum(
       UUID courseId,
       UUID semesterId,
@@ -73,16 +63,6 @@ public class ExamValidator {
     }
   }
 
-  /**
-   * BUG-10 FIX — Vérifie que la somme des coefficients est EXACTEMENT 1 (§7 cahier des charges).
-   *
-   * <p>"La somme des coefficients des examens d'un même cours doit être égale à 1."
-   *
-   * <p>Cette vérification complémentaire à {@link #validateCoefficientSum} doit être appelée
-   * <b>avant la publication des notes</b> d'un cours donné pour un semestre donné : à ce moment,
-   * tous les examens du cours doivent avoir été créés et leur somme doit être exactement 1. Si la
-   * somme est inférieure à 1, la publication est bloquée.
-   */
   public void validateCoefficientSumEqualsOne(UUID courseId, UUID semesterId) {
     List<Exam> exams = examRepository.findByCourseIdAndSemesterId(courseId, semesterId);
 
@@ -95,7 +75,7 @@ public class ExamValidator {
     long sumDenominator = 1;
 
     for (Exam exam : exams) {
-      // Addition de fractions : a/b + c/d = (a*d + c*b) / (b*d)
+
       long crossNumerator =
           sumNumerator * exam.getCoefficientDenominator()
               + exam.getCoefficientNumerator() * sumDenominator;
@@ -104,7 +84,6 @@ public class ExamValidator {
       sumDenominator = crossDenominator;
     }
 
-    // Vérification : somme == 1 ⟺ numérateur == dénominateur
     if (sumNumerator != sumDenominator) {
       throw new BadRequestException(
           "Sum of coefficients for course "

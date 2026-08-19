@@ -75,7 +75,6 @@ class AcademicYearServiceTest {
         new AcademicYearRequest(
             "2025-2026", LocalDate.of(2026, 6, 30), LocalDate.of(2025, 9, 1), "L1");
 
-    // FIX: Utiliser doThrow() pour les méthodes void
     doThrow(new BadRequestException("startDate must be before endDate"))
         .when(academicYearValidator)
         .validateDateRange(LocalDate.of(2026, 6, 30), LocalDate.of(2025, 9, 1));

@@ -26,7 +26,6 @@ public class Transcript {
   @JoinColumn(name = "academic_year_id", nullable = false)
   private AcademicYear academicYear;
 
-  /** Null = relevé annuel complet. Renseigné = relevé partiel d'un semestre (MCD correction #5). */
   @ManyToOne
   @JoinColumn(name = "semester_id")
   private Semester semester;

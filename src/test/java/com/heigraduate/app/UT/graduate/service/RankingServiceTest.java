@@ -149,8 +149,6 @@ class RankingServiceTest {
     assertThat(ranking.get(2).studentId()).isEqualTo(studentPaul);
     assertThat(ranking.get(2).rank()).isEqualTo(3);
 
-    // Le test vérifie que generateRanking ne filtre plus par parcours en mémoire
-    // mais via findByParcoursId() — les étudiants d'un autre parcours ne sont pas chargés.
     verify(graduationService, never()).determineGraduation(otherParcoursStudent);
     verify(diplomaRepository).deleteByPromotionIdAndParcoursId(promotionId, parcoursId);
   }

@@ -45,7 +45,7 @@ public class BearerAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
           }
         } catch (Exception ignored) {
-          // leave the SecurityContext unauthenticated; the entry point will produce the 401
+
         }
       }
     }
