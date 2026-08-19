@@ -31,4 +31,14 @@ public class WebViewController {
     model.addAttribute("promotionId", promotionId);
     return "promotion-detail";
   }
+
+  @GetMapping("/notes")
+  public String notes() {
+    return "notes";
+  }
+
+  @GetMapping("/releves")
+  public String releves() {
+    return "releves";
+  }
 }
