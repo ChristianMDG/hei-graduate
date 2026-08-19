@@ -29,22 +29,6 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Generates a student's transcript (RELEVE, §10) as a PDF.
- *
- * <p>Reuses {@link AcademicAverageService} for the annual average, obtained/expected credits and
- * course validation status, instead of recomputing them - §10 and §11 must never disagree on
- * whether a course or a year is validated.
- *
- * <p>BUG-02 FIX: le PDF est maintenant uploadé sur S3 et persisté en table {@code transcript} (§15
- * : génération → S3 → lien → e-mail). Le chemin synchrone (GET /api/transcripts) et le chemin
- * asynchrone (event TranscriptEmailRequested) partagent désormais la même logique.
- *
- * <p>Known limitation: the subject also asks for "le semestre ou les semestres concernés", but
- * nothing in the current schema links a Course or CourseTrack to a Semester (Semester only has its
- * own start/end dates, no FK to AcademicYear either) - there is no way to compute this field
- * without a schema change on Membre 1's SEMESTRE domain. Left out rather than guessed.
- */
 @Service
 @RequiredArgsConstructor
 public class TranscriptService {
@@ -62,11 +46,6 @@ public class TranscriptService {
   private final com.heigraduate.app.graduate.repository.TranscriptRepository transcriptRepository;
   private final com.heigraduate.app.file.bucket.BucketComponent bucketComponent;
 
-  /**
-   * Génère le PDF, l'uploade sur S3, persiste l'entrée en base et retourne les octets du PDF.
-   *
-   * <p>BUG-02 FIX — avant ce correctif, la méthode retournait les octets sans S3 ni DB.
-   */
   @Transactional
   public byte[] generateTranscript(UUID studentId, UUID academicYearId) {
     Student student =
@@ -89,7 +68,6 @@ public class TranscriptService {
 
     byte[] pdf = renderPdf(student, academicYear, summary, lines, isComplete);
 
-    // BUG-02 FIX — Upload S3 + persistance en base (§15)
     String bucketKey =
         BUCKET_KEY_PREFIX
             + student.getStudentNumber()

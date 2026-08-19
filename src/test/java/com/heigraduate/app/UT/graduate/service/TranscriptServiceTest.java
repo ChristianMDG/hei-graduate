@@ -43,7 +43,7 @@ class TranscriptServiceTest {
   @Mock private AcademicYearRepository academicYearRepository;
   @Mock private AcademicAverageService academicAverageService;
   @Mock private FinalGradeQuery finalGradeQuery;
-  // BUG-02 FIX : nouveaux champs injectés dans TranscriptService
+
   @Mock private TranscriptRepository transcriptRepository;
   @Mock private BucketComponent bucketComponent;
 
@@ -125,7 +125,6 @@ class TranscriptServiceTest {
     when(finalGradeQuery.getFinalGrade(student.getId(), course2.getId()))
         .thenReturn(Optional.of(new BigDecimal("12.00")));
 
-    // BUG-02 FIX : stubber upload S3 et persistence transcript
     when(bucketComponent.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(transcriptRepository.save(any(Transcript.class)))
@@ -169,7 +168,6 @@ class TranscriptServiceTest {
     when(finalGradeQuery.getFinalGrade(student.getId(), course2.getId()))
         .thenReturn(Optional.empty());
 
-    // BUG-02 FIX : stubs upload S3 + persistence AVANT l'appel
     when(bucketComponent.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(transcriptRepository.save(any(Transcript.class)))
@@ -221,7 +219,6 @@ class TranscriptServiceTest {
                 List.of(),
                 List.of()));
 
-    // BUG-02 FIX : stubber upload S3 et save transcript
     when(bucketComponent.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(transcriptRepository.save(any(Transcript.class)))

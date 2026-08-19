@@ -92,7 +92,6 @@ class StudentServiceTest {
             LocalDate.of(2023, 9, 1),
             "ACTIVE");
 
-    // FIX: Utiliser doThrow() pour les méthodes void qui lancent des exceptions
     doThrow(new ConflictException("Student number STD001 already exists"))
         .when(studentValidator)
         .validateStudentNumberUniqueness("STD001", null);

@@ -80,7 +80,6 @@ class EnrollmentServiceTest {
     EnrollmentRequest request =
         new EnrollmentRequest(studentId, parcoursId, groupK3, LocalDate.of(2025, 9, 1));
 
-    // FIX: Utiliser doThrow() pour les méthodes void
     doThrow(
             new ConflictException(
                 "Student already has an active enrollment — use the transfer endpoint instead"))

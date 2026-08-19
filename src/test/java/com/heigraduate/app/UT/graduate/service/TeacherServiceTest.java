@@ -72,7 +72,6 @@ class TeacherServiceTest {
   void create_shouldThrowConflict_whenUserIdAlreadyLinked() {
     TeacherRequest request = new TeacherRequest(userId, "Martin", "Sophie", "Algorithmique", "CDI");
 
-    // FIX: Utiliser doThrow() pour les méthodes void
     doThrow(new ConflictException("User already linked to a teacher"))
         .when(teacherValidator)
         .validateUserNotAlreadyLinked(userId, null);

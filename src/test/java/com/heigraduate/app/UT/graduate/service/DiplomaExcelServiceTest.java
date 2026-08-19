@@ -46,7 +46,7 @@ class DiplomaExcelServiceTest {
   @Mock private PromotionRepository promotionRepository;
   @Mock private ParcoursRepository parcoursRepository;
   @Mock private DiplomaRepository diplomaRepository;
-  // BUG-06 FIX : DiplomaExcelService persiste maintenant dans diploma_list
+
   @Mock private DiplomaListRepository diplomaListRepository;
   @Mock private RankingService rankingService;
   @Mock private BucketComponent bucketComponent;
@@ -117,7 +117,7 @@ class DiplomaExcelServiceTest {
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "checksum"));
     when(bucketComponent.presign(anyString(), any()))
         .thenReturn(new URL("https://bucket.s3.amazonaws.com/diplomas/generated.xlsx"));
-    // BUG-06 FIX : stubber diplomaListRepository (upsert après upload S3)
+
     when(diplomaListRepository.findByPromotionIdAndParcoursId(any(), any()))
         .thenReturn(java.util.Optional.empty());
     when(diplomaListRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

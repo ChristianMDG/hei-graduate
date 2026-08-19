@@ -28,9 +28,6 @@ public class TranscriptController {
   private final EventProducer<TranscriptEmailRequested> eventProducer;
 
   @GetMapping("/{studentId}")
-  // NC-10 FIX (§18) : génération du relevé d'un étudiant réservée à l'ADMIN.
-  // Un enseignant n'a accès qu'aux cours qui lui sont affectés, pas au relevé complet d'un
-  // étudiant.
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<byte[]> generate(
       @PathVariable UUID studentId, @RequestParam UUID academicYearId) {
@@ -46,8 +43,6 @@ public class TranscriptController {
   }
 
   @PostMapping("/{studentId}/send-email")
-  // BUG-11 FIX: l'envoi du relevé est une action administrative (§15/§6).
-  // Un enseignant ne doit pas pouvoir déclencher l'envoi du relevé d'un étudiant.
   @PreAuthorize("hasRole('ADMIN')")
   @ResponseStatus(HttpStatus.ACCEPTED)
   public void sendByEmail(@PathVariable UUID studentId, @RequestParam UUID academicYearId) {

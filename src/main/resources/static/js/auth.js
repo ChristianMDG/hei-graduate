@@ -34,7 +34,7 @@
     }
   }
 
-  // Wraps fetch(): adds the Authorization header, redirects to /login on 401.
+  
   async function authFetch(url, options) {
     const token = getToken();
     const opts = options || {};

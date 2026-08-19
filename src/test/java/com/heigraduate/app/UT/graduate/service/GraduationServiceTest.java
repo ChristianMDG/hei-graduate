@@ -94,11 +94,6 @@ class GraduationServiceTest {
         .build();
   }
 
-  /**
-   * Reproduces the subject's reference scenario: a student who changed group twice (K3 -> K1 -> K2)
-   * and changed parcours once (TN -> EL) over three academic years, with every mandatory course
-   * validated (>= 10/20). Expected: graduated = true.
-   */
   @Test
   void determineGraduation_shouldGraduate_studentWithGroupAndParcoursChangesOverThreeYears() {
     Enrollment year1Enrollment =
@@ -161,7 +156,7 @@ class GraduationServiceTest {
     assertThat(result.unvalidatedMandatoryCourseIds()).isEmpty();
     assertThat(result.academicYearIdsConsidered())
         .containsExactly(year1.getId(), year2.getId(), year3.getId());
-    // (12*5 + 14*5 + 10*5) / 15 = 12.00
+
     assertThat(result.overallAverage()).isEqualByComparingTo("12.00");
   }
 
@@ -199,8 +194,7 @@ class GraduationServiceTest {
 
   @Test
   void determineGraduation_shouldNotGraduate_whenFewerThanThreeAcademicYearsCompleted() {
-    // Student only enrolled during year1: even with every mandatory course validated,
-    // the subject requires 3 full academic years before graduation can be granted.
+
     Enrollment enrollment =
         Enrollment.builder()
             .id(UUID.randomUUID())

@@ -98,7 +98,6 @@ class AcademicAverageServiceTest {
     AnnualAverageResult result =
         academicAverageService.computeAnnualAverage(studentId, academicYear.getId());
 
-    // (16*5 + 10*3) / 8 = 13.75
     assertThat(result.average()).isEqualByComparingTo("13.75");
     assertThat(result.obtainedCredits()).isEqualTo(8);
     assertThat(result.expectedCredits()).isEqualTo(8);
@@ -137,9 +136,6 @@ class AcademicAverageServiceTest {
     AnnualAverageResult result =
         academicAverageService.computeAnnualAverage(studentId, academicYear.getId());
 
-    // NC-01 FIX (§11) : la moyenne est divisée par expectedCredits (10) et non gradedCredits (5).
-    // Le cours non noté contribue 0 à la somme pondérée mais son poids reste dans le dénominateur.
-    // Résultat : (12.00 * 5 + 0 * 5) / 10 = 6.00 — la moyenne est baissée par l'absence de note.
     assertThat(result.average()).isEqualByComparingTo("6.00");
     assertThat(result.obtainedCredits()).isEqualTo(5);
     assertThat(result.expectedCredits()).isEqualTo(10);
@@ -195,7 +191,7 @@ class AcademicAverageServiceTest {
     assertThat(result.expectedCredits())
         .as("courses from both parcours held during the year must be included")
         .isEqualTo(10);
-    // (11*4 + 15*6) / 10 = 13.40
+
     assertThat(result.average()).isEqualByComparingTo("13.40");
   }
 

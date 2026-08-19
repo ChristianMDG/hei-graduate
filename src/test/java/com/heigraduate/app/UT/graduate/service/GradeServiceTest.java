@@ -242,7 +242,6 @@ class GradeServiceTest {
     assertThatThrownBy(() -> gradeService.create(request, actingUser))
         .isInstanceOf(AccessDeniedException.class);
 
-    // Regression guard: Assignment.teacherId references Teacher.id, never User.id.
     verify(assignmentService, never()).isTeacherAssignedToCourse(any(), any(), any());
     verify(gradeRepository, never()).save(any());
   }
