@@ -35,31 +35,37 @@ public class EnrollmentService {
   }
 
   @Transactional
-  public Enrollment transfer(UUID studentId, TransferRequest request) {
-    Enrollment currentActive =
-        enrollmentRepository
-            .findByStudentIdAndEndDateIsNull(studentId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No active enrollment found for student: " + studentId));
+public Enrollment transfer(UUID studentId, TransferRequest request) {
+  Enrollment currentActive =
+      enrollmentRepository
+          .findByStudentIdAndEndDateIsNull(studentId)
+          .orElseThrow(
+              () ->
+                  new ResourceNotFoundException(
+                      "No active enrollment found for student: " + studentId));
 
-    enrollmentValidator.validateTransferDate(currentActive, request.effectiveDate());
+  enrollmentValidator.validateTransferDate(currentActive, request.effectiveDate());
 
-    currentActive.setEndDate(request.effectiveDate());
-    enrollmentRepository.save(currentActive);
+  currentActive.setEndDate(request.effectiveDate().minusDays(1));
+  enrollmentRepository.saveAndFlush(currentActive);
 
-    Enrollment newEnrollment =
-        Enrollment.builder()
-            .studentId(studentId)
-            .parcoursId(
-                request.parcoursId() != null ? request.parcoursId() : currentActive.getParcoursId())
-            .groupId(request.groupId() != null ? request.groupId() : currentActive.getGroupId())
-            .startDate(request.effectiveDate())
-            .endDate(null)
-            .build();
-    return enrollmentRepository.save(newEnrollment);
-  }
+  Enrollment newEnrollment =
+      Enrollment.builder()
+          .studentId(studentId)
+          .parcoursId(
+              request.parcoursId() != null
+                  ? request.parcoursId()
+                  : currentActive.getParcoursId())
+          .groupId(
+              request.groupId() != null
+                  ? request.groupId()
+                  : currentActive.getGroupId())
+          .startDate(request.effectiveDate())
+          .endDate(null)
+          .build();
+
+  return enrollmentRepository.save(newEnrollment);
+}
 
   @Transactional(readOnly = true)
   public Enrollment getCurrent(UUID studentId) {
