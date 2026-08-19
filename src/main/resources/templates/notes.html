@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>HEI Graduate — Mes notes</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 40px auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        a { color: #1a5fb4; }
+        #top-bar { display: flex; justify-content: space-between; align-items: center; }
+        nav { margin-top: 8px; }
+        nav a { margin-right: 16px; }
+        #empty { color: #666; margin-top: 16px; }
+        .value { font-weight: bold; }
+        .value.low { color: #b00020; }
+    </style>
+</head>
+<body>
+<div id="top-bar">
+    <div>
+        <h1>Mes notes</h1>
+        <nav>
+            <a href="/notes">Mes notes</a>
+            <a href="/releves">Mes relevés</a>
+        </nav>
+    </div>
+    <button id="logout-btn">Se déconnecter</button>
+</div>
+
+<table id="grades-table" style="display:none;">
+    <thead>
+    <tr><th>Cours</th><th>Examen</th><th>Note</th></tr>
+    </thead>
+    <tbody id="grades-body"></tbody>
+</table>
+<p id="empty" style="display:none;">Aucune note publiée pour le moment.</p>
+
+<script th:src="@{/js/auth.js}"></script>
+<script>
+    window.heiAuth.requireAuth();
+
+    document.getElementById("logout-btn").addEventListener("click", function () {
+      window.heiAuth.logout();
+    });
+
+    function renderRow(grade) {
+      const row = document.createElement("tr");
+      const value = Number(grade.value);
+      const valueClass = value < 10 ? "value low" : "value";
+      row.innerHTML =
+        "<td>" + grade.courseReference + "</td>" +
+        "<td>" + grade.examLabel + "</td>" +
+        "<td class='" + valueClass + "'>" + value.toFixed(2) + "</td>";
+      return row;
+    }
+
+    async function loadMyGrades() {
+      const response = await window.heiAuth.authFetch("/api/grades/me");
+      if (!response.ok) {
+        document.getElementById("empty").textContent = "Impossible de charger vos notes.";
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
+      const grades = await response.json();
+
+      if (grades.length === 0) {
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
+
+      const body = document.getElementById("grades-body");
+      grades.forEach(function (grade) {
+        body.appendChild(renderRow(grade));
+      });
+      document.getElementById("grades-table").style.display = "table";
+    }
+
+    loadMyGrades();
+</script>
+</body>
+</html>

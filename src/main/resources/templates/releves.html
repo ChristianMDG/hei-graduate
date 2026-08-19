@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>HEI Graduate — Mes relevés</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 40px auto; }
+        a { color: #1a5fb4; }
+        #top-bar { display: flex; justify-content: space-between; align-items: center; }
+        nav { margin-top: 8px; }
+        nav a { margin-right: 16px; }
+        label { display: block; margin-top: 20px; font-weight: bold; }
+        select { padding: 6px; margin-top: 6px; min-width: 220px; }
+        .actions { display: flex; gap: 12px; margin-top: 20px; }
+        button { padding: 8px 16px; cursor: pointer; }
+        #status { margin-top: 16px; color: #1a5fb4; }
+        .error { color: #b00020; }
+    </style>
+</head>
+<body>
+<div id="top-bar">
+    <div>
+        <h1>Mes relevés de notes</h1>
+        <nav>
+            <a href="/notes">Mes notes</a>
+            <a href="/releves">Mes relevés</a>
+        </nav>
+    </div>
+    <button id="logout-btn">Se déconnecter</button>
+</div>
+
+<label for="academic-year-select">Année universitaire</label>
+<select id="academic-year-select"></select>
+
+<div class="actions">
+    <button id="download-btn">Télécharger le PDF</button>
+    <button id="email-btn">Recevoir par e-mail</button>
+</div>
+
+<p id="status"></p>
+
+<script th:src="@{/js/auth.js}"></script>
+<script>
+    window.heiAuth.requireAuth();
+
+    document.getElementById("logout-btn").addEventListener("click", function () {
+      window.heiAuth.logout();
+    });
+
+    function setStatus(message, isError) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = isError ? "error" : "";
+    }
+
+    function selectedAcademicYearId() {
+      return document.getElementById("academic-year-select").value;
+    }
+
+    async function loadAcademicYears() {
+      const response = await window.heiAuth.authFetch("/api/academic-years");
+      const years = await response.json();
+      const select = document.getElementById("academic-year-select");
+      years.forEach(function (year) {
+        const option = document.createElement("option");
+        option.value = year.id;
+        option.textContent = year.label;
+        select.appendChild(option);
+      });
+    }
+
+    async function downloadTranscript() {
+      const academicYearId = selectedAcademicYearId();
+      if (!academicYearId) {
+        setStatus("Sélectionnez une année universitaire.", true);
+        return;
+      }
+      setStatus("Génération du relevé en cours...");
+      try {
+        const response = await window.heiAuth.authFetch(
+          "/api/transcripts/me?academicYearId=" + academicYearId
+        );
+        if (!response.ok) {
+          setStatus("Impossible de générer le relevé.", true);
+          return;
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "mon-releve.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus("Relevé téléchargé.");
+      } catch (err) {
+        setStatus("Erreur lors du téléchargement du relevé.", true);
+      }
+    }
+
+    async function emailTranscript() {
+      const academicYearId = selectedAcademicYearId();
+      if (!academicYearId) {
+        setStatus("Sélectionnez une année universitaire.", true);
+        return;
+      }
+      setStatus("Envoi du relevé par e-mail...");
+      try {
+        const response = await window.heiAuth.authFetch(
+          "/api/transcripts/me/send-email?academicYearId=" + academicYearId,
+          { method: "POST" }
+        );
+        if (!response.ok) {
+          setStatus("Impossible d'envoyer le relevé par e-mail.", true);
+          return;
+        }
+        setStatus("Envoi en cours — vous recevrez votre relevé par e-mail sous peu.");
+      } catch (err) {
+        setStatus("Erreur lors de l'envoi du relevé par e-mail.", true);
+      }
+    }
+
+    document.getElementById("download-btn").addEventListener("click", downloadTranscript);
+    document.getElementById("email-btn").addEventListener("click", emailTranscript);
+
+    loadAcademicYears();
+</script>
+</body>
+</html>

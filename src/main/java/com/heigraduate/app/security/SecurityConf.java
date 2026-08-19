@@ -52,8 +52,6 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers("/ping", "/health/**")
                     .permitAll()
-                    .requestMatchers("/login", "/promotions", "/promotions/**")
-                    .permitAll()
                     .requestMatchers("/js/**", "/css/**", "/favicon.ico")
                     .permitAll()
                     .requestMatchers("/api/users", "/api/users/**")
