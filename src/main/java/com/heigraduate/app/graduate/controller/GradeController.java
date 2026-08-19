@@ -42,7 +42,7 @@ public class GradeController {
   }
 
   @GetMapping("/me")
-  @PreAuthorize("hasRole('STUDENT')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
   public List<GradeResponse> findMyPublishedGrades(@AuthenticationPrincipal User connectedUser) {
     return gradeService.findMyPublishedGrades(connectedUser.getId());
   }

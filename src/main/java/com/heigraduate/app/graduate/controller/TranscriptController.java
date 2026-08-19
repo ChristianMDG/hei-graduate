@@ -36,7 +36,7 @@ public class TranscriptController {
   }
 
   @GetMapping("/me")
-  @PreAuthorize("hasRole('STUDENT')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
   public ResponseEntity<byte[]> generateMine(@AuthenticationPrincipal User connectedUser) {
     byte[] pdf = transcriptService.generateTranscriptForUser(connectedUser.getId());
     return buildPdfResponse(pdf, "mon-releve.pdf");
@@ -55,7 +55,7 @@ public class TranscriptController {
   }
 
   @PostMapping("/me/send-email")
-  @PreAuthorize("hasRole('STUDENT')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
   @ResponseStatus(HttpStatus.ACCEPTED)
   public void sendMineByEmail(
       @AuthenticationPrincipal User connectedUser, @RequestParam UUID academicYearId) {
