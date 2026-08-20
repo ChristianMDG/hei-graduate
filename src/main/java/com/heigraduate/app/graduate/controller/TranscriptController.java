@@ -37,8 +37,10 @@ public class TranscriptController {
 
   @GetMapping("/me")
   @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
-  public ResponseEntity<byte[]> generateMine(@AuthenticationPrincipal User connectedUser) {
-    byte[] pdf = transcriptService.generateTranscriptForUser(connectedUser.getId());
+  public ResponseEntity<byte[]> generateMine(
+      @AuthenticationPrincipal User connectedUser,
+      @RequestParam(required = false) UUID academicYearId) {
+    byte[] pdf = transcriptService.generateTranscriptForUser(connectedUser.getId(), academicYearId);
     return buildPdfResponse(pdf, "mon-releve.pdf");
   }
 
