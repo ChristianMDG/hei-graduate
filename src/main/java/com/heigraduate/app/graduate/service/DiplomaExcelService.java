@@ -43,6 +43,10 @@ public class DiplomaExcelService {
   private final RankingService rankingService;
   private final BucketComponent bucketComponent;
 
+  /**
+   * Génère un Excel contenant TOUS les parcours (EL + TN) de la promotion. Utilisé depuis la page
+   * détail promotion.
+   */
   @Transactional
   public DiplomaExcelResponse generateExcel(UUID promotionId) {
     Promotion promotion =
@@ -53,14 +57,21 @@ public class DiplomaExcelService {
 
     List<UUID> parcoursIds = diplomaRepository.findDistinctParcoursIdsByPromotionId(promotionId);
     if (parcoursIds.isEmpty()) {
-      throw new ResourceNotFoundException(
-          "No diplomas have been generated yet for promotion: " + promotionId);
+      List<Parcours> activeParcours = parcoursRepository.findByActiveTrue();
+      for (Parcours p : activeParcours) {
+        rankingService.generateRanking(promotionId, p.getId());
+      }
+      parcoursIds = diplomaRepository.findDistinctParcoursIdsByPromotionId(promotionId);
+      if (parcoursIds.isEmpty()) {
+        parcoursIds = activeParcours.stream().map(Parcours::getId).toList();
+      }
     }
 
     File workbookFile = writeWorkbook(promotion, parcoursIds);
     String bucketKey = BUCKET_KEY_PREFIX + promotionId + "/" + UUID.randomUUID() + ".xlsx";
     bucketComponent.upload(workbookFile, bucketKey);
 
+    // On associe la même clé à chaque parcours (fichier multi-feuilles)
     for (UUID parcoursId : parcoursIds) {
       diplomaListRepository
           .findByPromotionIdAndParcoursId(promotionId, parcoursId)
@@ -79,16 +90,78 @@ public class DiplomaExcelService {
     return new DiplomaExcelResponse(downloadUrl.toString());
   }
 
-  @Transactional(readOnly = true)
+  /**
+   * Génère un Excel pour UN seul parcours (EL ou TN). Utilisé depuis la liste des promotions (ligne
+   * EL / ligne TN).
+   */
+  @Transactional
+  public DiplomaExcelResponse generateExcelForParcours(UUID promotionId, UUID parcoursId) {
+    Promotion promotion =
+        promotionRepository
+            .findById(promotionId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Promotion not found: " + promotionId));
+    Parcours parcours =
+        parcoursRepository
+            .findById(parcoursId)
+            .orElseThrow(() -> new ResourceNotFoundException("Parcours not found: " + parcoursId));
+
+    // S'assurer que le classement existe
+    List<DiplomaResponse> ranking = rankingService.getRanking(promotionId, parcoursId);
+    if (ranking.isEmpty()) {
+      rankingService.generateRanking(promotionId, parcoursId);
+      ranking = rankingService.getRanking(promotionId, parcoursId);
+    }
+
+    File workbookFile = writeWorkbook(promotion, List.of(parcoursId));
+    String bucketKey =
+        BUCKET_KEY_PREFIX
+            + promotionId
+            + "/"
+            + parcours.getCode()
+            + "-"
+            + UUID.randomUUID()
+            + ".xlsx";
+    bucketComponent.upload(workbookFile, bucketKey);
+
+    diplomaListRepository
+        .findByPromotionIdAndParcoursId(promotionId, parcoursId)
+        .ifPresentOrElse(
+            existing -> existing.setUrlS3(bucketKey),
+            () ->
+                diplomaListRepository.save(
+                    DiplomaList.builder()
+                        .promotionId(promotionId)
+                        .parcoursId(parcoursId)
+                        .urlS3(bucketKey)
+                        .build()));
+
+    var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
+    return new DiplomaExcelResponse(downloadUrl.toString());
+  }
+
+  @Transactional
   public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
     List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
     if (lists.isEmpty() || lists.get(0).getUrlS3() == null) {
-      throw new ResourceNotFoundException(
-          "No Excel file has been generated yet for promotion: " + promotionId);
+      return generateExcel(promotionId);
     }
     String bucketKey = lists.get(0).getUrlS3();
     var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
     return new DiplomaExcelResponse(downloadUrl.toString());
+  }
+
+  @Transactional
+  public DiplomaExcelResponse getExistingExcelForParcours(UUID promotionId, UUID parcoursId) {
+    return diplomaListRepository
+        .findByPromotionIdAndParcoursId(promotionId, parcoursId)
+        .filter(list -> list.getUrlS3() != null)
+        .map(
+            list -> {
+              var downloadUrl = bucketComponent.presign(list.getUrlS3(), DOWNLOAD_LINK_VALIDITY);
+              return new DiplomaExcelResponse(downloadUrl.toString());
+            })
+        .orElseGet(() -> generateExcelForParcours(promotionId, parcoursId));
   }
 
   private File writeWorkbook(Promotion promotion, List<UUID> parcoursIds) {
@@ -139,6 +212,6 @@ public class DiplomaExcelService {
   }
 
   private String sheetName(Parcours parcours) {
-    return parcours.getCode();
+    return parcours.getCode() != null ? parcours.getCode() : "Parcours";
   }
 }

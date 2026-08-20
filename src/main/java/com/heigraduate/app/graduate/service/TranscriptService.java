@@ -112,6 +112,11 @@ public class TranscriptService {
 
   @Transactional(readOnly = true)
   public byte[] generateTranscriptForUser(UUID userId) {
+    return generateTranscriptForUser(userId, null);
+  }
+
+  @Transactional(readOnly = true)
+  public byte[] generateTranscriptForUser(UUID userId, UUID academicYearId) {
     Student student =
         studentRepository
             .findByUserId(userId)
@@ -119,8 +124,8 @@ public class TranscriptService {
                 () ->
                     new ResourceNotFoundException("No student profile linked to user: " + userId));
 
-    UUID academicYearId = resolveCurrentAcademicYearId();
-    return generateTranscript(student.getId(), academicYearId);
+    UUID targetYearId = academicYearId != null ? academicYearId : resolveCurrentAcademicYearId();
+    return generateTranscript(student.getId(), targetYearId);
   }
 
   private List<TranscriptLine> buildLines(UUID studentId, AnnualAverageResult summary) {
@@ -154,9 +159,16 @@ public class TranscriptService {
         .filter(y -> !today.isBefore(y.getStartDate()) && !today.isAfter(y.getEndDate()))
         .findFirst()
         .map(AcademicYear::getId)
-        .orElseThrow(
+        .orElseGet(
             () ->
-                new ResourceNotFoundException("No active academic year found for date: " + today));
+                academicYearRepository.findAll().stream()
+                    .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
+                    .findFirst()
+                    .map(AcademicYear::getId)
+                    .orElseThrow(
+                        () ->
+                            new ResourceNotFoundException(
+                                "No active academic year found for date: " + today)));
   }
 
   private byte[] renderPdf(
