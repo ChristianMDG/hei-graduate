@@ -312,10 +312,7 @@
 
             const data = await response.json();
 
-            /*
-             * Seuls ADMIN et STUDENT ont accès à l'interface.
-             * Le TEACHER ne reçoit donc aucune session.
-             */
+           
             if (data.user.role !== "ADMIN" && data.user.role !== "STUDENT") {
                 error.textContent =
                     "Accès à cette interface réservé aux administrateurs et aux étudiants.";
