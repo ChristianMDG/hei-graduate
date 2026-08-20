@@ -330,10 +330,6 @@
 <script>
     window.heiAuth.requireAuth();
 
-    /*
-     * Cette page est réservée à ADMIN.
-     * STUDENT et TEACHER ne doivent pas pouvoir l'utiliser.
-     */
     if (!window.heiAuth.isAdmin || !window.heiAuth.isAdmin()) {
         if (window.heiAuth.logout) {
             window.heiAuth.logout();

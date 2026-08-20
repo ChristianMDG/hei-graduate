@@ -274,7 +274,6 @@
         </div>
 
         <nav class="nav">
-            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
         </nav>
 
         <div class="sidebar-bottom">
@@ -355,9 +354,6 @@
 
     window.heiAuth.requireAuth();
 
-    /*
-     * Cette page est réservée à STUDENT.
-     */
     if (!window.heiAuth.isStudent || !window.heiAuth.isStudent()) {
 
         if (window.heiAuth.logout) {

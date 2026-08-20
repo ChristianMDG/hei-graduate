@@ -325,22 +325,22 @@
                 <div class="field">
                     <label for="email">Adresse e-mail</label>
                     <input
-                            type="email"
-                            id="email"
-                            placeholder="exemple@email.com"
-                            autocomplete="email"
-                            required
+                        type="email"
+                        id="email"
+                        placeholder="exemple@email.com"
+                        autocomplete="email"
+                        required
                     >
                 </div>
 
                 <div class="field">
                     <label for="password">Mot de passe</label>
                     <input
-                            type="password"
-                            id="password"
-                            placeholder="Votre mot de passe"
-                            autocomplete="current-password"
-                            required
+                        type="password"
+                        id="password"
+                        placeholder="Votre mot de passe"
+                        autocomplete="current-password"
+                        required
                     >
                 </div>
 
@@ -394,10 +394,7 @@
 
             const role = data.user && data.user.role;
 
-            /*
-             * Seuls ADMIN et STUDENT peuvent accéder à l'interface.
-             * Le TEACHER est explicitement refusé.
-             */
+           
             if (role !== "ADMIN" && role !== "STUDENT") {
                 error.textContent =
                     "Votre rôle ne dispose pas d'un accès à cette interface.";
