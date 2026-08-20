@@ -15,7 +15,9 @@ public class WebViewController {
     return "login";
   }
 
-  @GetMapping(value = "/promotions", produces = MediaType.TEXT_HTML_VALUE)
+  @GetMapping(
+      value = {"/", "/promotions"},
+      produces = MediaType.TEXT_HTML_VALUE)
   public String promotions() {
     return "promotions";
   }
