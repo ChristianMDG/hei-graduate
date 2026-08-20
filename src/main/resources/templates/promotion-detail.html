@@ -1,323 +1,698 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HEI Graduate — Détails Promotion</title>
+
+    <title>HEI Graduate — Diplômés</title>
+
     <style>
-        * { box-sizing: border-box; }
-        :root {
-            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff;
-            --background: #f6f8fc; --surface: #ffffff;
-            --text: #172033; --muted: #667085; --border: #e6eaf0;
-            --danger: #b42318; --danger-bg: #fef3f2; --success: #027a48; --success-bg: #ecfdf3;
-            --sidebar: #111827;
+        * {
+            box-sizing: border-box;
         }
-        body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; background: var(--background); color: var(--text); }
-        .layout { min-height: 100vh; display: flex; }
-        .sidebar { width: 250px; background: var(--sidebar); color: #fff; padding: 26px 18px; display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; }
-        .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; margin-bottom: 42px; font-size: 19px; font-weight: 800; }
-        .brand-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--primary); }
-        .nav { display: flex; flex-direction: column; gap: 6px; }
-        .nav a { color: #cbd5e1; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; }
-        .nav a:hover, .nav a.active { color: #fff; background: var(--primary); }
-        .sidebar-bottom { margin-top: auto; }
-        .logout { width: 100%; border: 0; background: transparent; color: #cbd5e1; padding: 12px 14px; text-align: left; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
-        .logout:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-        .main { margin-left: 250px; width: calc(100% - 250px); padding: 36px 42px; }
-        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
-        .back-link:hover { text-decoration: underline; }
-        .eyebrow { font-size: 12px; font-weight: 700; color: var(--primary); letter-spacing: .08em; margin-bottom: 6px; }
-        h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.5px; }
-        .description { color: var(--muted); margin: 0 0 28px; font-size: 14px; }
-        #status { margin: 16px 0; padding: 14px 18px; border-radius: 12px; display: none; font-size: 14px; font-weight: 500; }
-        #status.error { display: block; background: var(--danger-bg); color: var(--danger); border: 1px solid #fec4c0; }
-        #status.ok { display: block; background: var(--success-bg); color: var(--success); border: 1px solid #abefe0; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03); margin-bottom: 24px; }
-        .track-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px 24px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { color: #475467; font-weight: 700; background: #f8fafc; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
-        tbody tr:last-child td { border-bottom: 0; }
-        tbody tr:hover { background: #fafcff; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: 0; transition: all 0.2s; text-decoration: none; }
-        .generate-btn { background: var(--primary); color: #fff; }
-        .generate-btn:hover { background: var(--primary-dark); }
-        .excel-btn { background: #111827; color: #fff; width: 100%; min-height: 48px; font-size: 15px; font-weight: 700; margin-top: 8px; margin-bottom: 32px; }
-        .excel-btn:hover { background: #1f2937; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-weight: 700; font-size: 12px; }
-        .empty { padding: 40px 24px; text-align: center; color: var(--muted); font-size: 14px; }
+
+        :root {
+            --navy: #071a33;
+            --navy-light: #0d2a4d;
+            --gold: #c9a227;
+            --gold-light: #e4c55d;
+            --gold-soft: #f8f1d8;
+            --background: #f5f7fa;
+            --surface: #ffffff;
+            --text: #132238;
+            --muted: #667085;
+            --border: #e2e7ee;
+            --danger: #b42318;
+            --danger-bg: #fef3f2;
+            --success: #027a48;
+            --success-bg: #ecfdf3;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--navy);
+            color: #fff;
+            padding: 26px 18px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            inset: 0 auto 0 0;
+            box-shadow: 8px 0 30px rgba(7,26,51,.08);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 0 12px;
+            margin-bottom: 42px;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .brand-icon {
+            width: 39px;
+            height: 39px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav a {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 650;
+            transition: .2s;
+        }
+
+        .nav a:hover {
+            color: white;
+            background: rgba(255,255,255,.07);
+        }
+
+        .nav a.active {
+            color: var(--navy);
+            background: var(--gold);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .logout {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,.08);
+            background: transparent;
+            color: #cbd5e1;
+            padding: 12px 14px;
+            text-align: left;
+            border-radius: 11px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .logout:hover {
+            background: rgba(255,255,255,.07);
+            color: white;
+        }
+
+        .main {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 40px 42px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--navy);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--gold);
+            letter-spacing: .14em;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 29px;
+            letter-spacing: -.6px;
+            color: var(--navy);
+        }
+
+        .description {
+            color: var(--muted);
+            margin: 0 0 28px;
+            font-size: 14px;
+        }
+
+        #status {
+            margin: 16px 0;
+            padding: 13px 17px;
+            border-radius: 11px;
+            display: none;
+            font-size: 13px;
+        }
+
+        #status.error {
+            display: block;
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #fec4c0;
+        }
+
+        #status.ok {
+            display: block;
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #abefe0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 7px 25px rgba(7,26,51,.045);
+            margin-bottom: 22px;
+        }
+
+        .track-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .track-title {
+            margin: 0;
+            font-size: 17px;
+            color: var(--navy);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 22px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 750;
+            background: #fafbfc;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        tbody tr:hover {
+            background: #fcfaf2;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .rank {
+            color: var(--navy);
+            font-weight: 850;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--gold-soft);
+            color: #765e08;
+            font-weight: 750;
+            font-size: 11px;
+        }
+
+        .empty {
+            padding: 42px 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
         @media (max-width: 800px) {
-            .sidebar { position: relative; width: 100%; }
-            .main { margin-left: 0; width: 100%; padding: 24px 16px; }
-            .layout { display: block; }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+            }
+
+            .layout {
+                display: block;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 24px 16px;
+            }
         }
     </style>
 </head>
+
 <body th:data-promotion-id="${promotionId}">
+
 <div class="layout">
+
     <aside class="sidebar">
-        <div class="brand"><div class="brand-icon">🎓</div><span>HEI Graduate</span></div>
+
+        <div class="brand">
+            <div class="brand-icon">🎓</div>
+            <span>HEI Graduate</span>
+        </div>
+
         <nav class="nav">
             <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
         </nav>
+
         <div class="sidebar-bottom">
-            <button id="logout-btn" class="logout">↪ &nbsp; Se déconnecter</button>
+            <button id="logout-btn" class="logout">
+                ↪ &nbsp; Se déconnecter
+            </button>
         </div>
+
     </aside>
 
     <main class="main">
-        <a href="/promotions" class="back-link">← Retour aux promotions</a>
-        <div class="eyebrow">ESPACE ACADÉMIQUE</div>
-        <h1 id="promotion-title">Diplômés — Promotion</h1>
+
+        <a href="/promotions" class="back-link">
+            ← Retour aux promotions
+        </a>
+
+        <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
+
+        <h1 id="promotion-title">
+            Diplômés — Promotion
+        </h1>
+
         <p class="description">
-            Liste des diplômés et classement officiel par parcours (CDC §16).
+            Liste officielle des diplômés par parcours.
         </p>
 
         <p id="status"></p>
 
         <div id="tracks-container"></div>
+
     </main>
+
 </div>
 
 <script th:src="@{/js/auth.js}"></script>
+
 <script>
-(function () {
-    function ready(fn) {
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", fn);
-        } else {
-            fn();
-        }
-    }
 
-    ready(function () {
-        if (!window.heiAuth) {
-            console.error("heiAuth manquant");
-            return;
-        }
-        window.heiAuth.requireAuth();
-        window.heiAuth.renderSidebar("promotions");
+    (function () {
 
-        // Les étudiants n'ont pas accès à cette page selon le CDC
-        if (window.heiAuth.isStudent()) {
-            window.location.href = "/notes";
-            return;
-        }
-
-        var promotionId = document.body.getAttribute("data-promotion-id");
-        if (!promotionId) {
-            var parts = window.location.pathname.split("/").filter(Boolean);
-            var idx = parts.indexOf("promotions");
-            if (idx >= 0 && parts[idx + 1]) {
-                promotionId = parts[idx + 1];
+        function ready(fn) {
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", fn);
+            } else {
+                fn();
             }
         }
 
-        if (!promotionId) {
-            setStatus("Promotion introuvable (ID manquant).", true);
-            return;
-        }
+        ready(function () {
 
-        var isAdmin = window.heiAuth.isAdmin && window.heiAuth.isAdmin();
-
-        var logoutBtn = document.getElementById("logout-btn");
-        if (logoutBtn) {
-            logoutBtn.addEventListener("click", function () {
-                window.heiAuth.logout();
-            });
-        }
-
-        function setStatus(message, isError) {
-            var el = document.getElementById("status");
-            if (!el) return;
-            el.textContent = message || "";
-            el.className = isError ? "error" : "ok";
-            el.style.display = message ? "block" : "none";
-        }
-
-        function renderDiplomaTable(diplomas) {
-            if (!diplomas || diplomas.length === 0) {
-                var p = document.createElement("p");
-                p.className = "empty";
-                p.innerHTML =
-                    "Aucun diplômé pour ce parcours.<br>" +
-                    (isAdmin
-                        ? "Cliquez sur <strong>Générer le classement</strong>."
-                        : "Le classement n'a pas encore été généré.");
-                return p;
+            if (!window.heiAuth) {
+                console.error("heiAuth manquant");
+                return;
             }
-            var wrapper = document.createElement("div");
-            wrapper.className = "table-wrapper";
-            var table = document.createElement("table");
-            table.innerHTML =
-                "<thead><tr>" +
-                "<th>Rang</th><th>N° Étudiant</th><th>Nom</th><th>Prénom</th>" +
-                "<th>Moyenne générale</th><th>Mention</th>" +
-                "</tr></thead><tbody></tbody>";
-            var body = table.querySelector("tbody");
-            diplomas.forEach(function (d) {
-                var row = document.createElement("tr");
-                row.innerHTML =
-                    "<td><strong>" + (d.rank != null ? "#" + d.rank : "-") + "</strong></td>" +
-                    "<td>" + (d.studentNumber || "-") + "</td>" +
-                    "<td><strong>" + (d.lastName || "-") + "</strong></td>" +
-                    "<td>" + (d.firstName || "-") + "</td>" +
-                    "<td>" +
-                    (d.overallAverage != null
-                        ? Number(d.overallAverage).toFixed(2) + " / 20"
-                        : "-") +
-                    "</td>" +
-                    "<td><span class='badge'>" + (d.mention || "—") + "</span></td>";
-                body.appendChild(row);
-            });
-            wrapper.appendChild(table);
-            return wrapper;
-        }
 
-        async function loadRanking(parcours, container) {
-            try {
-                var response = await window.heiAuth.authFetch(
-                    "/api/promotions/" + promotionId + "/parcours/" + parcours.id + "/diplomas"
-                );
-                if (!response.ok) {
-                    container.innerHTML = "<p class='empty'>Erreur de chargement du classement.</p>";
-                    return;
+            window.heiAuth.requireAuth();
+
+            /*
+             * Cette page est réservée à ADMIN.
+             */
+            if (!window.heiAuth.isAdmin || !window.heiAuth.isAdmin()) {
+                if (window.heiAuth.logout) {
+                    window.heiAuth.logout();
+                } else {
+                    window.location.href = "/login";
                 }
-                var diplomas = await response.json();
-                container.innerHTML = "";
-                container.appendChild(renderDiplomaTable(diplomas));
-            } catch (e) {
-                container.innerHTML = "<p class='empty'>Impossible de charger le classement.</p>";
+                return;
             }
-        }
 
-        async function generateRanking(parcours, container) {
-            setStatus("Génération du classement " + (parcours.code || parcours.label) + "...");
-            try {
-                var response = await window.heiAuth.authFetch(
-                    "/api/promotions/" + promotionId + "/parcours/" + parcours.id + "/diplomas/generate",
-                    { method: "POST" }
-                );
-                if (!response.ok) {
-                    setStatus("Impossible de générer le classement pour " + parcours.label + ".", true);
-                    return;
+            window.heiAuth.renderSidebar("promotions");
+
+            var promotionId =
+                document.body.getAttribute("data-promotion-id");
+
+            if (!promotionId) {
+
+                var parts =
+                    window.location.pathname
+                        .split("/")
+                        .filter(Boolean);
+
+                var idx = parts.indexOf("promotions");
+
+                if (idx >= 0 && parts[idx + 1]) {
+                    promotionId = parts[idx + 1];
                 }
-                var diplomas = await response.json();
-                container.innerHTML = "";
-                container.appendChild(renderDiplomaTable(diplomas));
-                setStatus("Classement généré avec succès : " + diplomas.length + " diplômé(s).");
-            } catch (e) {
-                setStatus("Erreur lors de la génération.", true);
             }
-        }
 
-        async function downloadExcel() {
-            setStatus("Préparation du fichier Excel...");
-            try {
-                var response = await window.heiAuth.authFetch(
-                    "/api/promotions/" + promotionId + "/diplomas/excel/generate",
-                    { method: "POST" }
+            if (!promotionId) {
+                setStatus(
+                    "Promotion introuvable (ID manquant).",
+                    true
                 );
-                if (!response.ok) {
-                    response = await window.heiAuth.authFetch(
-                        "/api/promotions/" + promotionId + "/diplomas/excel"
+                return;
+            }
+
+            var logoutBtn =
+                document.getElementById("logout-btn");
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", function () {
+                    window.heiAuth.logout();
+                });
+            }
+
+            function setStatus(message, isError) {
+
+                var el =
+                    document.getElementById("status");
+
+                if (!el) return;
+
+                el.textContent = message || "";
+
+                el.className =
+                    isError ? "error" : "ok";
+
+                el.style.display =
+                    message ? "block" : "none";
+            }
+
+            function renderDiplomaTable(diplomas) {
+
+                if (!diplomas || diplomas.length === 0) {
+
+                    var p =
+                        document.createElement("p");
+
+                    p.className = "empty";
+
+                    p.textContent =
+                        "Aucun diplômé pour ce parcours.";
+
+                    return p;
+                }
+
+                var wrapper =
+                    document.createElement("div");
+
+                wrapper.className = "table-wrapper";
+
+                var table =
+                    document.createElement("table");
+
+                table.innerHTML =
+                    "<thead>" +
+                        "<tr>" +
+                            "<th>Rang</th>" +
+                            "<th>N° Étudiant</th>" +
+                            "<th>Nom</th>" +
+                            "<th>Prénom</th>" +
+                            "<th>Moyenne générale</th>" +
+                            "<th>Mention</th>" +
+                        "</tr>" +
+                    "</thead>" +
+                    "<tbody></tbody>";
+
+                var body =
+                    table.querySelector("tbody");
+
+                diplomas.forEach(function (d) {
+
+                    var row =
+                        document.createElement("tr");
+
+                    /*
+                     * Le # devant le rang a été supprimé.
+                     * La colonne Rang reste présente.
+                     */
+                    row.innerHTML =
+                        "<td><strong class='rank'>" +
+                            (d.rank != null ? d.rank : "-") +
+                        "</strong></td>" +
+
+                        "<td>" +
+                            (d.studentNumber || "-") +
+                        "</td>" +
+
+                        "<td><strong>" +
+                            (d.lastName || "-") +
+                        "</strong></td>" +
+
+                        "<td>" +
+                            (d.firstName || "-") +
+                        "</td>" +
+
+                        "<td>" +
+                            (
+                                d.overallAverage != null
+                                    ? Number(d.overallAverage)
+                                        .toFixed(2) + " / 20"
+                                    : "-"
+                            ) +
+                        "</td>" +
+
+                        "<td>" +
+                            "<span class='badge'>" +
+                                (d.mention || "—") +
+                            "</span>" +
+                        "</td>";
+
+                    body.appendChild(row);
+                });
+
+                wrapper.appendChild(table);
+
+                return wrapper;
+            }
+
+            async function loadRanking(parcours, container) {
+
+                try {
+
+                    /*
+                     * On conserve la récupération existante
+                     * des diplômés.
+                     */
+                    var response =
+                        await window.heiAuth.authFetch(
+                            "/api/promotions/" +
+                            promotionId +
+                            "/parcours/" +
+                            parcours.id +
+                            "/diplomas"
+                        );
+
+                    if (!response.ok) {
+
+                        container.innerHTML =
+                            "<p class='empty'>" +
+                            "Erreur de chargement des diplômés." +
+                            "</p>";
+
+                        return;
+                    }
+
+                    var diplomas =
+                        await response.json();
+
+                    container.innerHTML = "";
+
+                    container.appendChild(
+                        renderDiplomaTable(diplomas)
+                    );
+
+                } catch (e) {
+
+                    container.innerHTML =
+                        "<p class='empty'>" +
+                        "Impossible de charger les diplômés." +
+                        "</p>";
+                }
+            }
+
+            function buildTrackSection(parcours) {
+
+                var section =
+                    document.createElement("section");
+
+                section.className = "card track-section";
+
+                var header =
+                    document.createElement("div");
+
+                header.className = "track-header";
+
+                var title =
+                    document.createElement("h2");
+
+                title.className = "track-title";
+
+                if (parcours.code) {
+
+                    title.innerHTML =
+                        "<span class='badge' " +
+                        "style='margin-right:8px'>" +
+                        parcours.code +
+                        "</span>" +
+                        (parcours.label || "");
+
+                } else {
+
+                    title.textContent =
+                        parcours.label || "Parcours";
+                }
+
+                header.appendChild(title);
+
+                section.appendChild(header);
+
+                var tableHolder =
+                    document.createElement("div");
+
+                section.appendChild(tableHolder);
+
+                loadRanking(
+                    parcours,
+                    tableHolder
+                );
+
+                return section;
+            }
+
+            async function loadPromotion() {
+
+                try {
+
+                    var response =
+                        await window.heiAuth.authFetch(
+                            "/api/promotions/" +
+                            promotionId
+                        );
+
+                    if (!response.ok) return;
+
+                    var promotion =
+                        await response.json();
+
+                    var title =
+                        document.getElementById(
+                            "promotion-title"
+                        );
+
+                    if (title && promotion.label) {
+
+                        title.textContent =
+                            "Diplômés — " +
+                            promotion.label;
+                    }
+
+                } catch (e) {
+
+                    console.error(
+                        "Erreur chargement promotion",
+                        e
                     );
                 }
-                if (!response.ok) {
-                    setStatus("Impossible de télécharger le fichier Excel.", true);
-                    return;
-                }
-                var data = await response.json();
-                var url = data.downloadUrl || data.url || data.presignedUrl;
-                if (url) {
-                    window.open(url, "_blank");
-                    setStatus("Fichier Excel prêt.");
-                } else {
-                    setStatus("Aucune URL de téléchargement reçue du serveur.", true);
-                }
-            } catch (e) {
-                setStatus("Erreur lors du téléchargement Excel.", true);
             }
-        }
 
-        function buildTrackSection(parcours) {
-            var section = document.createElement("section");
-            section.className = "card track-section";
+            async function loadTracks() {
 
-            var header = document.createElement("div");
-            header.className = "track-header";
-            header.innerHTML =
-                "<div><h2 style='margin:0; font-size:18px'>" +
-                (parcours.code ? "<span class='badge' style='margin-right:8px'>" + parcours.code + "</span>" : "") +
-                (parcours.label || "") +
-                "</h2></div>";
+                var container =
+                    document.getElementById(
+                        "tracks-container"
+                    );
 
-            var actions = document.createElement("div");
-            actions.className = "actions";
-            if (isAdmin) {
-                var btn = document.createElement("button");
-                btn.className = "btn generate-btn";
-                btn.textContent = "⚡ Générer le classement";
-                btn.addEventListener("click", function () {
-                    generateRanking(parcours, tableHolder);
-                });
-                actions.appendChild(btn);
-            }
-            header.appendChild(actions);
-            section.appendChild(header);
+                if (!container) return;
 
-            var tableHolder = document.createElement("div");
-            section.appendChild(tableHolder);
-            loadRanking(parcours, tableHolder);
-            return section;
-        }
+                try {
 
-        async function loadPromotion() {
-            try {
-                var response = await window.heiAuth.authFetch("/api/promotions/" + promotionId);
-                if (!response.ok) return;
-                var promotion = await response.json();
-                var title = document.getElementById("promotion-title");
-                if (title && promotion.label) {
-                    title.textContent = "Diplômés — " + promotion.label;
+                    var response =
+                        await window.heiAuth.authFetch(
+                            "/api/parcours?activeOnly=true"
+                        );
+
+                    if (!response.ok) {
+
+                        setStatus(
+                            "Impossible de charger les parcours.",
+                            true
+                        );
+
+                        return;
+                    }
+
+                    var tracks =
+                        await response.json();
+
+                    container.innerHTML = "";
+
+                    tracks.forEach(function (parcours) {
+
+                        container.appendChild(
+                            buildTrackSection(parcours)
+                        );
+                    });
+
+                } catch (e) {
+
+                    setStatus(
+                        "Erreur lors du chargement des données.",
+                        true
+                    );
                 }
-            } catch (e) {
-                console.error("Erreur chargement promotion", e);
             }
-        }
 
-        async function loadTracks() {
-            var container = document.getElementById("tracks-container");
-            if (!container) return;
-            try {
-                var response = await window.heiAuth.authFetch("/api/parcours?activeOnly=true");
-                if (!response.ok) {
-                    setStatus("Impossible de charger les parcours.", true);
-                    return;
-                }
-                var tracks = await response.json();
-                container.innerHTML = "";
-                tracks.forEach(function (parcours) {
-                    container.appendChild(buildTrackSection(parcours));
-                });
-                if (isAdmin) {
-                    var excelBtn = document.createElement("button");
-                    excelBtn.className = "btn excel-btn";
-                    excelBtn.innerHTML = "📊 &nbsp; Télécharger la liste des diplômés (Excel)";
-                    excelBtn.addEventListener("click", downloadExcel);
-                    container.appendChild(excelBtn);
-                }
-            } catch (e) {
-                setStatus("Erreur lors du chargement des données.", true);
-            }
-        }
+            loadPromotion();
+            loadTracks();
 
-        loadPromotion();
-        loadTracks();
-    });
-})();
+        });
+
+    })();
+
 </script>
+
 </body>
 </html>

@@ -4,79 +4,303 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HEI Graduate — Promotions</title>
+
     <style>
         * { box-sizing: border-box; }
+
         :root {
-            --navy: #0b1f3f; --navy-dark: #061428; --navy-mid: #12294d;
-            --gold: #c9a227; --gold-dark: #a9871c; --gold-light: #f4e8c1;
-            --background: #f6f4ee; --surface: #fff;
-            --text: #10192b; --muted: #647089; --border: #e4e1d5;
+            --navy: #071a33;
+            --navy-light: #0d2a4d;
+            --gold: #c9a227;
+            --gold-light: #e4c55d;
+            --gold-soft: #f8f1d8;
+            --background: #f5f7fa;
+            --surface: #ffffff;
+            --text: #132238;
+            --muted: #667085;
+            --border: #e2e7ee;
         }
-        body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: var(--background); color: var(--text); }
-        .layout { min-height: 100vh; display: flex; }
-        .sidebar { width: 250px; background: linear-gradient(180deg, var(--navy-dark), var(--navy)); color: #fff; padding: 26px 18px; display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; border-right: 1px solid rgba(201, 162, 39, 0.2); }
-        .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; margin-bottom: 42px; font-size: 19px; font-weight: 800; }
-        .brand-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--gold); color: var(--navy-dark); }
-        .nav a { display: block; color: rgba(255,255,255,0.72); text-decoration: none; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-        .nav a:hover { color: #fff; background: rgba(255,255,255,0.08); }
-        .nav a.active { color: var(--navy-dark); background: var(--gold); }
-        .sidebar-bottom { margin-top: auto; }
-        .logout { width: 100%; border: 0; background: transparent; color: rgba(255,255,255,0.72); padding: 12px 14px; text-align: left; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
-        .logout:hover { background: rgba(255,255,255,0.08); color: #fff; }
-        .main { margin-left: 250px; padding: 36px 40px; width: calc(100% - 250px); }
-        .eyebrow { font-size: 12px; font-weight: 700; color: var(--gold-dark); letter-spacing: .08em; margin-bottom: 8px; }
-        h1 { margin: 0 0 8px; font-size: 28px; color: var(--navy-dark); }
-        .description { color: var(--muted); margin: 0 0 28px; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 5px 20px rgba(11, 31, 63, 0.05); }
-        .card-header { padding: 18px 22px; border-bottom: 1px solid var(--border); }
-        .card-title { margin: 0; font-size: 16px; color: var(--navy-dark); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px 22px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { color: var(--navy); font-weight: 700; background: #fbf9f3; }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--navy);
+            color: #fff;
+            padding: 26px 18px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            inset: 0 auto 0 0;
+            box-shadow: 8px 0 30px rgba(7, 26, 51, .08);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 0 12px;
+            margin-bottom: 42px;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .brand-icon {
+            width: 39px;
+            height: 39px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav a {
+            display: block;
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 650;
+            margin-bottom: 3px;
+            transition: .2s;
+        }
+
+        .nav a:hover {
+            color: #fff;
+            background: rgba(255,255,255,.07);
+        }
+
+        .nav a.active {
+            color: var(--navy);
+            background: var(--gold);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .logout {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,.08);
+            background: transparent;
+            color: #cbd5e1;
+            padding: 12px 14px;
+            text-align: left;
+            border-radius: 11px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .logout:hover {
+            background: rgba(255,255,255,.07);
+            color: #fff;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 42px;
+            width: calc(100% - 250px);
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--gold);
+            letter-spacing: .14em;
+            margin-bottom: 9px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0 0 9px;
+            font-size: 31px;
+            letter-spacing: -.8px;
+            color: var(--navy);
+        }
+
+        .description {
+            color: var(--muted);
+            margin: 0 0 30px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 19px;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(7,26,51,.05);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 16px;
+            color: var(--navy);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 22px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 700;
+            background: #fafbfc;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        tbody tr:hover {
+            background: #fcfaf2;
+        }
+
         .view-link {
-            display: inline-block; padding: 8px 14px; border-radius: 8px;
-            text-decoration: none; font-weight: 700; font-size: 13px;
-            background: var(--gold); color: var(--navy-dark);
+            display: inline-block;
+            padding: 9px 15px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            background: var(--navy);
+            color: #fff;
+            transition: .2s;
         }
-        .view-link:hover { background: var(--gold-dark); }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--gold-light); color: var(--navy-dark); font-weight: 700; font-size: 12px; }
-        .empty { padding: 48px; text-align: center; color: var(--muted); }
-        #status { margin: 12px 0; padding: 12px 16px; border-radius: 10px; display: none; }
-        #status.error { display: block; background: #fef3f2; color: #b42318; }
-        #status.ok { display: block; background: #ecfdf3; color: #027a48; }
+
+        .view-link:hover {
+            background: var(--navy-light);
+            transform: translateY(-1px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--gold-soft);
+            color: #765e08;
+            font-weight: 800;
+            font-size: 11px;
+        }
+
+        .empty {
+            padding: 52px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        #status {
+            margin: 12px 0;
+            padding: 12px 16px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #status.error {
+            display: block;
+            background: #fef3f2;
+            color: #b42318;
+        }
+
+        #status.ok {
+            display: block;
+            background: #ecfdf3;
+            color: #027a48;
+        }
+
         @media (max-width: 800px) {
-            .sidebar { position: relative; width: 100%; }
-            .main { margin-left: 0; width: 100%; padding: 24px 16px; }
-            .layout { display: block; }
+            .sidebar {
+                position: relative;
+                width: 100%;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 24px 16px;
+            }
+
+            .layout {
+                display: block;
+            }
         }
     </style>
 </head>
+
 <body>
+
 <div class="layout">
+
     <aside class="sidebar">
-        <div class="brand"><div class="brand-icon">🎓</div><span>HEI Graduate</span></div>
+        <div class="brand">
+            <div class="brand-icon">🎓</div>
+            <span>HEI Graduate</span>
+        </div>
+
         <nav class="nav">
             <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
         </nav>
+
         <div class="sidebar-bottom">
-            <button id="logout-btn" class="logout">↪ &nbsp; Se déconnecter</button>
+            <button id="logout-btn" class="logout">
+                ↪ &nbsp; Se déconnecter
+            </button>
         </div>
     </aside>
 
     <main class="main">
-        <div class="eyebrow">ESPACE ACADÉMIQUE</div>
+
+        <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
+
         <h1>Promotions</h1>
+
         <p class="description">
-            Liste des promotions et parcours (EL / TN). Consultez les diplômés par promotion et par parcours.
+            Consultez les promotions et les diplômés par parcours.
         </p>
+
         <p id="status"></p>
 
         <section class="card">
+
             <div class="card-header">
                 <h2 class="card-title">Promotions × Parcours</h2>
             </div>
+
             <div class="table-wrapper">
+
                 <table id="promotions-table" style="display:none;">
+
                     <thead>
                     <tr>
                         <th>Promotion</th>
@@ -85,30 +309,44 @@
                         <th>Action</th>
                     </tr>
                     </thead>
+
                     <tbody id="promotions-body"></tbody>
+
                 </table>
+
             </div>
+
             <div id="empty" class="empty" style="display:none;">
                 Aucune promotion pour le moment.
             </div>
+
         </section>
+
     </main>
 </div>
 
 <script th:src="@{/js/auth.js}"></script>
+
 <script>
     window.heiAuth.requireAuth();
-    window.heiAuth.renderSidebar("promotions");
-    document.getElementById("logout-btn").addEventListener("click", () => window.heiAuth.logout());
 
-    // Accès direct réservé aux admins. Les étudiants sont renvoyés vers
-    // leur espace, tout autre rôle (ex. enseignant) est déconnecté.
-    if (window.heiAuth.isStudent()) {
-        window.location.href = "/notes";
-    } else if (!(window.heiAuth.isAdmin && window.heiAuth.isAdmin())) {
-        window.heiAuth.logout();
-        window.location.href = "/login";
+    /*
+     * Cette page est réservée à ADMIN.
+     * STUDENT et TEACHER ne doivent pas pouvoir l'utiliser.
+     */
+    if (!window.heiAuth.isAdmin || !window.heiAuth.isAdmin()) {
+        if (window.heiAuth.logout) {
+            window.heiAuth.logout();
+        } else {
+            window.location.href = "/login";
+        }
     }
+
+    window.heiAuth.renderSidebar("promotions");
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+        window.heiAuth.logout();
+    });
 
     function setStatus(msg, isError) {
         const el = document.getElementById("status");
@@ -118,43 +356,76 @@
     }
 
     async function loadPromotions() {
-        const [promoRes, trackRes] = await Promise.all([
-            window.heiAuth.authFetch("/api/promotions"),
-            window.heiAuth.authFetch("/api/parcours?activeOnly=true")
-        ]);
-        const promotions = await promoRes.json();
-        const tracks = await trackRes.json();
+        try {
+            const [promoRes, trackRes] = await Promise.all([
+                window.heiAuth.authFetch("/api/promotions"),
+                window.heiAuth.authFetch("/api/parcours?activeOnly=true")
+            ]);
 
-        if (!promotions.length) {
-            document.getElementById("empty").style.display = "block";
-            return;
-        }
+            if (!promoRes.ok || !trackRes.ok) {
+                setStatus("Impossible de charger les promotions.", true);
+                return;
+            }
 
-        const body = document.getElementById("promotions-body");
-        body.innerHTML = "";
+            const promotions = await promoRes.json();
+            const tracks = await trackRes.json();
 
-        // CDC : une ligne par Promotion × Parcours
-        promotions.forEach(function (promotion) {
-            tracks.forEach(function (parcours) {
-                const row = document.createElement("tr");
-                const parcoursLabel = (parcours.code || parcours.label || "Parcours");
-                row.innerHTML =
-                    "<td><strong>" + promotion.label + "</strong></td>" +
-                    "<td><span class='badge'>" + (parcours.code || parcours.label) + "</span> " +
-                    (parcours.label || "") + "</td>" +
-                    "<td>" + (promotion.finalAcademicYearLabel || "—") + "</td>" +
-                    "<td>" +
-                    "<a class='view-link' href='/promotions/" + promotion.id +
-                    "?parcoursId=" + parcours.id + "'>Voir les diplômés</a>" +
-                    "</td>";
-                body.appendChild(row);
+            if (!promotions.length) {
+                document.getElementById("empty").style.display = "block";
+                return;
+            }
+
+            const body = document.getElementById("promotions-body");
+            body.innerHTML = "";
+
+            promotions.forEach(function (promotion) {
+
+                tracks.forEach(function (parcours) {
+
+                    const row = document.createElement("tr");
+
+                    const parcoursLabel =
+                        parcours.code ||
+                        parcours.label ||
+                        "Parcours";
+
+                    row.innerHTML =
+                        "<td><strong>" +
+                        (promotion.label || "-") +
+                        "</strong></td>" +
+
+                        "<td>" +
+                        "<span class='badge'>" +
+                        (parcours.code || parcours.label || "-") +
+                        "</span> " +
+                        (parcours.label || "") +
+                        "</td>" +
+
+                        "<td>" +
+                        (promotion.finalAcademicYearLabel || "—") +
+                        "</td>" +
+
+                        "<td>" +
+                        "<a class='view-link' href='/promotions/" +
+                        promotion.id +
+                        "?parcoursId=" +
+                        parcours.id +
+                        "'>Voir les diplômés</a>" +
+                        "</td>";
+
+                    body.appendChild(row);
+                });
             });
-        });
 
-        document.getElementById("promotions-table").style.display = "table";
+            document.getElementById("promotions-table").style.display = "table";
+
+        } catch (e) {
+            setStatus("Erreur lors du chargement des promotions.", true);
+        }
     }
 
     loadPromotions();
 </script>
+
 </body>
 </html>
