@@ -49,23 +49,30 @@ class GraduationFlowIT extends FacadeIT {
 
   @BeforeEach
   void setUp() {
-    // --- Parcours ---
+
+    String uid = UUID.randomUUID().toString().substring(0, 6);
+
     parcoursTn =
         parcoursRepository.save(
-            Parcours.builder().code("TN").label("Transformation Numérique").active(true).build());
+            Parcours.builder()
+                .code("TN-" + uid)
+                .label("Transformation Numérique")
+                .active(true)
+                .build());
     parcoursEl =
         parcoursRepository.save(
-            Parcours.builder().code("EL").label("Écosystème Logiciel").active(true).build());
+            Parcours.builder().code("EL-" + uid).label("Écosystème Logiciel").active(true).build());
 
-    // --- Groupes ---
     groupK1 =
-        groupRepository.save(Group.builder().reference("K1").capacity(30).active(true).build());
+        groupRepository.save(
+            Group.builder().reference("K1-" + uid).capacity(30).active(true).build());
     groupK2 =
-        groupRepository.save(Group.builder().reference("K2").capacity(30).active(true).build());
+        groupRepository.save(
+            Group.builder().reference("K2-" + uid).capacity(30).active(true).build());
     groupK3 =
-        groupRepository.save(Group.builder().reference("K3").capacity(30).active(true).build());
+        groupRepository.save(
+            Group.builder().reference("K3-" + uid).capacity(30).active(true).build());
 
-    // --- Années ---
     year1 =
         academicYearRepository.save(
             AcademicYear.builder()
@@ -91,32 +98,26 @@ class GraduationFlowIT extends FacadeIT {
                 .level("L3")
                 .build());
 
-    // --- Semestres ---
     s1y1 = saveSemester(year1, "S1-2023", LocalDate.of(2023, 9, 1), LocalDate.of(2024, 1, 31));
     s1y2 = saveSemester(year2, "S1-2024", LocalDate.of(2024, 9, 1), LocalDate.of(2025, 1, 31));
     s1y3 = saveSemester(year3, "S1-2025", LocalDate.of(2025, 9, 1), LocalDate.of(2026, 1, 31));
 
-    // --- Cours ---
     courseTnY1 = saveCourse("METIER1", "Métier TN", 5);
     courseElY2 = saveCourse("PROG4", "Programmation avancée", 5);
     courseElY3 = saveCourse("ARCHI1", "Architecture logicielle", 5);
 
-    // --- CourseTrack obligatoires ---
     saveCourseTrack(courseTnY1, parcoursTn, s1y1);
     saveCourseTrack(courseElY2, parcoursEl, s1y2);
     saveCourseTrack(courseElY3, parcoursEl, s1y3);
 
-    // --- Examens (coef 1/1) ---
     Exam examY1 = saveExam(courseTnY1, year1, s1y1, "Exam METIER1");
     Exam examY2 = saveExam(courseElY2, year2, s1y2, "Exam PROG4");
     Exam examY3 = saveExam(courseElY3, year3, s1y3, "Exam ARCHI1");
 
-    // --- Étudiant ---
-    String unique = UUID.randomUUID().toString().substring(0, 8);
     User user =
         userRepository.save(
             User.builder()
-                .email("std-" + unique + "@hei.mg")
+                .email("std-" + uid + "@hei.mg")
                 .password("{noop}password")
                 .role(UserRole.STUDENT)
                 .active(true)
@@ -126,15 +127,13 @@ class GraduationFlowIT extends FacadeIT {
         studentRepository.save(
             Student.builder()
                 .userId(user.getId())
-                .studentNumber("STD-" + unique)
+                .studentNumber("STD-" + uid)
                 .lastName("Rakoto")
                 .firstName("Jean")
                 .enrollmentDate(LocalDate.of(2023, 9, 1))
                 .status("ACTIVE")
                 .build());
 
-    // --- Historique d'inscription (CDC §4) ---
-    // L1 : TN + K3
     enrollmentRepository.save(
         Enrollment.builder()
             .studentId(student.getId())
