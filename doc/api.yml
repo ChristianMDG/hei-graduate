@@ -5,7 +5,7 @@ info:
     Complete OpenAPI documentation for the HEI Graduate application.
     Manages students, teachers, courses, tracks (EL/TN), groups, assignments,
     exams, grades, modification history, PDF transcripts, graduate rankings, and S3 Excel exports.
-  version: 1.0.0
+  version: 1.1.0
 
 servers:
   - url: http://localhost:8080
@@ -13,41 +13,45 @@ servers:
 
 tags:
   - name: Auth
-    description: JWT Authentication (Login, Profile)
+    description: JWT Authentication (Login)
+  - name: User
+    description: User account management (ADMIN)
   - name: Student
     description: Student profile management
   - name: Teacher
     description: Teacher profile management
   - name: Course
-    description: Course catalog management
+    description: Course catalog management (ADMIN)
   - name: Parcours
     description: Track management (EL - Software Ecosystem, TN - Digital Transformation)
   - name: Group
-    description: Student group management (K1, K2, K3)
+    description: Student group management (K1, K2, K3) (ADMIN)
   - name: AcademicYear
     description: Academic year management (L1, L2, L3)
   - name: Semester
-    description: Semester management (30 ECTS credits per semester)
+    description: Semester management (30 ECTS credits per semester) (ADMIN)
+  - name: CourseTrack
+    description: COURS_PARCOURS — mandatory/optional course-to-track-to-semester mapping (ADMIN)
   - name: Assignment
-    description: Teacher assignments to courses, years, and groups
+    description: Teacher assignments to courses, years, and groups (ADMIN)
   - name: Enrollment
     description: Student enrollments, track/group transfer history
   - name: Exam
-    description: Exam management and coefficient sum validation (=1 per semester)
+    description: Exam management and coefficient sum validation (=1 per semester) (ADMIN)
   - name: Grade
     description: Grade entry, consultation, publication, and edit history
   - name: Transcript
     description: PDF transcript generation and asynchronous email delivery
+  - name: Promotion
+    description: Promotion (graduating class) management
   - name: Ranking & Graduation
     description: 3-year graduation determination and student ranking by promotion and track
   - name: DiplomaExcel
     description: Graduates Excel list export and saved S3 download URL retrieval
 
 paths:
-  # ==========================================
-  # AUTHENTICATION
-  # ==========================================
-  /api/auth/login:
+
+  /auth/login:
     post:
       tags: [Auth]
       summary: User authentication (JWT)
@@ -59,7 +63,7 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Authentication successful, returns JWT token and user role
+          description: Authentication successful, returns JWT token and user profile
           content:
             application/json:
               schema:
@@ -67,10 +71,34 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /api/auth/me:
+  # ==========================================
+  # USERS
+  # ==========================================
+  /api/users:
+    post:
+      tags: [User]
+      summary: Create a user account (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     get:
-      tags: [Auth]
-      summary: Get currently authenticated user profile
+      tags: [User]
+      summary: List all users (ADMIN)
       security:
         - bearerAuth: []
       responses:
@@ -78,17 +106,245 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # COURSES
-  # ==========================================
+  /api/users/{id}:
+    get:
+      tags: [User]
+      summary: Get a user by ID (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [User]
+      summary: Update a user (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags: [User]
+      summary: Delete a user (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: User successfully deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/students:
+    post:
+      tags: [Student]
+      summary: Create a student profile (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    get:
+      tags: [Student]
+      summary: List all students (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/students/{id}:
+    get:
+      tags: [Student]
+      summary: Get a student by ID (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Student]
+      summary: Update a student profile (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/students/me:
+    get:
+      tags: [Student]
+      summary: Get the authenticated student's own profile (ADMIN or STUDENT)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/teachers:
+    post:
+      tags: [Teacher]
+      summary: Create a teacher profile (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    get:
+      tags: [Teacher]
+      summary: List all teachers (any authenticated user)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeacherResponse"
+
+  /api/teachers/{id}:
+    get:
+      tags: [Teacher]
+      summary: Get a teacher by ID (any authenticated user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Teacher]
+      summary: Update a teacher profile (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/teachers/me:
+    get:
+      tags: [Teacher]
+      summary: Get the authenticated teacher's own profile (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
   /api/courses:
     get:
       tags: [Course]
-      summary: List all courses
+      summary: List all courses (ADMIN)
       security:
         - bearerAuth: []
       responses:
@@ -99,9 +355,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CourseResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       tags: [Course]
       summary: Create a new course (ADMIN)
@@ -127,7 +382,7 @@ paths:
   /api/courses/{id}:
     get:
       tags: [Course]
-      summary: Get a course by ID
+      summary: Get a course by ID (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -140,7 +395,6 @@ paths:
                 $ref: "#/components/schemas/CourseResponse"
         "404":
           $ref: "#/components/responses/NotFound"
-
     put:
       tags: [Course]
       summary: Update a course (ADMIN)
@@ -162,7 +416,6 @@ paths:
                 $ref: "#/components/schemas/CourseResponse"
         "403":
           $ref: "#/components/responses/Forbidden"
-
     delete:
       tags: [Course]
       summary: Deactivate a course (ADMIN)
@@ -176,9 +429,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # PARCOURS (TRACKS)
-  # ==========================================
+
   /api/parcours:
     get:
       tags: [Parcours]
@@ -190,7 +441,7 @@ paths:
           in: query
           schema:
             type: boolean
-            default: true
+            default: false
       responses:
         "200":
           content:
@@ -199,7 +450,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ParcoursResponse"
-
     post:
       tags: [Parcours]
       summary: Create a track (ADMIN)
@@ -217,24 +467,530 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ParcoursResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # EXAMS
-  # ==========================================
-  /api/exams:
+  /api/parcours/{id}:
     get:
-      tags: [Exam]
-      summary: List exams for a given course and/or semester
+      tags: [Parcours]
+      summary: Get a track by ID
       security:
         - bearerAuth: []
       parameters:
-        - name: courseId
-          in: query
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParcoursResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Parcours]
+      summary: Update a track (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParcoursRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParcoursResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/parcours/{id}/deactivate:
+    patch:
+      tags: [Parcours]
+      summary: Deactivate a track (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParcoursResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/parcours/{id}/activate:
+    patch:
+      tags: [Parcours]
+      summary: Reactivate a track (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParcoursResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/groups:
+    get:
+      tags: [Group]
+      summary: List all groups (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Group]
+      summary: Create a group (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/groups/{id}:
+    get:
+      tags: [Group]
+      summary: Get a group by ID (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Group]
+      summary: Update a group (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags: [Group]
+      summary: Deactivate a group (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Group successfully deactivated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/academic-years:
+    post:
+      tags: [AcademicYear]
+      summary: Create an academic year (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademicYearRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicYearResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    get:
+      tags: [AcademicYear]
+      summary: List all academic years (any authenticated user)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AcademicYearResponse"
+
+  /api/academic-years/{id}:
+    get:
+      tags: [AcademicYear]
+      summary: Get an academic year by ID (any authenticated user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicYearResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [AcademicYear]
+      summary: Update an academic year (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademicYearRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicYearResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/semesters:
+    get:
+      tags: [Semester]
+      summary: List all semesters (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SemesterResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Semester]
+      summary: Create a semester (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SemesterRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SemesterResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/semesters/{id}:
+    get:
+      tags: [Semester]
+      summary: Get a semester by ID (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SemesterResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Semester]
+      summary: Update a semester (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SemesterRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SemesterResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags: [Semester]
+      summary: Deactivate a semester (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Semester successfully deactivated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/course-tracks:
+    get:
+      tags: [CourseTrack]
+      summary: List all course-track mappings (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseTrackResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [CourseTrack]
+      summary: Map a course to a track/semester as mandatory or optional (ADMIN)
+      description: Enforces EL/TN/year isolation — a course mapped for one track and academic year never leaks into another.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseTrackRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseTrackResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/course-tracks/{id}:
+    delete:
+      tags: [CourseTrack]
+      summary: Remove a course-track mapping (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Mapping successfully deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/assignments:
+    get:
+      tags: [Assignment]
+      summary: List all teacher assignments (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssignmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Assignment]
+      summary: Assign a teacher to a course for given groups (ADMIN)
+      description: e.g. PROG4 assigned to groups K1+K2 but not K3.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/assignments/{id}:
+    get:
+      tags: [Assignment]
+      summary: Get an assignment by ID (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignmentResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Assignment]
+      summary: Remove an assignment (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Assignment successfully deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/enrollments:
+    post:
+      tags: [Enrollment]
+      summary: Enroll a student in a track/group (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollmentRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/enrollments/{studentId}/transfer:
+    post:
+      tags: [Enrollment]
+      summary: Transfer a student to a new track/group mid-semester (ADMIN)
+      description: e.g. K3 → K1 → K2 transfer history example from the subject.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-        - name: semesterId
-          in: query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/enrollments/{studentId}/current:
+    get:
+      tags: [Enrollment]
+      summary: Get a student's current enrollment (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/enrollments/{studentId}/history:
+    get:
+      tags: [Enrollment]
+      summary: Get a student's full enrollment/transfer history (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
@@ -245,8 +1001,55 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ExamResponse"
+                  $ref: "#/components/schemas/EnrollmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
+  /api/enrollments/{studentId}/at:
+    get:
+      tags: [Enrollment]
+      summary: Get the enrollment active for a student on a given date (ADMIN or TEACHER)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/exams:
+    get:
+      tags: [Exam]
+      summary: List all exams (ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExamResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       tags: [Exam]
       summary: Create an exam (ADMIN)
@@ -267,10 +1070,60 @@ paths:
                 $ref: "#/components/schemas/ExamResponse"
         "400":
           description: Coefficient sum exceeds 1 or numerator > denominator
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # GRADES
-  # ==========================================
+  /api/exams/{id}:
+    get:
+      tags: [Exam]
+      summary: Get an exam by ID (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Exam]
+      summary: Update an exam (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags: [Exam]
+      summary: Delete an exam (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Exam successfully deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
   /api/grades:
     get:
       tags: [Grade]
@@ -287,7 +1140,6 @@ paths:
                   $ref: "#/components/schemas/GradeResponse"
         "403":
           $ref: "#/components/responses/Forbidden"
-
     post:
       tags: [Grade]
       summary: Enter a grade (ADMIN or assigned TEACHER)
@@ -310,20 +1162,54 @@ paths:
         "409":
           description: Grade already exists for this student and exam
 
-  /api/grades/me:
+  /api/grades/{id}:
     get:
       tags: [Grade]
-      summary: Get authenticated student's published grades (STUDENT)
+      summary: Get a grade by ID (ADMIN)
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
       responses:
         "200":
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/GradeResponse"
+                $ref: "#/components/schemas/GradeResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Grade]
+      summary: Update a grade with reason (ADMIN or assigned TEACHER)
+      description: Preserves edit history in grade_history (§9). A single @Transactional method reads the old value, inserts history, then updates — never a direct update elsewhere.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeUpdateRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeResponse"
+    delete:
+      tags: [Grade]
+      summary: Delete a grade (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204":
+          description: Grade successfully deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/grades/student/{studentId}:
     get:
@@ -347,27 +1233,20 @@ paths:
                 items:
                   $ref: "#/components/schemas/GradeResponse"
 
-  /api/grades/{id}:
-    put:
+  /api/grades/me:
+    get:
       tags: [Grade]
-      summary: Update a grade with reason (ADMIN or assigned TEACHER)
-      description: Preserves edit history in grade_history (§9).
+      summary: Get authenticated student's own published grades (ADMIN or STUDENT)
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/PathId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GradeUpdateRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GradeResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeResponse"
 
   /api/grades/{id}/publish:
     post:
@@ -406,14 +1285,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/GradeHistoryResponse"
 
-  # ==========================================
-  # TRANSCRIPTS
-  # ==========================================
   /api/transcripts/{studentId}:
     get:
       tags: [Transcript]
       summary: Generate a PDF academic transcript for a student (ADMIN)
-      description: Generates PDF, uploads to AWS S3, and records history (§15).
+      description: Reads the student's mandatory courses for their current track (via CourseRequirementQuery) and their final grades (via FinalGradeQuery). Marked "provisoire" if any grade is missing.
       security:
         - bearerAuth: []
       parameters:
@@ -437,11 +1313,15 @@ paths:
               schema:
                 type: string
                 format: binary
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/transcripts/me:
     get:
       tags: [Transcript]
-      summary: Download authenticated student's own PDF transcript (STUDENT)
+      summary: Download authenticated student's own PDF transcript (ADMIN or STUDENT)
       security:
         - bearerAuth: []
       responses:
@@ -455,7 +1335,12 @@ paths:
   /api/transcripts/{studentId}/send-email:
     post:
       tags: [Transcript]
-      summary: Request asynchronous email delivery of transcript (ADMIN)
+      summary: Request asynchronous email delivery of a student's transcript (ADMIN)
+      description: >
+        Publishes a TranscriptEmailRequested event. A Poja worker regenerates the PDF,
+        uploads it to the S3 bucket, and emails the student a presigned download link
+        (valid 7 days) — the HTTP request returns immediately without waiting on
+        PDF generation, S3 I/O, or SMTP.
       security:
         - bearerAuth: []
       parameters:
@@ -472,12 +1357,83 @@ paths:
             type: string
             format: uuid
       responses:
-        "222":
-          description: Asynchronous email delivery event accepted
+        "202":
+          description: Event accepted — email will be sent asynchronously
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # RANKING & GRADUATION
-  # ==========================================
+  /api/transcripts/me/send-email:
+    post:
+      tags: [Transcript]
+      summary: Request asynchronous email delivery of the authenticated student's own transcript (ADMIN or STUDENT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Event accepted — email will be sent asynchronously
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+  /api/promotions:
+    post:
+      tags: [Promotion]
+      summary: Create a promotion / graduating class (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    get:
+      tags: [Promotion]
+      summary: List all promotions (any authenticated user)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromotionResponse"
+
+  /api/promotions/{id}:
+    get:
+      tags: [Promotion]
+      summary: Get a promotion by ID (any authenticated user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+
   /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas/generate:
     post:
       tags: [Ranking & Graduation]
@@ -506,11 +1462,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DiplomaResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/promotions/{promotionId}/parcours/{parcoursId}/diplomas:
     get:
       tags: [Ranking & Graduation]
-      summary: Get graduates list and ranking for a track
+      summary: Get graduates list and ranking for a track (ADMIN)
       security:
         - bearerAuth: []
       parameters:
@@ -534,10 +1492,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DiplomaResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  # ==========================================
-  # DIPLOMA EXCEL EXPORT
-  # ==========================================
   /api/promotions/{promotionId}/diplomas/excel:
     get:
       tags: [DiplomaExcel]
@@ -559,11 +1516,14 @@ paths:
                 $ref: "#/components/schemas/DiplomaExcelResponse"
         "404":
           description: Excel file not generated yet
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/promotions/{promotionId}/diplomas/excel/generate:
     post:
       tags: [DiplomaExcel]
       summary: Generate graduates Excel file and persist link on S3 (ADMIN)
+      description: One worksheet per track.
       security:
         - bearerAuth: []
       parameters:
@@ -579,6 +1539,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiplomaExcelResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
 components:
   securitySchemes:
@@ -617,10 +1579,11 @@ components:
   schemas:
     LoginRequest:
       type: object
-      required: [username, password]
+      required: [email, password]
       properties:
-        username:
+        email:
           type: string
+          format: email
           example: admin@hei.mg
         password:
           type: string
@@ -631,9 +1594,8 @@ components:
       properties:
         token:
           type: string
-        role:
-          type: string
-          example: ADMIN
+        user:
+          $ref: "#/components/schemas/UserResponse"
 
     UserResponse:
       type: object
@@ -644,6 +1606,123 @@ components:
         email:
           type: string
         role:
+          type: string
+          enum: [ADMIN, TEACHER, STUDENT]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastLogin:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [ADMIN, TEACHER, STUDENT]
+
+    UpdateUserRequest:
+      type: object
+      required: [email, role, active]
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [ADMIN, TEACHER, STUDENT]
+        active:
+          type: boolean
+
+    StudentRequest:
+      type: object
+      required: [userId, studentNumber, lastName, firstName, enrollmentDate, status]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        studentNumber:
+          type: string
+          example: STD24049
+        lastName:
+          type: string
+        firstName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        enrollmentDate:
+          type: string
+          format: date
+        status:
+          type: string
+
+    StudentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        studentNumber:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        enrollmentDate:
+          type: string
+          format: date
+        status:
+          type: string
+
+    TeacherRequest:
+      type: object
+      required: [userId, lastName, firstName]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        lastName:
+          type: string
+        firstName:
+          type: string
+        specialty:
+          type: string
+        contractType:
+          type: string
+
+    TeacherResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        lastName:
+          type: string
+        firstName:
+          type: string
+        specialty:
+          type: string
+        contractType:
           type: string
 
     CourseResponse:
@@ -698,8 +1777,266 @@ components:
       properties:
         code:
           type: string
+          maxLength: 10
         label:
           type: string
+
+    GroupRequest:
+      type: object
+      required: [reference]
+      properties:
+        reference:
+          type: string
+          example: K1
+        capacity:
+          type: integer
+          minimum: 1
+
+    GroupResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        capacity:
+          type: integer
+        active:
+          type: boolean
+
+    AcademicYearRequest:
+      type: object
+      required: [label, startDate, endDate, level]
+      properties:
+        label:
+          type: string
+          example: "2025-2026"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        level:
+          type: string
+          example: L1
+
+    AcademicYearResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        level:
+          type: string
+
+    SemesterRequest:
+      type: object
+      required: [academicYearId, label, startDate, endDate]
+      properties:
+        academicYearId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        expectedCredits:
+          type: integer
+          minimum: 1
+          example: 30
+
+    SemesterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        expectedCredits:
+          type: integer
+        active:
+          type: boolean
+
+    CourseTrackRequest:
+      type: object
+      required: [courseId, trackId, semesterId, mandatory]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        trackId:
+          type: string
+          format: uuid
+        semesterId:
+          type: string
+          format: uuid
+        mandatory:
+          type: boolean
+
+    CourseTrackResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        courseReference:
+          type: string
+        trackId:
+          type: string
+          format: uuid
+        trackCode:
+          type: string
+        semesterId:
+          type: string
+          format: uuid
+        semesterLabel:
+          type: string
+        academicYearId:
+          type: string
+          format: uuid
+        mandatory:
+          type: boolean
+
+    AssignmentRequest:
+      type: object
+      required: [courseId, teacherId, academicYearId, groupIds]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        teacherId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        semesterId:
+          type: string
+          format: uuid
+        groupIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+
+    AssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        courseReference:
+          type: string
+        teacherId:
+          type: string
+          format: uuid
+        teacherLastName:
+          type: string
+        academicYearId:
+          type: string
+          format: uuid
+        academicYearLabel:
+          type: string
+        semesterId:
+          type: string
+          format: uuid
+        semesterLabel:
+          type: string
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              reference:
+                type: string
+
+    EnrollmentRequest:
+      type: object
+      required: [studentId, parcoursId, groupId, startDate]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        parcoursId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+
+    EnrollmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        parcoursId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    TransferRequest:
+      type: object
+      required: [effectiveDate]
+      description: At least one of parcoursId / groupId should be set — a transfer that changes neither is a no-op.
+      properties:
+        parcoursId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        effectiveDate:
+          type: string
+          format: date
 
     ExamResponse:
       type: object
@@ -710,11 +2047,29 @@ components:
         courseId:
           type: string
           format: uuid
+        courseReference:
+          type: string
+        academicYearId:
+          type: string
+          format: uuid
+        academicYearLabel:
+          type: string
         semesterId:
           type: string
           format: uuid
+        semesterLabel:
+          type: string
         label:
           type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: "08:00:00"
+        endTime:
+          type: string
+          example: "10:00:00"
         coefficientNumerator:
           type: integer
           example: 1
@@ -724,7 +2079,18 @@ components:
 
     ExamRequest:
       type: object
-      required: [courseId, academicYearId, semesterId, label, coefficientNumerator, coefficientDenominator]
+      required:
+        [
+          courseId,
+          academicYearId,
+          semesterId,
+          label,
+          date,
+          startTime,
+          endTime,
+          coefficientNumerator,
+          coefficientDenominator,
+        ]
       properties:
         courseId:
           type: string
@@ -737,10 +2103,21 @@ components:
           format: uuid
         label:
           type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: "08:00:00"
+        endTime:
+          type: string
+          example: "10:00:00"
         coefficientNumerator:
           type: integer
+          minimum: 1
         coefficientDenominator:
           type: integer
+          minimum: 1
 
     GradeResponse:
       type: object
@@ -751,19 +2128,28 @@ components:
         studentId:
           type: string
           format: uuid
+        studentLastName:
+          type: string
         examId:
           type: string
           format: uuid
+        examLabel:
+          type: string
+        courseId:
+          type: string
+          format: uuid
+        courseReference:
+          type: string
         value:
           type: number
           format: float
           example: 15.5
         status:
           type: string
-          example: DRAFT
-        enteredAt:
+          enum: [DRAFT, PUBLISHED]
+        enteredByUserId:
           type: string
-          format: date-time
+          format: uuid
 
     GradeRequest:
       type: object
@@ -814,6 +2200,30 @@ components:
           type: string
           format: date-time
 
+    PromotionRequest:
+      type: object
+      required: [label, finalAcademicYearId]
+      properties:
+        label:
+          type: string
+        finalAcademicYearId:
+          type: string
+          format: uuid
+
+    PromotionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        finalAcademicYearId:
+          type: string
+          format: uuid
+        finalAcademicYearLabel:
+          type: string
+
     DiplomaResponse:
       type: object
       properties:
@@ -830,12 +2240,21 @@ components:
           type: string
         firstName:
           type: string
-        rank:
-          type: integer
-          example: 1
+        promotionId:
+          type: string
+          format: uuid
+        parcoursId:
+          type: string
+          format: uuid
+        obtainedDate:
+          type: string
+          format: date
         overallAverage:
           type: number
           example: 16.42
+        rank:
+          type: integer
+          example: 1
         mention:
           type: string
           example: Distinction
