@@ -53,8 +53,14 @@ public class DiplomaExcelService {
 
     List<UUID> parcoursIds = diplomaRepository.findDistinctParcoursIdsByPromotionId(promotionId);
     if (parcoursIds.isEmpty()) {
-      throw new ResourceNotFoundException(
-          "No diplomas have been generated yet for promotion: " + promotionId);
+      List<Parcours> activeParcours = parcoursRepository.findByActiveTrue();
+      for (Parcours p : activeParcours) {
+        rankingService.generateRanking(promotionId, p.getId());
+      }
+      parcoursIds = diplomaRepository.findDistinctParcoursIdsByPromotionId(promotionId);
+      if (parcoursIds.isEmpty()) {
+        parcoursIds = activeParcours.stream().map(Parcours::getId).toList();
+      }
     }
 
     File workbookFile = writeWorkbook(promotion, parcoursIds);
@@ -79,12 +85,11 @@ public class DiplomaExcelService {
     return new DiplomaExcelResponse(downloadUrl.toString());
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
     List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
     if (lists.isEmpty() || lists.get(0).getUrlS3() == null) {
-      throw new ResourceNotFoundException(
-          "No Excel file has been generated yet for promotion: " + promotionId);
+      return generateExcel(promotionId);
     }
     String bucketKey = lists.get(0).getUrlS3();
     var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);

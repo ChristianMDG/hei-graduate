@@ -24,7 +24,7 @@ class AdminAccessTest {
 
   @Test
   void transcriptController_generateMine_allowsAdmin() throws Exception {
-    Method method = TranscriptController.class.getMethod("generateMine", User.class);
+    Method method = TranscriptController.class.getMethod("generateMine", User.class, UUID.class);
     PreAuthorize annotation = method.getAnnotation(PreAuthorize.class);
     assertThat(annotation).isNotNull();
     assertThat(annotation.value()).contains("ADMIN");

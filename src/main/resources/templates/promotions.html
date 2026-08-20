@@ -55,6 +55,8 @@
         <div class="brand"><div class="brand-icon">🎓</div><span>HEI Graduate</span></div>
         <nav class="nav">
             <a href="/promotions" class="active">🎓 &nbsp; Promotions</a>
+            <a href="/notes">📊 &nbsp; Mes notes</a>
+            <a href="/releves">📄 &nbsp; Mes relevés</a>
         </nav>
         <div class="sidebar-bottom">
             <button id="logout-btn" class="logout">↪ &nbsp; Se déconnecter</button>
@@ -108,16 +110,6 @@
     async function downloadExcel(promotionId, label) {
         setStatus("Préparation du fichier Excel pour " + label + "...");
         try {
-            // 1) s'assurer que des diplômes existent (sinon excel = 404)
-            const tracksRes = await window.heiAuth.authFetch("/api/parcours?activeOnly=true");
-            const tracks = await tracksRes.json();
-            for (const p of tracks) {
-                await window.heiAuth.authFetch(
-                    "/api/promotions/" + promotionId + "/parcours/" + p.id + "/diplomas/generate",
-                    { method: "POST" }
-                );
-            }
-            // 2) générer / récupérer Excel
             let response = await window.heiAuth.authFetch(
                 "/api/promotions/" + promotionId + "/diplomas/excel/generate",
                 { method: "POST" }
@@ -128,14 +120,14 @@
                 );
             }
             if (!response.ok) {
-                setStatus("Impossible de télécharger l'Excel (générez d'abord les classements).", true);
+                setStatus("Impossible de télécharger le fichier Excel.", true);
                 return;
             }
             const data = await response.json();
             const url = data.downloadUrl || data.url || data.presignedUrl;
             if (url) {
                 window.open(url, "_blank");
-                setStatus("Fichier Excel prêt.");
+                setStatus("Fichier Excel prêt pour " + label + ".");
             } else {
                 setStatus("Réponse Excel sans URL de téléchargement.", true);
             }
