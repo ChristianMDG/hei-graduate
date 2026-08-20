@@ -184,10 +184,6 @@ class GradeFlowIT extends FacadeIT {
             .build());
   }
 
-  // =========================================================================
-  // 1. Création
-  // =========================================================================
-
   @Test
   void admin_canCreateGrade() {
     GradeResponse response =
@@ -239,10 +235,6 @@ class GradeFlowIT extends FacadeIT {
         .hasMessageContaining("already exists");
   }
 
-  // =========================================================================
-  // 2. Historisation (§9)
-  // =========================================================================
-
   @Test
   void update_preservesHistory() {
     GradeResponse created =
@@ -282,14 +274,8 @@ class GradeFlowIT extends FacadeIT {
         .isInstanceOf(AccessDeniedException.class);
   }
 
-  // =========================================================================
-  // 3. Publication (§7 / §10)
-  // =========================================================================
-
   @Test
   void publish_fails_whenCoefficientSumNotExactlyOne() {
-    // On ne crée qu'UN examen (coef 1/2) → somme ≠ 1
-    // Pour ce test isolé : supprimer les 2 autres examens
     examRepository.delete(examQuarter1);
     examRepository.delete(examQuarter2);
 
@@ -310,20 +296,13 @@ class GradeFlowIT extends FacadeIT {
             new GradeRequest(student.getId(), examHalf.getId(), new BigDecimal("16.00")),
             adminUser);
 
-    // Les 3 examens existent déjà (1/2 + 1/4 + 1/4 = 1)
     GradeResponse published = gradeService.publish(created.id());
 
     assertThat(published.status()).isEqualTo(GradeStatus.PUBLISHED);
   }
 
-  // =========================================================================
-  // 4. Note finale pondérée (§7 / §8)
-  // =========================================================================
-
   @Test
   void getFinalGrade_computesWeightedAverage() {
-    // Partiel 1/2 → 16  |  TP1 1/4 → 12  |  TP2 1/4 → 8
-    // final = 16*(1/2) + 12*(1/4) + 8*(1/4) = 8 + 3 + 2 = 13.00
     createAndPublish(examHalf, "16.00");
     createAndPublish(examQuarter1, "12.00");
     createAndPublish(examQuarter2, "8.00");
@@ -336,7 +315,6 @@ class GradeFlowIT extends FacadeIT {
 
   @Test
   void getFinalGrade_returnsEmpty_whenNoPublishedGrades() {
-    // Notes en DRAFT uniquement
     gradeService.create(
         new GradeRequest(student.getId(), examHalf.getId(), new BigDecimal("15.00")), adminUser);
 
@@ -344,10 +322,6 @@ class GradeFlowIT extends FacadeIT {
 
     assertThat(finalGrade).isEmpty();
   }
-
-  // =========================================================================
-  // 5. Visibilité étudiant (§6 / §18)
-  // =========================================================================
 
   @Test
   void student_seesOnlyPublishedGrades() {
@@ -390,8 +364,6 @@ class GradeFlowIT extends FacadeIT {
 
     assertThat(grades).isEmpty();
   }
-
-  // ---------- helpers ----------
 
   private void createAndPublish(Exam exam, String value) {
     GradeResponse created =
