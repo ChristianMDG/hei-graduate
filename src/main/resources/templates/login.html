@@ -11,24 +11,28 @@
         }
 
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --background: #f4f7fb;
+            --navy: #0b1f3f;
+            --navy-dark: #061428;
+            --navy-mid: #12294d;
+            --gold: #c9a227;
+            --gold-dark: #a9871c;
+            --gold-light: #f4e8c1;
+            --background: #f6f4ee;
             --surface: #ffffff;
-            --text: #172033;
-            --muted: #667085;
-            --border: #e4e7ec;
+            --text: #10192b;
+            --muted: #647089;
+            --border: #e4e1d5;
             --danger: #b42318;
-            --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+            --shadow: 0 24px 60px rgba(6, 20, 40, 0.18);
         }
 
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            font-family: "Fraunces", Georgia, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
                          "Segoe UI", sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 35%),
+                radial-gradient(circle at top left, rgba(201, 162, 39, 0.14), transparent 40%),
                 var(--background);
             color: var(--text);
             display: flex;
@@ -47,15 +51,41 @@
             border-radius: 28px;
             overflow: hidden;
             box-shadow: var(--shadow);
+            border: 1px solid rgba(201, 162, 39, 0.25);
         }
 
         .brand-panel {
             padding: 64px;
-            background: linear-gradient(145deg, #1d4ed8, #2563eb 55%, #3b82f6);
+            background:
+                linear-gradient(160deg, var(--navy-dark), var(--navy) 55%, var(--navy-mid) 100%);
             color: white;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-panel::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            bottom: -80px;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            border: 1px solid rgba(201, 162, 39, 0.35);
+        }
+
+        .brand-panel::before {
+            content: "";
+            position: absolute;
+            right: -30px;
+            bottom: -30px;
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: 1px solid rgba(201, 162, 39, 0.25);
         }
 
         .brand {
@@ -64,6 +94,8 @@
             gap: 12px;
             font-weight: 800;
             font-size: 22px;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            z-index: 1;
         }
 
         .brand-icon {
@@ -72,37 +104,48 @@
             border-radius: 13px;
             display: grid;
             place-items: center;
-            background: rgba(255, 255, 255, 0.16);
+            background: var(--gold);
+            color: var(--navy-dark);
             font-size: 20px;
         }
 
         .brand-content {
             max-width: 420px;
+            z-index: 1;
         }
 
         .brand-content h1 {
             margin: 0 0 20px;
-            font-size: 44px;
-            line-height: 1.1;
-            letter-spacing: -1.5px;
+            font-size: 42px;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+
+        .brand-content span.accent {
+            color: var(--gold);
         }
 
         .brand-content p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.82);
+            color: rgba(255, 255, 255, 0.78);
             line-height: 1.7;
             font-size: 16px;
+            font-family: ui-sans-serif, system-ui, sans-serif;
         }
 
         .brand-footer {
-            color: rgba(255, 255, 255, 0.65);
+            color: rgba(255, 255, 255, 0.55);
             font-size: 13px;
+            z-index: 1;
+            font-family: ui-sans-serif, system-ui, sans-serif;
         }
 
         .form-panel {
             padding: 64px;
             display: flex;
             align-items: center;
+            font-family: ui-sans-serif, system-ui, sans-serif;
         }
 
         .form-container {
@@ -115,6 +158,7 @@
             margin: 0 0 8px;
             font-size: 30px;
             letter-spacing: -0.7px;
+            color: var(--navy-dark);
         }
 
         .subtitle {
@@ -132,6 +176,7 @@
             margin-bottom: 8px;
             font-size: 14px;
             font-weight: 600;
+            color: var(--navy-dark);
         }
 
         input {
@@ -148,8 +193,8 @@
         }
 
         input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.16);
         }
 
         button {
@@ -157,17 +202,24 @@
             height: 50px;
             border: 0;
             border-radius: 12px;
-            background: var(--primary);
-            color: white;
+            background: var(--gold);
+            color: var(--navy-dark);
             font-size: 15px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
             transition: 0.2s;
+            letter-spacing: 0.2px;
         }
 
         button:hover {
-            background: var(--primary-dark);
+            background: var(--gold-dark);
             transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: default;
         }
 
         #error {
@@ -184,11 +236,11 @@
 
             .brand-panel {
                 padding: 40px;
-                min-height: 300px;
+                min-height: 280px;
             }
 
             .brand-content h1 {
-                font-size: 34px;
+                font-size: 32px;
             }
 
             .brand-footer {
@@ -213,7 +265,7 @@
         </div>
 
         <div class="brand-content">
-            <h1>Votre parcours académique, simplement.</h1>
+            <h1>Votre parcours académique, <span class="accent">simplement</span>.</h1>
             <p>
                 Consultez vos notes, téléchargez vos relevés
                 et accédez aux informations relatives aux promotions
@@ -305,11 +357,18 @@
             }
 
             const data = await response.json();
+            const role = data.user.role;
+
+            // Seuls ADMIN et STUDENT ont accès direct à la plateforme.
+            if (role !== "STUDENT" && role !== "ADMIN") {
+                error.textContent = "Votre rôle n'a pas accès direct à cette plateforme.";
+                return;
+            }
 
             window.heiAuth.setSession(data.token, data.user);
 
             window.location.href =
-                data.user.role === "STUDENT"
+                role === "STUDENT"
                     ? "/notes"
                     : "/promotions";
 
