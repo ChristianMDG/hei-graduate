@@ -3,256 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HEI Graduate — Promotions</title>
+    <title>HEI Graduate — Connexion</title>
 
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         :root {
-            --navy: #071a33;
-            --navy-light: #0d2a4d;
-            --gold: #c9a227;
-            --gold-light: #e4c55d;
-            --gold-soft: #f8f1d8;
-            --background: #f5f7fa;
+            --navy: #071b36;
+            --navy-light: #0d2a4f;
+            --gold: #d4af37;
+            --gold-light: #f4e7b2;
+            --background: #f4f6f9;
             --surface: #ffffff;
-            --text: #132238;
+            --text: #10233f;
             --muted: #667085;
-            --border: #e2e7ee;
+            --border: #e4e7ec;
+            --danger: #b42318;
+            --shadow: 0 24px 70px rgba(7, 27, 54, 0.14);
         }
 
         body {
             margin: 0;
-            font-family: Inter, system-ui, sans-serif;
-            background: var(--background);
-            color: var(--text);
-        }
-
-        .layout {
             min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+                         BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(212, 175, 55, 0.12), transparent 35%),
+                var(--background);
+            color: var(--text);
             display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
         }
 
-        .sidebar {
-            width: 250px;
-            background: var(--navy);
-            color: #fff;
-            padding: 26px 18px;
+        .login-wrapper {
+            width: 100%;
+            max-width: 1050px;
+            min-height: 620px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--surface);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .brand-panel {
+            padding: 64px;
+            background:
+                radial-gradient(circle at top right, rgba(212,175,55,.20), transparent 35%),
+                linear-gradient(145deg, #05172f, #0b2749 60%, #12385f);
+            color: white;
             display: flex;
             flex-direction: column;
-            position: fixed;
-            inset: 0 auto 0 0;
-            box-shadow: 8px 0 30px rgba(7, 26, 51, .08);
+            justify-content: space-between;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 0 12px;
-            margin-bottom: 42px;
-            font-size: 19px;
+            gap: 12px;
             font-weight: 800;
+            font-size: 22px;
         }
 
         .brand-icon {
-            width: 39px;
-            height: 39px;
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
             display: grid;
             place-items: center;
-            border-radius: 12px;
             background: var(--gold);
             color: var(--navy);
+            font-size: 20px;
         }
 
-        .nav {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .brand-content {
+            max-width: 420px;
         }
 
-        .nav a {
-            display: block;
-            color: #cbd5e1;
-            text-decoration: none;
-            padding: 12px 14px;
-            border-radius: 11px;
-            font-size: 14px;
-            font-weight: 650;
-            margin-bottom: 3px;
-            transition: .2s;
+        .brand-content h1 {
+            margin: 0 0 20px;
+            font-size: 44px;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
         }
 
-        .nav a:hover {
-            color: #fff;
-            background: rgba(255,255,255,.07);
-        }
-
-        .nav a.active {
-            color: var(--navy);
-            background: var(--gold);
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
-        }
-
-        .logout {
-            width: 100%;
-            border: 1px solid rgba(255,255,255,.08);
-            background: transparent;
-            color: #cbd5e1;
-            padding: 12px 14px;
-            text-align: left;
-            border-radius: 11px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 650;
-        }
-
-        .logout:hover {
-            background: rgba(255,255,255,.07);
-            color: #fff;
-        }
-
-        .main {
-            margin-left: 250px;
-            padding: 42px;
-            width: calc(100% - 250px);
-        }
-
-        .eyebrow {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--gold);
-            letter-spacing: .14em;
-            margin-bottom: 9px;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            margin: 0 0 9px;
-            font-size: 31px;
-            letter-spacing: -.8px;
-            color: var(--navy);
-        }
-
-        .description {
-            color: var(--muted);
-            margin: 0 0 30px;
-            font-size: 14px;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 19px;
-            overflow: hidden;
-            box-shadow: 0 8px 28px rgba(7,26,51,.05);
-        }
-
-        .card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-title {
+        .brand-content p {
             margin: 0;
+            color: rgba(255,255,255,.78);
+            line-height: 1.7;
             font-size: 16px;
-            color: var(--navy);
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 15px 22px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            font-size: 14px;
-        }
-
-        th {
-            color: var(--muted);
-            font-weight: 700;
-            background: #fafbfc;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-        }
-
-        tbody tr:hover {
-            background: #fcfaf2;
-        }
-
-        .view-link {
-            display: inline-block;
-            padding: 9px 15px;
-            border-radius: 9px;
-            text-decoration: none;
-            font-weight: 700;
+        .brand-footer {
+            color: rgba(255,255,255,.58);
             font-size: 13px;
-            background: var(--navy);
-            color: #fff;
+        }
+
+        .form-panel {
+            padding: 64px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 390px;
+            margin: auto;
+        }
+
+        .form-container h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            letter-spacing: -.7px;
+        }
+
+        .subtitle {
+            margin: 0 0 34px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            height: 50px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0 15px;
+            font-size: 15px;
+            color: var(--text);
+            outline: none;
+            background: #fff;
             transition: .2s;
         }
 
-        .view-link:hover {
+        input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px rgba(212,175,55,.12);
+        }
+
+        button {
+            width: 100%;
+            height: 50px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--navy);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        button:hover {
             background: var(--navy-light);
             transform: translateY(-1px);
         }
 
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 999px;
-            background: var(--gold-soft);
-            color: #765e08;
-            font-weight: 800;
-            font-size: 11px;
-        }
-
-        .empty {
-            padding: 52px;
-            text-align: center;
-            color: var(--muted);
-        }
-
-        #status {
-            margin: 12px 0;
-            padding: 12px 16px;
-            border-radius: 10px;
-            display: none;
-        }
-
-        #status.error {
-            display: block;
-            background: #fef3f2;
-            color: #b42318;
-        }
-
-        #status.ok {
-            display: block;
-            background: #ecfdf3;
-            color: #027a48;
+        #error {
+            min-height: 20px;
+            margin: 14px 0 0;
+            color: var(--danger);
+            font-size: 14px;
         }
 
         @media (max-width: 800px) {
-            .sidebar {
-                position: relative;
-                width: 100%;
+            .login-wrapper {
+                grid-template-columns: 1fr;
             }
 
-            .main {
-                margin-left: 0;
-                width: 100%;
-                padding: 24px 16px;
+            .brand-panel {
+                padding: 40px;
+                min-height: 300px;
             }
 
-            .layout {
-                display: block;
+            .brand-content h1 {
+                font-size: 34px;
+            }
+
+            .brand-footer {
+                display: none;
+            }
+
+            .form-panel {
+                padding: 40px 28px;
             }
         }
     </style>
@@ -260,167 +209,133 @@
 
 <body>
 
-<div class="layout">
+<div class="login-wrapper">
 
-    <aside class="sidebar">
+    <section class="brand-panel">
         <div class="brand">
             <div class="brand-icon">🎓</div>
             <span>HEI Graduate</span>
         </div>
 
-        <nav class="nav">
-            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
-        </nav>
-
-        <div class="sidebar-bottom">
-            <button id="logout-btn" class="logout">
-                ↪ &nbsp; Se déconnecter
-            </button>
+        <div class="brand-content">
+            <h1>Votre parcours académique, simplement.</h1>
+            <p>
+                Consultez vos notes, téléchargez vos relevés
+                et accédez aux informations relatives aux promotions
+                et aux diplômés.
+            </p>
         </div>
-    </aside>
 
-    <main class="main">
+        <div class="brand-footer">
+            Plateforme de gestion académique — HEI Graduate
+        </div>
+    </section>
 
-        <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
+    <section class="form-panel">
+        <div class="form-container">
 
-        <h1>Promotions</h1>
+            <h2>Bienvenue 👋</h2>
 
-        <p class="description">
-            Consultez les promotions et les diplômés par parcours.
-        </p>
+            <p class="subtitle">
+                Connectez-vous à votre espace.
+            </p>
 
-        <p id="status"></p>
+            <form id="login-form">
 
-        <section class="card">
+                <div class="field">
+                    <label for="email">Adresse e-mail</label>
+                    <input
+                            type="email"
+                            id="email"
+                            placeholder="exemple@email.com"
+                            autocomplete="email"
+                            required
+                    >
+                </div>
 
-            <div class="card-header">
-                <h2 class="card-title">Promotions × Parcours</h2>
-            </div>
+                <div class="field">
+                    <label for="password">Mot de passe</label>
+                    <input
+                            type="password"
+                            id="password"
+                            placeholder="Votre mot de passe"
+                            autocomplete="current-password"
+                            required
+                    >
+                </div>
 
-            <div class="table-wrapper">
+                <button type="submit">
+                    Se connecter
+                </button>
 
-                <table id="promotions-table" style="display:none;">
+                <p id="error"></p>
 
-                    <thead>
-                    <tr>
-                        <th>Promotion</th>
-                        <th>Parcours</th>
-                        <th>Année finale</th>
-                        <th>Action</th>
-                    </tr>
-                    </thead>
+            </form>
+        </div>
+    </section>
 
-                    <tbody id="promotions-body"></tbody>
-
-                </table>
-
-            </div>
-
-            <div id="empty" class="empty" style="display:none;">
-                Aucune promotion pour le moment.
-            </div>
-
-        </section>
-
-    </main>
 </div>
 
 <script th:src="@{/js/auth.js}"></script>
 
 <script>
-    window.heiAuth.requireAuth();
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-    if (!window.heiAuth.isAdmin || !window.heiAuth.isAdmin()) {
-        if (window.heiAuth.logout) {
-            window.heiAuth.logout();
-        } else {
-            window.location.href = "/login";
-        }
-    }
+        const error = document.getElementById("error");
+        const button = this.querySelector("button");
 
-    window.heiAuth.renderSidebar("promotions");
+        error.textContent = "";
 
-    document.getElementById("logout-btn").addEventListener("click", () => {
-        window.heiAuth.logout();
-    });
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
 
-    function setStatus(msg, isError) {
-        const el = document.getElementById("status");
-        el.textContent = msg || "";
-        el.className = msg ? (isError ? "error" : "ok") : "";
-        el.style.display = msg ? "block" : "none";
-    }
+        button.disabled = true;
+        button.textContent = "Connexion...";
 
-    async function loadPromotions() {
         try {
-            const [promoRes, trackRes] = await Promise.all([
-                window.heiAuth.authFetch("/api/promotions"),
-                window.heiAuth.authFetch("/api/parcours?activeOnly=true")
-            ]);
-
-            if (!promoRes.ok || !trackRes.ok) {
-                setStatus("Impossible de charger les promotions.", true);
-                return;
-            }
-
-            const promotions = await promoRes.json();
-            const tracks = await trackRes.json();
-
-            if (!promotions.length) {
-                document.getElementById("empty").style.display = "block";
-                return;
-            }
-
-            const body = document.getElementById("promotions-body");
-            body.innerHTML = "";
-
-            promotions.forEach(function (promotion) {
-
-                tracks.forEach(function (parcours) {
-
-                    const row = document.createElement("tr");
-
-                    const parcoursLabel =
-                        parcours.code ||
-                        parcours.label ||
-                        "Parcours";
-
-                    row.innerHTML =
-                        "<td><strong>" +
-                        (promotion.label || "-") +
-                        "</strong></td>" +
-
-                        "<td>" +
-                        "<span class='badge'>" +
-                        (parcours.code || parcours.label || "-") +
-                        "</span> " +
-                        (parcours.label || "") +
-                        "</td>" +
-
-                        "<td>" +
-                        (promotion.finalAcademicYearLabel || "—") +
-                        "</td>" +
-
-                        "<td>" +
-                        "<a class='view-link' href='/promotions/" +
-                        promotion.id +
-                        "?parcoursId=" +
-                        parcours.id +
-                        "'>Voir les diplômés</a>" +
-                        "</td>";
-
-                    body.appendChild(row);
-                });
+            const response = await fetch("/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
             });
 
-            document.getElementById("promotions-table").style.display = "table";
+            if (!response.ok) {
+                error.textContent = "Identifiants invalides.";
+                return;
+            }
 
-        } catch (e) {
-            setStatus("Erreur lors du chargement des promotions.", true);
+            const data = await response.json();
+
+            /*
+             * Seuls ADMIN et STUDENT ont accès à l'interface.
+             * Le TEACHER ne reçoit donc aucune session.
+             */
+            if (data.user.role !== "ADMIN" && data.user.role !== "STUDENT") {
+                error.textContent =
+                    "Accès à cette interface réservé aux administrateurs et aux étudiants.";
+                return;
+            }
+
+            window.heiAuth.setSession(data.token, data.user);
+
+            window.location.href =
+                data.user.role === "STUDENT"
+                    ? "/notes"
+                    : "/promotions";
+
+        } catch (err) {
+            error.textContent = "Erreur de connexion au serveur.";
+        } finally {
+            button.disabled = false;
+            button.textContent = "Se connecter";
         }
-    }
-
-    loadPromotions();
+    });
 </script>
 
 </body>
