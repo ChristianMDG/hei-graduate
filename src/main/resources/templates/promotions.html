@@ -7,37 +7,39 @@
     <style>
         * { box-sizing: border-box; }
         :root {
-            --primary: #2563eb; --primary-dark: #1d4ed8;
-            --background: #f6f8fc; --surface: #fff;
-            --text: #172033; --muted: #667085; --border: #e6eaf0;
+            --navy: #0b1f3f; --navy-dark: #061428; --navy-mid: #12294d;
+            --gold: #c9a227; --gold-dark: #a9871c; --gold-light: #f4e8c1;
+            --background: #f6f4ee; --surface: #fff;
+            --text: #10192b; --muted: #647089; --border: #e4e1d5;
         }
-        body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--background); color: var(--text); }
+        body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: var(--background); color: var(--text); }
         .layout { min-height: 100vh; display: flex; }
-        .sidebar { width: 250px; background: #111827; color: #fff; padding: 26px 18px; display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; }
+        .sidebar { width: 250px; background: linear-gradient(180deg, var(--navy-dark), var(--navy)); color: #fff; padding: 26px 18px; display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; border-right: 1px solid rgba(201, 162, 39, 0.2); }
         .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; margin-bottom: 42px; font-size: 19px; font-weight: 800; }
-        .brand-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--primary); }
-        .nav a { display: block; color: #cbd5e1; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-        .nav a:hover, .nav a.active { color: #fff; background: var(--primary); }
+        .brand-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--gold); color: var(--navy-dark); }
+        .nav a { display: block; color: rgba(255,255,255,0.72); text-decoration: none; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+        .nav a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav a.active { color: var(--navy-dark); background: var(--gold); }
         .sidebar-bottom { margin-top: auto; }
-        .logout { width: 100%; border: 0; background: transparent; color: #cbd5e1; padding: 12px 14px; text-align: left; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .logout { width: 100%; border: 0; background: transparent; color: rgba(255,255,255,0.72); padding: 12px 14px; text-align: left; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .logout:hover { background: rgba(255,255,255,0.08); color: #fff; }
         .main { margin-left: 250px; padding: 36px 40px; width: calc(100% - 250px); }
-        .eyebrow { font-size: 12px; font-weight: 700; color: var(--primary); letter-spacing: .08em; margin-bottom: 8px; }
-        h1 { margin: 0 0 8px; font-size: 28px; }
+        .eyebrow { font-size: 12px; font-weight: 700; color: var(--gold-dark); letter-spacing: .08em; margin-bottom: 8px; }
+        h1 { margin: 0 0 8px; font-size: 28px; color: var(--navy-dark); }
         .description { color: var(--muted); margin: 0 0 28px; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 5px 20px rgba(11, 31, 63, 0.05); }
         .card-header { padding: 18px 22px; border-bottom: 1px solid var(--border); }
-        .card-title { margin: 0; font-size: 16px; }
+        .card-title { margin: 0; font-size: 16px; color: var(--navy-dark); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px 22px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { color: var(--muted); font-weight: 600; background: #fafbfc; }
-        .view-link, .dl-link {
+        th { color: var(--navy); font-weight: 700; background: #fbf9f3; }
+        .view-link {
             display: inline-block; padding: 8px 14px; border-radius: 8px;
-            text-decoration: none; font-weight: 600; font-size: 13px; margin-right: 8px;
+            text-decoration: none; font-weight: 700; font-size: 13px;
+            background: var(--gold); color: var(--navy-dark);
         }
-        .view-link { background: var(--primary); color: #fff; }
-        .view-link:hover { background: var(--primary-dark); }
-        .dl-link { background: #111827; color: #fff; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eff6ff; color: var(--primary); font-weight: 700; font-size: 12px; }
+        .view-link:hover { background: var(--gold-dark); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--gold-light); color: var(--navy-dark); font-weight: 700; font-size: 12px; }
         .empty { padding: 48px; text-align: center; color: var(--muted); }
         #status { margin: 12px 0; padding: 12px 16px; border-radius: 10px; display: none; }
         #status.error { display: block; background: #fef3f2; color: #b42318; }
@@ -65,13 +67,13 @@
         <div class="eyebrow">ESPACE ACADÉMIQUE</div>
         <h1>Promotions</h1>
         <p class="description">
-            Liste des promotions et parcours (EL / TN). Consultez les diplômés ou téléchargez le fichier Excel du parcours.
+            Liste des promotions et parcours (EL / TN). Consultez les diplômés par promotion et par parcours.
         </p>
         <p id="status"></p>
 
         <section class="card">
             <div class="card-header">
-                <h2 class="card-title">Promotions × Parcours (CDC §16)</h2>
+                <h2 class="card-title">Promotions × Parcours</h2>
             </div>
             <div class="table-wrapper">
                 <table id="promotions-table" style="display:none;">
@@ -99,9 +101,13 @@
     window.heiAuth.renderSidebar("promotions");
     document.getElementById("logout-btn").addEventListener("click", () => window.heiAuth.logout());
 
-    // Les étudiants n'ont pas accès à cette page selon le CDC
+    // Accès direct réservé aux admins. Les étudiants sont renvoyés vers
+    // leur espace, tout autre rôle (ex. enseignant) est déconnecté.
     if (window.heiAuth.isStudent()) {
         window.location.href = "/notes";
+    } else if (!(window.heiAuth.isAdmin && window.heiAuth.isAdmin())) {
+        window.heiAuth.logout();
+        window.location.href = "/login";
     }
 
     function setStatus(msg, isError) {
@@ -109,40 +115,6 @@
         el.textContent = msg || "";
         el.className = msg ? (isError ? "error" : "ok") : "";
         el.style.display = msg ? "block" : "none";
-    }
-
-    /**
-     * Télécharge la liste des diplômés pour UN parcours (EL ou TN).
-     * Appelé depuis la ligne correspondante de la table.
-     */
-    async function downloadExcel(promotionId, parcoursId, label) {
-        setStatus("Préparation du fichier Excel pour " + label + "...");
-        try {
-            const qs = parcoursId ? ("?parcoursId=" + parcoursId) : "";
-            let response = await window.heiAuth.authFetch(
-                "/api/promotions/" + promotionId + "/diplomas/excel/generate" + qs,
-                { method: "POST" }
-            );
-            if (!response.ok) {
-                response = await window.heiAuth.authFetch(
-                    "/api/promotions/" + promotionId + "/diplomas/excel" + qs
-                );
-            }
-            if (!response.ok) {
-                setStatus("Impossible de télécharger le fichier Excel.", true);
-                return;
-            }
-            const data = await response.json();
-            const url = data.downloadUrl || data.url || data.presignedUrl;
-            if (url) {
-                window.open(url, "_blank");
-                setStatus("Fichier Excel prêt pour " + label + ".");
-            } else {
-                setStatus("Réponse Excel sans URL de téléchargement.", true);
-            }
-        } catch (e) {
-            setStatus("Erreur lors du téléchargement Excel.", true);
-        }
     }
 
     async function loadPromotions() {
@@ -166,7 +138,6 @@
             tracks.forEach(function (parcours) {
                 const row = document.createElement("tr");
                 const parcoursLabel = (parcours.code || parcours.label || "Parcours");
-                const fullLabel = promotion.label + " — " + parcoursLabel;
                 row.innerHTML =
                     "<td><strong>" + promotion.label + "</strong></td>" +
                     "<td><span class='badge'>" + (parcours.code || parcours.label) + "</span> " +
@@ -175,28 +146,12 @@
                     "<td>" +
                     "<a class='view-link' href='/promotions/" + promotion.id +
                     "?parcoursId=" + parcours.id + "'>Voir les diplômés</a>" +
-                    (window.heiAuth.isAdmin()
-                        ? "<a class='dl-link' href='#' data-promo='" + promotion.id +
-                          "' data-parcours='" + parcours.id +
-                          "' data-label='" + fullLabel + "'>Télécharger Excel</a>"
-                        : "") +
                     "</td>";
                 body.appendChild(row);
             });
         });
 
         document.getElementById("promotions-table").style.display = "table";
-
-        body.querySelectorAll(".dl-link").forEach(function (a) {
-            a.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                downloadExcel(
-                    a.getAttribute("data-promo"),
-                    a.getAttribute("data-parcours"),
-                    a.getAttribute("data-label")
-                );
-            });
-        });
     }
 
     loadPromotions();
