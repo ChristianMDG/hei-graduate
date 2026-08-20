@@ -13,25 +13,22 @@
         }
 
         :root {
-            --navy: #071a33;
-            --navy-light: #0d2a4d;
-            --gold: #c9a227;
-            --gold-light: #e4c55d;
-            --gold-soft: #f8f1d8;
-            --background: #f5f7fa;
+            --navy: #071b36;
+            --navy-light: #0d2a4f;
+            --gold: #d4af37;
+            --gold-light: #f8f1d7;
+            --background: #f4f6f9;
             --surface: #ffffff;
-            --text: #132238;
+            --text: #10233f;
             --muted: #667085;
-            --border: #e2e7ee;
+            --border: #e4e7ec;
             --danger: #b42318;
-            --danger-bg: #fef3f2;
             --success: #027a48;
-            --success-bg: #ecfdf3;
         }
 
         body {
             margin: 0;
-            font-family: Inter, system-ui, -apple-system, sans-serif;
+            font-family: Inter, system-ui, sans-serif;
             background: var(--background);
             color: var(--text);
         }
@@ -44,13 +41,12 @@
         .sidebar {
             width: 250px;
             background: var(--navy);
-            color: #fff;
+            color: white;
             padding: 26px 18px;
             display: flex;
             flex-direction: column;
             position: fixed;
             inset: 0 auto 0 0;
-            box-shadow: 8px 0 30px rgba(7,26,51,.08);
         }
 
         .brand {
@@ -64,11 +60,11 @@
         }
 
         .brand-icon {
-            width: 39px;
-            height: 39px;
+            width: 38px;
+            height: 38px;
             display: grid;
             place-items: center;
-            border-radius: 12px;
+            border-radius: 11px;
             background: var(--gold);
             color: var(--navy);
         }
@@ -80,23 +76,26 @@
         }
 
         .nav a {
-            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            color: #d8e0ea;
             text-decoration: none;
             padding: 12px 14px;
-            border-radius: 11px;
+            border-radius: 10px;
             font-size: 14px;
-            font-weight: 650;
-            transition: .2s;
+            font-weight: 600;
         }
 
-        .nav a:hover {
-            color: white;
-            background: rgba(255,255,255,.07);
-        }
-
+        .nav a:hover,
         .nav a.active {
             color: var(--navy);
             background: var(--gold);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
         }
 
         .sidebar-bottom {
@@ -105,109 +104,78 @@
 
         .logout {
             width: 100%;
-            border: 1px solid rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
             background: transparent;
-            color: #cbd5e1;
+            color: #d8e0ea;
             padding: 12px 14px;
             text-align: left;
-            border-radius: 11px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 650;
+            font-weight: 600;
         }
 
         .logout:hover {
-            background: rgba(255,255,255,.07);
-            color: white;
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
         .main {
             margin-left: 250px;
             width: calc(100% - 250px);
-            padding: 40px 42px;
+            padding: 38px 42px;
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
-            color: var(--navy);
+            gap: 6px;
+            color: #80640d;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
-            margin-bottom: 22px;
+            margin-bottom: 18px;
         }
 
         .back-link:hover {
-            color: var(--gold);
+            color: var(--navy);
         }
 
         .eyebrow {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 800;
-            color: var(--gold);
-            letter-spacing: .14em;
+            color: #a17e12;
+            letter-spacing: .1em;
             margin-bottom: 7px;
-            text-transform: uppercase;
         }
 
         h1 {
             margin: 0 0 8px;
-            font-size: 29px;
-            letter-spacing: -.6px;
-            color: var(--navy);
+            font-size: 30px;
         }
 
         .description {
             color: var(--muted);
             margin: 0 0 28px;
-            font-size: 14px;
-        }
-
-        #status {
-            margin: 16px 0;
-            padding: 13px 17px;
-            border-radius: 11px;
-            display: none;
-            font-size: 13px;
-        }
-
-        #status.error {
-            display: block;
-            background: var(--danger-bg);
-            color: var(--danger);
-            border: 1px solid #fec4c0;
-        }
-
-        #status.ok {
-            display: block;
-            background: var(--success-bg);
-            color: var(--success);
-            border: 1px solid #abefe0;
         }
 
         .card {
-            background: var(--surface);
+            background: white;
             border: 1px solid var(--border);
             border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 7px 25px rgba(7,26,51,.045);
+            box-shadow: 0 8px 30px rgba(7,27,54,.05);
             margin-bottom: 22px;
         }
 
         .track-header {
             padding: 20px 24px;
             border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
         }
 
         .track-title {
             margin: 0;
-            font-size: 17px;
-            color: var(--navy);
+            font-size: 18px;
         }
 
         .table-wrapper {
@@ -221,53 +189,62 @@
 
         th,
         td {
-            padding: 14px 22px;
+            padding: 14px 24px;
             text-align: left;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
 
         th {
-            color: var(--muted);
-            font-weight: 750;
+            color: #59677a;
+            font-weight: 700;
             background: #fafbfc;
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: .04em;
         }
 
         tbody tr:hover {
-            background: #fcfaf2;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: 0;
-        }
-
-        .rank {
-            color: var(--navy);
-            font-weight: 850;
+            background: #fcfcfa;
         }
 
         .badge {
             display: inline-block;
             padding: 5px 10px;
             border-radius: 999px;
-            background: var(--gold-soft);
-            color: #765e08;
-            font-weight: 750;
-            font-size: 11px;
+            background: var(--gold-light);
+            color: #80640d;
+            font-weight: 800;
+            font-size: 12px;
         }
 
         .empty {
-            padding: 42px 24px;
+            padding: 40px 24px;
             text-align: center;
             color: var(--muted);
             font-size: 14px;
         }
 
-        @media (max-width: 800px) {
+        #status {
+            margin: 16px 0;
+            padding: 13px 16px;
+            border-radius: 10px;
+            display: none;
+        }
 
+        #status.error {
+            display: block;
+            background: #fef3f2;
+            color: var(--danger);
+        }
+
+        #status.ok {
+            display: block;
+            background: #ecfdf3;
+            color: var(--success);
+        }
+
+        @media (max-width: 800px) {
             .sidebar {
                 position: relative;
                 width: 100%;
@@ -297,9 +274,7 @@
             <span>HEI Graduate</span>
         </div>
 
-        <nav class="nav">
-            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
-        </nav>
+        <nav class="nav"></nav>
 
         <div class="sidebar-bottom">
             <button id="logout-btn" class="logout">
@@ -315,14 +290,16 @@
             ← Retour aux promotions
         </a>
 
-        <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
+        <div class="eyebrow">
+            ESPACE ADMINISTRATEUR
+        </div>
 
         <h1 id="promotion-title">
             Diplômés — Promotion
         </h1>
 
         <p class="description">
-            Liste officielle des diplômés par parcours.
+            Liste des diplômés par parcours.
         </p>
 
         <p id="status"></p>
@@ -336,8 +313,23 @@
 <script th:src="@{/js/auth.js}"></script>
 
 <script>
-
     (function () {
+
+        function setupAdminSidebar() {
+
+            const nav = document.querySelector(".nav");
+
+            if (!nav) {
+                return;
+            }
+
+            nav.innerHTML = `
+                <a href="/promotions" class="active">
+                    <span class="nav-icon">▣</span>
+                    <span>Promotions</span>
+                </a>
+            `;
+        }
 
         function ready(fn) {
             if (document.readyState === "loading") {
@@ -358,10 +350,11 @@
 
             /*
              * Cette page est réservée à ADMIN.
+             * STUDENT et TEACHER ne restent pas sur cette interface.
              */
-            if (!window.heiAuth.isAdmin || !window.heiAuth.isAdmin()) {
-                if (window.heiAuth.logout) {
-                    window.heiAuth.logout();
+            if (!window.heiAuth.isAdmin()) {
+                if (window.heiAuth.isStudent()) {
+                    window.location.href = "/notes";
                 } else {
                     window.location.href = "/login";
                 }
@@ -369,23 +362,10 @@
             }
 
             window.heiAuth.renderSidebar("promotions");
+            setupAdminSidebar();
 
-            var promotionId =
+            const promotionId =
                 document.body.getAttribute("data-promotion-id");
-
-            if (!promotionId) {
-
-                var parts =
-                    window.location.pathname
-                        .split("/")
-                        .filter(Boolean);
-
-                var idx = parts.indexOf("promotions");
-
-                if (idx >= 0 && parts[idx + 1]) {
-                    promotionId = parts[idx + 1];
-                }
-            }
 
             if (!promotionId) {
                 setStatus(
@@ -395,21 +375,20 @@
                 return;
             }
 
-            var logoutBtn =
+            const logoutBtn =
                 document.getElementById("logout-btn");
 
-            if (logoutBtn) {
-                logoutBtn.addEventListener("click", function () {
+            logoutBtn.addEventListener(
+                "click",
+                function () {
                     window.heiAuth.logout();
-                });
-            }
+                }
+            );
 
             function setStatus(message, isError) {
 
-                var el =
+                const el =
                     document.getElementById("status");
-
-                if (!el) return;
 
                 el.textContent = message || "";
 
@@ -424,7 +403,7 @@
 
                 if (!diplomas || diplomas.length === 0) {
 
-                    var p =
+                    const p =
                         document.createElement("p");
 
                     p.className = "empty";
@@ -435,12 +414,12 @@
                     return p;
                 }
 
-                var wrapper =
+                const wrapper =
                     document.createElement("div");
 
                 wrapper.className = "table-wrapper";
 
-                var table =
+                const table =
                     document.createElement("table");
 
                 table.innerHTML =
@@ -456,47 +435,52 @@
                     "</thead>" +
                     "<tbody></tbody>";
 
-                var body =
+                const body =
                     table.querySelector("tbody");
 
-                diplomas.forEach(function (d) {
+                diplomas.forEach(function (diploma) {
 
-                    var row =
+                    const row =
                         document.createElement("tr");
 
                     /*
-                     * Le # devant le rang a été supprimé.
-                     * La colonne Rang reste présente.
+                     * Pas de "#" devant le rang.
                      */
                     row.innerHTML =
-                        "<td><strong class='rank'>" +
-                            (d.rank != null ? d.rank : "-") +
+
+                        "<td><strong>" +
+                            (
+                                diploma.rank != null
+                                    ? diploma.rank
+                                    : "-"
+                            ) +
                         "</strong></td>" +
 
                         "<td>" +
-                            (d.studentNumber || "-") +
+                            (diploma.studentNumber || "-") +
                         "</td>" +
 
                         "<td><strong>" +
-                            (d.lastName || "-") +
+                            (diploma.lastName || "-") +
                         "</strong></td>" +
 
                         "<td>" +
-                            (d.firstName || "-") +
+                            (diploma.firstName || "-") +
                         "</td>" +
 
                         "<td>" +
                             (
-                                d.overallAverage != null
-                                    ? Number(d.overallAverage)
-                                        .toFixed(2) + " / 20"
+                                diploma.overallAverage != null
+                                    ? Number(
+                                        diploma.overallAverage
+                                      ).toFixed(2) + " / 20"
                                     : "-"
                             ) +
                         "</td>" +
 
                         "<td>" +
                             "<span class='badge'>" +
-                                (d.mention || "—") +
+                                (diploma.mention || "—") +
                             "</span>" +
                         "</td>";
 
@@ -508,15 +492,11 @@
                 return wrapper;
             }
 
-            async function loadRanking(parcours, container) {
+            async function loadDiplomas(parcours, container) {
 
                 try {
 
-                    /*
-                     * On conserve la récupération existante
-                     * des diplômés.
-                     */
-                    var response =
+                    const response =
                         await window.heiAuth.authFetch(
                             "/api/promotions/" +
                             promotionId +
@@ -535,7 +515,7 @@
                         return;
                     }
 
-                    var diplomas =
+                    const diplomas =
                         await response.json();
 
                     container.innerHTML = "";
@@ -555,46 +535,40 @@
 
             function buildTrackSection(parcours) {
 
-                var section =
+                const section =
                     document.createElement("section");
 
-                section.className = "card track-section";
+                section.className = "card";
 
-                var header =
+                const header =
                     document.createElement("div");
 
-                header.className = "track-header";
+                header.className =
+                    "track-header";
 
-                var title =
-                    document.createElement("h2");
+                header.innerHTML =
+                    "<h2 class='track-title'>" +
 
-                title.className = "track-title";
+                        (
+                            parcours.code
+                                ? "<span class='badge' style='margin-right:8px'>" +
+                                    parcours.code +
+                                  "</span>"
+                                : ""
+                        ) +
 
-                if (parcours.code) {
+                        (parcours.label || "") +
 
-                    title.innerHTML =
-                        "<span class='badge' " +
-                        "style='margin-right:8px'>" +
-                        parcours.code +
-                        "</span>" +
-                        (parcours.label || "");
-
-                } else {
-
-                    title.textContent =
-                        parcours.label || "Parcours";
-                }
-
-                header.appendChild(title);
+                    "</h2>";
 
                 section.appendChild(header);
 
-                var tableHolder =
+                const tableHolder =
                     document.createElement("div");
 
                 section.appendChild(tableHolder);
 
-                loadRanking(
+                loadDiplomas(
                     parcours,
                     tableHolder
                 );
@@ -606,18 +580,20 @@
 
                 try {
 
-                    var response =
+                    const response =
                         await window.heiAuth.authFetch(
                             "/api/promotions/" +
                             promotionId
                         );
 
-                    if (!response.ok) return;
+                    if (!response.ok) {
+                        return;
+                    }
 
-                    var promotion =
+                    const promotion =
                         await response.json();
 
-                    var title =
+                    const title =
                         document.getElementById(
                             "promotion-title"
                         );
@@ -640,16 +616,14 @@
 
             async function loadTracks() {
 
-                var container =
+                const container =
                     document.getElementById(
                         "tracks-container"
                     );
 
-                if (!container) return;
-
                 try {
 
-                    var response =
+                    const response =
                         await window.heiAuth.authFetch(
                             "/api/parcours?activeOnly=true"
                         );
@@ -664,7 +638,7 @@
                         return;
                     }
 
-                    var tracks =
+                    const tracks =
                         await response.json();
 
                     container.innerHTML = "";
@@ -687,11 +661,9 @@
 
             loadPromotion();
             loadTracks();
-
         });
 
     })();
-
 </script>
 
 </body>

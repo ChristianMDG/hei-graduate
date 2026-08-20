@@ -13,22 +13,24 @@
         }
 
         :root {
-            --navy: #071a33;
-            --navy-light: #0d2a4d;
-            --gold: #c9a227;
-            --gold-soft: #f8f1d8;
-            --background: #f5f7fa;
+            --navy: #071b36;
+            --navy-light: #0d2a4f;
+            --gold: #d4af37;
+            --gold-light: #f8f1d7;
+            --background: #f4f6f9;
             --surface: #ffffff;
-            --text: #132238;
+            --text: #10233f;
             --muted: #667085;
-            --border: #e2e7ee;
+            --border: #e4e7ec;
             --danger: #b42318;
             --danger-bg: #fef3f2;
         }
 
         body {
             margin: 0;
-            font-family: Inter, system-ui, sans-serif;
+            font-family: Inter, ui-sans-serif, system-ui,
+                         -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", sans-serif;
             background: var(--background);
             color: var(--text);
         }
@@ -47,7 +49,6 @@
             flex-direction: column;
             position: fixed;
             inset: 0 auto 0 0;
-            box-shadow: 8px 0 30px rgba(7,26,51,.08);
         }
 
         .brand {
@@ -61,11 +62,11 @@
         }
 
         .brand-icon {
-            width: 39px;
-            height: 39px;
+            width: 38px;
+            height: 38px;
             display: grid;
             place-items: center;
-            border-radius: 12px;
+            border-radius: 11px;
             background: var(--gold);
             color: var(--navy);
         }
@@ -77,23 +78,26 @@
         }
 
         .nav a {
-            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            color: #d8e0ea;
             text-decoration: none;
             padding: 12px 14px;
-            border-radius: 11px;
+            border-radius: 10px;
             font-size: 14px;
-            font-weight: 650;
-            transition: .2s;
+            font-weight: 600;
         }
 
-        .nav a:hover {
-            background: rgba(255,255,255,.07);
-            color: white;
-        }
-
+        .nav a:hover,
         .nav a.active {
-            background: var(--gold);
             color: var(--navy);
+            background: var(--gold);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
         }
 
         .sidebar-bottom {
@@ -102,26 +106,26 @@
 
         .logout {
             width: 100%;
-            border: 1px solid rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
             background: transparent;
-            color: #cbd5e1;
+            color: #d8e0ea;
             padding: 12px 14px;
             text-align: left;
-            border-radius: 11px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 650;
+            font-weight: 600;
         }
 
         .logout:hover {
-            background: rgba(255,255,255,.07);
-            color: white;
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
         .main {
             margin-left: 250px;
             width: calc(100% - 250px);
-            padding: 40px 42px;
+            padding: 42px;
         }
 
         .topbar {
@@ -129,22 +133,20 @@
         }
 
         .eyebrow {
-            color: var(--gold);
-            font-size: 11px;
+            color: #a17e12;
+            font-size: 12px;
             font-weight: 800;
-            letter-spacing: .14em;
+            letter-spacing: .1em;
             margin-bottom: 8px;
         }
 
         h1 {
             margin: 0;
             font-size: 30px;
-            color: var(--navy);
-            letter-spacing: -.7px;
         }
 
         .top-description {
-            margin: 7px 0 0;
+            margin: 8px 0 0;
             color: var(--muted);
             font-size: 14px;
         }
@@ -152,8 +154,8 @@
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 19px;
-            box-shadow: 0 8px 28px rgba(7,26,51,.045);
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(7,27,54,.05);
             overflow: hidden;
         }
 
@@ -165,7 +167,6 @@
         .card-title {
             margin: 0;
             font-size: 17px;
-            color: var(--navy);
         }
 
         .card-subtitle {
@@ -183,15 +184,6 @@
             border-collapse: collapse;
         }
 
-        th {
-            background: #fafbfc;
-            color: var(--muted);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            font-weight: 750;
-        }
-
         th,
         td {
             padding: 16px 24px;
@@ -199,16 +191,21 @@
             border-bottom: 1px solid var(--border);
         }
 
+        th {
+            background: #fafbfc;
+            color: #59677a;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            font-weight: 700;
+        }
+
         td {
             font-size: 14px;
         }
 
         tbody tr:hover {
-            background: #fcfaf2;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: 0;
+            background: #fcfcfa;
         }
 
         .grade {
@@ -216,11 +213,11 @@
             align-items: center;
             justify-content: center;
             min-width: 66px;
-            padding: 7px 11px;
-            border-radius: 9px;
-            background: var(--gold-soft);
-            color: #765e08;
-            font-weight: 850;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: #edf8f1;
+            color: #167044;
+            font-weight: 800;
         }
 
         .grade.low {
@@ -241,12 +238,9 @@
         }
 
         @media (max-width: 800px) {
-
             .sidebar {
                 width: 100%;
-                height: auto;
                 position: relative;
-                inset: auto;
             }
 
             .layout {
@@ -273,8 +267,7 @@
             <span>HEI Graduate</span>
         </div>
 
-        <nav class="nav">
-        </nav>
+        <nav class="nav"></nav>
 
         <div class="sidebar-bottom">
             <button id="logout-btn" class="logout">
@@ -354,22 +347,46 @@
 
     window.heiAuth.requireAuth();
 
-    if (!window.heiAuth.isStudent || !window.heiAuth.isStudent()) {
+    /*
+     * Cette page appartient uniquement à STUDENT.
+     */
+    if (!window.heiAuth.isStudent()) {
 
-        if (window.heiAuth.logout) {
-            window.heiAuth.logout();
+        if (window.heiAuth.isAdmin()) {
+            window.location.href = "/promotions";
         } else {
             window.location.href = "/login";
         }
-    }
 
-    window.heiAuth.renderSidebar("notes");
+    } else {
+
+        window.heiAuth.renderSidebar("notes");
+
+        /*
+         * Navigation propre pour STUDENT.
+         * Plus aucun caractère encodé/cassé.
+         */
+        document.querySelector(".nav").innerHTML = `
+            <a href="/notes" class="active">
+                <span class="nav-icon">▤</span>
+                <span>Notes</span>
+            </a>
+
+            <a href="/releves">
+                <span class="nav-icon">▥</span>
+                <span>Relevés</span>
+            </a>
+        `;
+    }
 
     document
         .getElementById("logout-btn")
-        .addEventListener("click", function () {
-            window.heiAuth.logout();
-        });
+        .addEventListener(
+            "click",
+            function () {
+                window.heiAuth.logout();
+            }
+        );
 
     function renderRow(grade) {
 
@@ -385,6 +402,7 @@
                 : "grade";
 
         row.innerHTML =
+
             "<td><strong>" +
                 grade.courseReference +
             "</strong></td>" +
@@ -393,78 +411,67 @@
                 grade.examLabel +
             "</td>" +
 
-            "<td><span class='" +
-                valueClass +
+            "<td>" +
+                "<span class='" +
+                    valueClass +
                 "'>" +
-                value.toFixed(2) +
-            "</span></td>";
+                    value.toFixed(2) +
+                "</span>" +
+            "</td>";
 
         return row;
     }
 
     async function loadMyGrades() {
 
-        try {
+        const response =
+            await window.heiAuth.authFetch(
+                "/api/grades/me"
+            );
 
-            const response =
-                await window.heiAuth.authFetch(
-                    "/api/grades/me"
-                );
-
-            if (!response.ok) {
-
-                document.getElementById("empty")
-                    .innerHTML =
-                    "<div class='empty-icon'>⚠️</div>" +
-                    "<div>Impossible de charger vos notes.</div>";
-
-                document.getElementById("empty")
-                    .style.display = "block";
-
-                return;
-            }
-
-            const grades =
-                await response.json();
-
-            if (grades.length === 0) {
-
-                document.getElementById("empty")
-                    .style.display = "block";
-
-                return;
-            }
-
-            const body =
-                document.getElementById(
-                    "grades-body"
-                );
-
-            grades.forEach(function (grade) {
-
-                body.appendChild(
-                    renderRow(grade)
-                );
-
-            });
-
-            document.getElementById(
-                "grades-table"
-            ).style.display = "table";
-
-        } catch (err) {
+        if (!response.ok) {
 
             document.getElementById("empty")
-                .innerHTML =
-                "<div class='empty-icon'>⚠️</div>" +
-                "<div>Impossible de charger vos notes.</div>";
+                .textContent =
+                "Impossible de charger vos notes.";
 
             document.getElementById("empty")
                 .style.display = "block";
+
+            return;
         }
+
+        const grades =
+            await response.json();
+
+        if (grades.length === 0) {
+
+            document.getElementById("empty")
+                .style.display = "block";
+
+            return;
+        }
+
+        const body =
+            document.getElementById(
+                "grades-body"
+            );
+
+        grades.forEach(function (grade) {
+
+            body.appendChild(
+                renderRow(grade)
+            );
+        });
+
+        document.getElementById(
+            "grades-table"
+        ).style.display = "table";
     }
 
-    loadMyGrades();
+    if (window.heiAuth.isStudent()) {
+        loadMyGrades();
+    }
 
 </script>
 

@@ -11,19 +11,17 @@
         }
 
         :root {
-            --navy: #071a33;
-            --navy-light: #0d2a4d;
-            --navy-soft: #12385f;
-            --gold: #c9a227;
-            --gold-light: #e4c55d;
-            --gold-soft: #f8f1d8;
-            --background: #f5f7fa;
+            --navy: #071b36;
+            --navy-light: #0d2a4f;
+            --gold: #d4af37;
+            --gold-light: #f4e7b2;
+            --background: #f4f6f9;
             --surface: #ffffff;
-            --text: #132238;
+            --text: #10233f;
             --muted: #667085;
-            --border: #e2e7ee;
+            --border: #e4e7ec;
             --danger: #b42318;
-            --shadow: 0 24px 70px rgba(7, 26, 51, 0.14);
+            --shadow: 0 24px 70px rgba(7, 27, 54, 0.14);
         }
 
         body {
@@ -32,125 +30,84 @@
             font-family: Inter, ui-sans-serif, system-ui, -apple-system,
                          BlinkMacSystemFont, "Segoe UI", sans-serif;
             background:
-                radial-gradient(circle at 10% 10%, rgba(201, 162, 39, 0.10), transparent 28%),
-                radial-gradient(circle at 90% 90%, rgba(7, 26, 51, 0.08), transparent 30%),
+                radial-gradient(circle at top left, rgba(212, 175, 55, 0.12), transparent 35%),
                 var(--background);
             color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 28px;
+            padding: 24px;
         }
 
         .login-wrapper {
             width: 100%;
-            max-width: 1120px;
-            min-height: 650px;
+            max-width: 1050px;
+            min-height: 620px;
             display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
+            grid-template-columns: 1fr 1fr;
             background: var(--surface);
-            border-radius: 30px;
+            border-radius: 28px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            border: 1px solid rgba(7, 26, 51, 0.06);
         }
 
         .brand-panel {
-            padding: 58px;
+            padding: 64px;
             background:
-                radial-gradient(circle at 80% 15%, rgba(228, 197, 93, 0.16), transparent 28%),
-                linear-gradient(145deg, var(--navy), var(--navy-light) 58%, var(--navy-soft));
+                radial-gradient(circle at top right, rgba(212,175,55,.20), transparent 35%),
+                linear-gradient(145deg, #05172f, #0b2749 60%, #12385f);
             color: white;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .brand-panel::after {
-            content: "";
-            position: absolute;
-            width: 260px;
-            height: 260px;
-            right: -90px;
-            bottom: -100px;
-            border: 1px solid rgba(228, 197, 93, 0.25);
-            border-radius: 50%;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 13px;
+            gap: 12px;
             font-weight: 800;
-            font-size: 21px;
-            position: relative;
-            z-index: 1;
+            font-size: 22px;
         }
 
         .brand-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 14px;
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
             display: grid;
             place-items: center;
             background: var(--gold);
             color: var(--navy);
-            font-size: 21px;
-            box-shadow: 0 8px 25px rgba(201, 162, 39, 0.25);
+            font-size: 20px;
         }
 
         .brand-content {
-            max-width: 470px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .brand-kicker {
-            color: var(--gold-light);
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            margin-bottom: 18px;
+            max-width: 420px;
         }
 
         .brand-content h1 {
             margin: 0 0 20px;
-            font-size: 45px;
-            line-height: 1.08;
-            letter-spacing: -1.8px;
+            font-size: 44px;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
         }
 
         .brand-content p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.76);
-            line-height: 1.8;
+            color: rgba(255,255,255,.78);
+            line-height: 1.7;
             font-size: 16px;
-            max-width: 430px;
-        }
-
-        .brand-line {
-            width: 62px;
-            height: 3px;
-            background: var(--gold);
-            border-radius: 999px;
-            margin-top: 28px;
         }
 
         .brand-footer {
-            color: rgba(255, 255, 255, 0.55);
-            font-size: 12px;
-            position: relative;
-            z-index: 1;
+            color: rgba(255,255,255,.58);
+            font-size: 13px;
         }
 
         .form-panel {
             padding: 64px;
             display: flex;
             align-items: center;
-            background: #fff;
         }
 
         .form-container {
@@ -159,32 +116,16 @@
             margin: auto;
         }
 
-        .form-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 7px 11px;
-            border-radius: 999px;
-            background: var(--gold-soft);
-            color: #765e08;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: .04em;
-            margin-bottom: 20px;
-        }
-
         .form-container h2 {
             margin: 0 0 8px;
-            font-size: 31px;
-            letter-spacing: -0.8px;
-            color: var(--navy);
+            font-size: 30px;
+            letter-spacing: -.7px;
         }
 
         .subtitle {
             margin: 0 0 34px;
             color: var(--muted);
             font-size: 15px;
-            line-height: 1.6;
         }
 
         .field {
@@ -194,16 +135,15 @@
         label {
             display: block;
             margin-bottom: 8px;
-            font-size: 13px;
-            font-weight: 750;
-            color: var(--navy);
+            font-size: 14px;
+            font-weight: 600;
         }
 
         input {
             width: 100%;
-            height: 52px;
+            height: 50px;
             border: 1px solid var(--border);
-            border-radius: 13px;
+            border-radius: 12px;
             padding: 0 15px;
             font-size: 15px;
             color: var(--text);
@@ -214,18 +154,18 @@
 
         input:focus {
             border-color: var(--gold);
-            box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.12);
+            box-shadow: 0 0 0 4px rgba(212,175,55,.12);
         }
 
         button {
             width: 100%;
-            height: 52px;
+            height: 50px;
             border: 0;
-            border-radius: 13px;
+            border-radius: 12px;
             background: var(--navy);
             color: white;
-            font-size: 14px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
             transition: .2s;
         }
@@ -233,40 +173,31 @@
         button:hover {
             background: var(--navy-light);
             transform: translateY(-1px);
-            box-shadow: 0 10px 25px rgba(7, 26, 51, 0.15);
-        }
-
-        button:disabled {
-            opacity: .65;
-            cursor: not-allowed;
-            transform: none;
         }
 
         #error {
             min-height: 20px;
             margin: 14px 0 0;
             color: var(--danger);
-            font-size: 13px;
-            line-height: 1.5;
+            font-size: 14px;
         }
 
         @media (max-width: 800px) {
-            body {
-                padding: 15px;
-            }
-
             .login-wrapper {
                 grid-template-columns: 1fr;
-                min-height: auto;
             }
 
             .brand-panel {
-                padding: 38px 30px;
-                min-height: 390px;
+                padding: 40px;
+                min-height: 300px;
             }
 
             .brand-content h1 {
                 font-size: 34px;
+            }
+
+            .brand-footer {
+                display: none;
             }
 
             .form-panel {
@@ -287,18 +218,12 @@
         </div>
 
         <div class="brand-content">
-            <div class="brand-kicker">Plateforme académique</div>
-
-            <h1>
-                Votre parcours académique, simplement.
-            </h1>
-
+            <h1>Votre parcours académique, simplement.</h1>
             <p>
-                Un espace centralisé pour consulter les résultats,
-                les relevés et les informations relatives aux diplômés.
+                Consultez vos notes, téléchargez vos relevés
+                et accédez aux informations relatives aux promotions
+                et aux diplômés.
             </p>
-
-            <div class="brand-line"></div>
         </div>
 
         <div class="brand-footer">
@@ -309,15 +234,10 @@
     <section class="form-panel">
         <div class="form-container">
 
-            <div class="form-badge">
-                <span>✦</span>
-                ESPACE SÉCURISÉ
-            </div>
-
             <h2>Bienvenue 👋</h2>
 
             <p class="subtitle">
-                Connectez-vous à votre espace académique.
+                Connectez-vous à votre espace.
             </p>
 
             <form id="login-form">
@@ -325,22 +245,22 @@
                 <div class="field">
                     <label for="email">Adresse e-mail</label>
                     <input
-                        type="email"
-                        id="email"
-                        placeholder="exemple@email.com"
-                        autocomplete="email"
-                        required
+                            type="email"
+                            id="email"
+                            placeholder="exemple@email.com"
+                            autocomplete="email"
+                            required
                     >
                 </div>
 
                 <div class="field">
                     <label for="password">Mot de passe</label>
                     <input
-                        type="password"
-                        id="password"
-                        placeholder="Votre mot de passe"
-                        autocomplete="current-password"
-                        required
+                            type="password"
+                            id="password"
+                            placeholder="Votre mot de passe"
+                            autocomplete="current-password"
+                            required
                     >
                 </div>
 
@@ -392,19 +312,17 @@
 
             const data = await response.json();
 
-            const role = data.user && data.user.role;
-
            
-            if (role !== "ADMIN" && role !== "STUDENT") {
+            if (data.user.role !== "ADMIN" && data.user.role !== "STUDENT") {
                 error.textContent =
-                    "Votre rôle ne dispose pas d'un accès à cette interface.";
+                    "Accès à cette interface réservé aux administrateurs et aux étudiants.";
                 return;
             }
 
             window.heiAuth.setSession(data.token, data.user);
 
             window.location.href =
-                role === "STUDENT"
+                data.user.role === "STUDENT"
                     ? "/notes"
                     : "/promotions";
 
