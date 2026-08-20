@@ -1,0 +1,410 @@
+--- a/src/main/resources/static/js/auth.js	2026-08-20 12:35:03.406481934 +0000
++++ b/src/main/resources/static/js/auth.js	2026-08-20 12:32:43.893000000 +0000
+@@ -17,9 +17,21 @@
+     return raw ? JSON.parse(raw) : null;
+   }
+ 
+-  function isAdmin() {
++  function getRole() {
+     const user = getUser();
+-    return !!user && user.role === "ADMIN";
++    return user ? user.role : null;
++  }
++
++  function isAdmin() {
++    return getRole() === "ADMIN";
++  }
++
++  function isTeacher() {
++    return getRole() === "TEACHER";
++  }
++
++  function isStudent() {
++    return getRole() === "STUDENT";
+   }
+ 
+   function logout() {
+@@ -34,7 +46,6 @@
+     }
+   }
+ 
+-  
+   async function authFetch(url, options) {
+     const token = getToken();
+     const opts = options || {};
+@@ -49,13 +60,67 @@
+     return response;
+   }
+ 
++  /**
++   * Construit le menu latéral selon le rôle (CDC §6).
++   * - STUDENT : Mes notes, Mes relevés
++   * - TEACHER : Mes cours / Saisie notes (pages notes), Promotions en lecture si besoin
++   * - ADMIN   : Promotions (gestion diplômés), + accès notes/relevés si utile
++   */
++  function renderSidebar(activePage) {
++    const nav = document.querySelector(".sidebar .nav");
++    if (!nav) return;
++
++    const role = getRole();
++    let items = [];
++
++    if (role === "STUDENT") {
++      items = [
++        { href: "/notes", icon: "📊", label: "Mes notes", page: "notes" },
++        { href: "/releves", icon: "📄", label: "Mes relevés", page: "releves" },
++      ];
++    } else if (role === "TEACHER") {
++      items = [
++        { href: "/notes", icon: "📊", label: "Saisie des notes", page: "notes" },
++        { href: "/promotions", icon: "🎓", label: "Promotions", page: "promotions" },
++      ];
++    } else {
++      // ADMIN (et fallback)
++      items = [
++        { href: "/promotions", icon: "🎓", label: "Promotions", page: "promotions" },
++        { href: "/notes", icon: "📊", label: "Notes", page: "notes" },
++        { href: "/releves", icon: "📄", label: "Relevés", page: "releves" },
++      ];
++    }
++
++    nav.innerHTML = items
++      .map(function (item) {
++        const active = item.page === activePage ? " active" : "";
++        return (
++          '<a href="' +
++          item.href +
++          '" class="' +
++          active.trim() +
++          '">' +
++          item.icon +
++          " &nbsp; " +
++          item.label +
++          "</a>"
++        );
++      })
++      .join("");
++  }
++
+   window.heiAuth = {
+     setSession,
+     getToken,
+     getUser,
++    getRole,
+     isAdmin,
++    isTeacher,
++    isStudent,
+     logout,
+     requireAuth,
+     authFetch,
++    renderSidebar,
+   };
+-})(window);
+\ No newline at end of file
++})(window);
+--- a/src/main/resources/templates/promotions.html	2026-08-20 12:35:03.534481940 +0000
++++ b/src/main/resources/templates/promotions.html	2026-08-20 12:33:12.301000000 +0000
+@@ -54,9 +54,7 @@
+     <aside class="sidebar">
+         <div class="brand"><div class="brand-icon">🎓</div><span>HEI Graduate</span></div>
+         <nav class="nav">
+-            <a href="/promotions" class="active">🎓 &nbsp; Promotions</a>
+-            <a href="/notes">📊 &nbsp; Mes notes</a>
+-            <a href="/releves">📄 &nbsp; Mes relevés</a>
++            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
+         </nav>
+         <div class="sidebar-bottom">
+             <button id="logout-btn" class="logout">↪ &nbsp; Se déconnecter</button>
+@@ -67,7 +65,7 @@
+         <div class="eyebrow">ESPACE ACADÉMIQUE</div>
+         <h1>Promotions</h1>
+         <p class="description">
+-            Liste des promotions et parcours (EL / TN). Consultez les diplômés ou téléchargez le fichier Excel.
++            Liste des promotions et parcours (EL / TN). Consultez les diplômés ou téléchargez le fichier Excel du parcours.
+         </p>
+         <p id="status"></p>
+ 
+@@ -98,8 +96,14 @@
+ <script th:src="@{/js/auth.js}"></script>
+ <script>
+     window.heiAuth.requireAuth();
++    window.heiAuth.renderSidebar("promotions");
+     document.getElementById("logout-btn").addEventListener("click", () => window.heiAuth.logout());
+ 
++    // Les étudiants n'ont pas accès à cette page selon le CDC
++    if (window.heiAuth.isStudent()) {
++        window.location.href = "/notes";
++    }
++
+     function setStatus(msg, isError) {
+         const el = document.getElementById("status");
+         el.textContent = msg || "";
+@@ -107,16 +111,21 @@
+         el.style.display = msg ? "block" : "none";
+     }
+ 
+-    async function downloadExcel(promotionId, label) {
++    /**
++     * Télécharge la liste des diplômés pour UN parcours (EL ou TN).
++     * Appelé depuis la ligne correspondante de la table.
++     */
++    async function downloadExcel(promotionId, parcoursId, label) {
+         setStatus("Préparation du fichier Excel pour " + label + "...");
+         try {
++            const qs = parcoursId ? ("?parcoursId=" + parcoursId) : "";
+             let response = await window.heiAuth.authFetch(
+-                "/api/promotions/" + promotionId + "/diplomas/excel/generate",
++                "/api/promotions/" + promotionId + "/diplomas/excel/generate" + qs,
+                 { method: "POST" }
+             );
+             if (!response.ok) {
+                 response = await window.heiAuth.authFetch(
+-                    "/api/promotions/" + promotionId + "/diplomas/excel"
++                    "/api/promotions/" + promotionId + "/diplomas/excel" + qs
+                 );
+             }
+             if (!response.ok) {
+@@ -156,6 +165,8 @@
+         promotions.forEach(function (promotion) {
+             tracks.forEach(function (parcours) {
+                 const row = document.createElement("tr");
++                const parcoursLabel = (parcours.code || parcours.label || "Parcours");
++                const fullLabel = promotion.label + " — " + parcoursLabel;
+                 row.innerHTML =
+                     "<td><strong>" + promotion.label + "</strong></td>" +
+                     "<td><span class='badge'>" + (parcours.code || parcours.label) + "</span> " +
+@@ -166,7 +177,8 @@
+                     "?parcoursId=" + parcours.id + "'>Voir les diplômés</a>" +
+                     (window.heiAuth.isAdmin()
+                         ? "<a class='dl-link' href='#' data-promo='" + promotion.id +
+-                          "' data-label='" + promotion.label + "'>Télécharger Excel</a>"
++                          "' data-parcours='" + parcours.id +
++                          "' data-label='" + fullLabel + "'>Télécharger Excel</a>"
+                         : "") +
+                     "</td>";
+                 body.appendChild(row);
+@@ -178,7 +190,11 @@
+         body.querySelectorAll(".dl-link").forEach(function (a) {
+             a.addEventListener("click", function (ev) {
+                 ev.preventDefault();
+-                downloadExcel(a.getAttribute("data-promo"), a.getAttribute("data-label"));
++                downloadExcel(
++                    a.getAttribute("data-promo"),
++                    a.getAttribute("data-parcours"),
++                    a.getAttribute("data-label")
++                );
+             });
+         });
+     }
+@@ -186,4 +202,4 @@
+     loadPromotions();
+ </script>
+ </body>
+-</html>
+\ No newline at end of file
++</html>
+--- a/src/main/resources/templates/promotion-detail.html	2026-08-20 12:35:03.638481944 +0000
++++ b/src/main/resources/templates/promotion-detail.html	2026-08-20 12:33:20.776000000 +0000
+@@ -60,9 +60,7 @@
+     <aside class="sidebar">
+         <div class="brand"><div class="brand-icon">🎓</div><span>HEI Graduate</span></div>
+         <nav class="nav">
+-            <a href="/promotions" class="active">🎓 &nbsp; Promotions</a>
+-            <a href="/notes">📊 &nbsp; Mes notes</a>
+-            <a href="/releves">📄 &nbsp; Mes relevés</a>
++            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
+         </nav>
+         <div class="sidebar-bottom">
+             <button id="logout-btn" class="logout">↪ &nbsp; Se déconnecter</button>
+@@ -100,6 +98,13 @@
+             return;
+         }
+         window.heiAuth.requireAuth();
++        window.heiAuth.renderSidebar("promotions");
++
++        // Les étudiants n'ont pas accès à cette page selon le CDC
++        if (window.heiAuth.isStudent()) {
++            window.location.href = "/notes";
++            return;
++        }
+ 
+         var promotionId = document.body.getAttribute("data-promotion-id");
+         if (!promotionId) {
+--- a/src/main/resources/templates/notes.html	2026-08-20 12:35:03.870481954 +0000
++++ b/src/main/resources/templates/notes.html	2026-08-20 12:33:30.128000000 +0000
+@@ -284,9 +284,7 @@
+         </div>
+ 
+         <nav class="nav">
+-            <a href="/promotions">🎓 &nbsp; Promotions</a>
+-            <a href="/notes" class="active">📊 &nbsp; Mes notes</a>
+-            <a href="/releves">📄 &nbsp; Mes relevés</a>
++            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
+         </nav>
+ 
+         <div class="sidebar-bottom">
+@@ -348,6 +346,7 @@
+ 
+ <script>
+     window.heiAuth.requireAuth();
++    window.heiAuth.renderSidebar("notes");
+ 
+     document.getElementById("logout-btn").addEventListener("click", function () {
+         window.heiAuth.logout();
+--- a/src/main/resources/templates/releves.html	2026-08-20 12:35:04.094481964 +0000
++++ b/src/main/resources/templates/releves.html	2026-08-20 12:33:40.727000000 +0000
+@@ -281,9 +281,7 @@
+         </div>
+ 
+         <nav class="nav">
+-            <a href="/promotions">🎓 &nbsp; Promotions</a>
+-            <a href="/notes">📊 &nbsp; Mes notes</a>
+-            <a href="/releves" class="active">📄 &nbsp; Mes relevés</a>
++            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
+         </nav>
+ 
+         <div class="sidebar-bottom">
+@@ -347,6 +345,7 @@
+ 
+ <script>
+     window.heiAuth.requireAuth();
++    window.heiAuth.renderSidebar("releves");
+ 
+     document.getElementById("logout-btn").addEventListener("click", function () {
+         window.heiAuth.logout();
+--- a/src/main/java/com/heigraduate/app/graduate/controller/DiplomaExcelController.java	2026-08-20 12:35:04.134481966 +0000
++++ b/src/main/java/com/heigraduate/app/graduate/controller/DiplomaExcelController.java	2026-08-20 12:31:56.339000000 +0000
+@@ -14,15 +14,30 @@
+ 
+   private final DiplomaExcelService diplomaExcelService;
+ 
++  /**
++   * Génère le fichier Excel des diplômés.
++   * Sans parcoursId : tous les parcours (EL + TN) dans un seul fichier.
++   * Avec parcoursId : uniquement le parcours demandé.
++   */
+   @PostMapping("/generate")
+   @PreAuthorize("hasRole('ADMIN')")
+-  public DiplomaExcelResponse generate(@PathVariable UUID promotionId) {
++  public DiplomaExcelResponse generate(
++      @PathVariable UUID promotionId,
++      @RequestParam(required = false) UUID parcoursId) {
++    if (parcoursId != null) {
++      return diplomaExcelService.generateExcelForParcours(promotionId, parcoursId);
++    }
+     return diplomaExcelService.generateExcel(promotionId);
+   }
+ 
+   @GetMapping
+   @PreAuthorize("hasRole('ADMIN')")
+-  public DiplomaExcelResponse getExisting(@PathVariable UUID promotionId) {
++  public DiplomaExcelResponse getExisting(
++      @PathVariable UUID promotionId,
++      @RequestParam(required = false) UUID parcoursId) {
++    if (parcoursId != null) {
++      return diplomaExcelService.getExistingExcelForParcours(promotionId, parcoursId);
++    }
+     return diplomaExcelService.getExistingExcel(promotionId);
+   }
+ }
+--- a/src/main/java/com/heigraduate/app/graduate/service/DiplomaExcelService.java	2026-08-20 12:35:04.186481968 +0000
++++ b/src/main/java/com/heigraduate/app/graduate/service/DiplomaExcelService.java	2026-08-20 12:32:31.512000000 +0000
+@@ -43,6 +43,10 @@
+   private final RankingService rankingService;
+   private final BucketComponent bucketComponent;
+ 
++  /**
++   * Génère un Excel contenant TOUS les parcours (EL + TN) de la promotion.
++   * Utilisé depuis la page détail promotion.
++   */
+   @Transactional
+   public DiplomaExcelResponse generateExcel(UUID promotionId) {
+     Promotion promotion =
+@@ -67,6 +71,7 @@
+     String bucketKey = BUCKET_KEY_PREFIX + promotionId + "/" + UUID.randomUUID() + ".xlsx";
+     bucketComponent.upload(workbookFile, bucketKey);
+ 
++    // On associe la même clé à chaque parcours (fichier multi-feuilles)
+     for (UUID parcoursId : parcoursIds) {
+       diplomaListRepository
+           .findByPromotionIdAndParcoursId(promotionId, parcoursId)
+@@ -85,6 +90,51 @@
+     return new DiplomaExcelResponse(downloadUrl.toString());
+   }
+ 
++  /**
++   * Génère un Excel pour UN seul parcours (EL ou TN).
++   * Utilisé depuis la liste des promotions (ligne EL / ligne TN).
++   */
++  @Transactional
++  public DiplomaExcelResponse generateExcelForParcours(UUID promotionId, UUID parcoursId) {
++    Promotion promotion =
++        promotionRepository
++            .findById(promotionId)
++            .orElseThrow(
++                () -> new ResourceNotFoundException("Promotion not found: " + promotionId));
++    Parcours parcours =
++        parcoursRepository
++            .findById(parcoursId)
++            .orElseThrow(
++                () -> new ResourceNotFoundException("Parcours not found: " + parcoursId));
++
++    // S'assurer que le classement existe
++    List<DiplomaResponse> ranking = rankingService.getRanking(promotionId, parcoursId);
++    if (ranking.isEmpty()) {
++      rankingService.generateRanking(promotionId, parcoursId);
++      ranking = rankingService.getRanking(promotionId, parcoursId);
++    }
++
++    File workbookFile = writeWorkbook(promotion, List.of(parcoursId));
++    String bucketKey =
++        BUCKET_KEY_PREFIX + promotionId + "/" + parcours.getCode() + "-" + UUID.randomUUID() + ".xlsx";
++    bucketComponent.upload(workbookFile, bucketKey);
++
++    diplomaListRepository
++        .findByPromotionIdAndParcoursId(promotionId, parcoursId)
++        .ifPresentOrElse(
++            existing -> existing.setUrlS3(bucketKey),
++            () ->
++                diplomaListRepository.save(
++                    DiplomaList.builder()
++                        .promotionId(promotionId)
++                        .parcoursId(parcoursId)
++                        .urlS3(bucketKey)
++                        .build()));
++
++    var downloadUrl = bucketComponent.presign(bucketKey, DOWNLOAD_LINK_VALIDITY);
++    return new DiplomaExcelResponse(downloadUrl.toString());
++  }
++
+   @Transactional
+   public DiplomaExcelResponse getExistingExcel(UUID promotionId) {
+     List<DiplomaList> lists = diplomaListRepository.findByPromotionId(promotionId);
+@@ -96,6 +146,19 @@
+     return new DiplomaExcelResponse(downloadUrl.toString());
+   }
+ 
++  @Transactional
++  public DiplomaExcelResponse getExistingExcelForParcours(UUID promotionId, UUID parcoursId) {
++    return diplomaListRepository
++        .findByPromotionIdAndParcoursId(promotionId, parcoursId)
++        .filter(list -> list.getUrlS3() != null)
++        .map(
++            list -> {
++              var downloadUrl = bucketComponent.presign(list.getUrlS3(), DOWNLOAD_LINK_VALIDITY);
++              return new DiplomaExcelResponse(downloadUrl.toString());
++            })
++        .orElseGet(() -> generateExcelForParcours(promotionId, parcoursId));
++  }
++
+   private File writeWorkbook(Promotion promotion, List<UUID> parcoursIds) {
+     try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+       for (UUID parcoursId : parcoursIds) {
+@@ -144,6 +207,6 @@
+   }
+ 
+   private String sheetName(Parcours parcours) {
+-    return parcours.getCode();
++    return parcours.getCode() != null ? parcours.getCode() : "Parcours";
+   }
+ }
