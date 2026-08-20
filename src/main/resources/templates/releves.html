@@ -281,9 +281,7 @@
         </div>
 
         <nav class="nav">
-            <a href="/promotions">🎓 &nbsp; Promotions</a>
-            <a href="/notes">📊 &nbsp; Mes notes</a>
-            <a href="/releves" class="active">📄 &nbsp; Mes relevés</a>
+            <!-- Rempli dynamiquement par heiAuth.renderSidebar -->
         </nav>
 
         <div class="sidebar-bottom">
@@ -347,6 +345,7 @@
 
 <script>
     window.heiAuth.requireAuth();
+    window.heiAuth.renderSidebar("releves");
 
     document.getElementById("logout-btn").addEventListener("click", function () {
         window.heiAuth.logout();
