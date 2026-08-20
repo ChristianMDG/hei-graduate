@@ -11,53 +11,55 @@
         }
 
         :root {
-            --navy: #0b1f3f;
-            --navy-dark: #061428;
-            --navy-mid: #12294d;
+            --navy: #071a33;
+            --navy-light: #0d2a4d;
+            --navy-soft: #12385f;
             --gold: #c9a227;
-            --gold-dark: #a9871c;
-            --gold-light: #f4e8c1;
-            --background: #f6f4ee;
+            --gold-light: #e4c55d;
+            --gold-soft: #f8f1d8;
+            --background: #f5f7fa;
             --surface: #ffffff;
-            --text: #10192b;
-            --muted: #647089;
-            --border: #e4e1d5;
+            --text: #132238;
+            --muted: #667085;
+            --border: #e2e7ee;
             --danger: #b42318;
-            --shadow: 0 24px 60px rgba(6, 20, 40, 0.18);
+            --shadow: 0 24px 70px rgba(7, 26, 51, 0.14);
         }
 
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Fraunces", Georgia, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-                         "Segoe UI", sans-serif;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+                         BlinkMacSystemFont, "Segoe UI", sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(201, 162, 39, 0.14), transparent 40%),
+                radial-gradient(circle at 10% 10%, rgba(201, 162, 39, 0.10), transparent 28%),
+                radial-gradient(circle at 90% 90%, rgba(7, 26, 51, 0.08), transparent 30%),
                 var(--background);
             color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 28px;
         }
 
         .login-wrapper {
             width: 100%;
-            max-width: 1050px;
-            min-height: 620px;
+            max-width: 1120px;
+            min-height: 650px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.05fr 0.95fr;
             background: var(--surface);
-            border-radius: 28px;
+            border-radius: 30px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            border: 1px solid rgba(201, 162, 39, 0.25);
+            border: 1px solid rgba(7, 26, 51, 0.06);
         }
 
         .brand-panel {
-            padding: 64px;
+            padding: 58px;
             background:
-                linear-gradient(160deg, var(--navy-dark), var(--navy) 55%, var(--navy-mid) 100%);
+                radial-gradient(circle at 80% 15%, rgba(228, 197, 93, 0.16), transparent 28%),
+                linear-gradient(145deg, var(--navy), var(--navy-light) 58%, var(--navy-soft));
             color: white;
             display: flex;
             flex-direction: column;
@@ -69,83 +71,86 @@
         .brand-panel::after {
             content: "";
             position: absolute;
-            right: -80px;
-            bottom: -80px;
             width: 260px;
             height: 260px;
+            right: -90px;
+            bottom: -100px;
+            border: 1px solid rgba(228, 197, 93, 0.25);
             border-radius: 50%;
-            border: 1px solid rgba(201, 162, 39, 0.35);
-        }
-
-        .brand-panel::before {
-            content: "";
-            position: absolute;
-            right: -30px;
-            bottom: -30px;
-            width: 170px;
-            height: 170px;
-            border-radius: 50%;
-            border: 1px solid rgba(201, 162, 39, 0.25);
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 13px;
             font-weight: 800;
-            font-size: 22px;
-            font-family: ui-sans-serif, system-ui, sans-serif;
+            font-size: 21px;
+            position: relative;
             z-index: 1;
         }
 
         .brand-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 13px;
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
             display: grid;
             place-items: center;
             background: var(--gold);
-            color: var(--navy-dark);
-            font-size: 20px;
+            color: var(--navy);
+            font-size: 21px;
+            box-shadow: 0 8px 25px rgba(201, 162, 39, 0.25);
         }
 
         .brand-content {
-            max-width: 420px;
+            max-width: 470px;
+            position: relative;
             z-index: 1;
+        }
+
+        .brand-kicker {
+            color: var(--gold-light);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
         }
 
         .brand-content h1 {
             margin: 0 0 20px;
-            font-size: 42px;
-            line-height: 1.15;
-            letter-spacing: -1px;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-        }
-
-        .brand-content span.accent {
-            color: var(--gold);
+            font-size: 45px;
+            line-height: 1.08;
+            letter-spacing: -1.8px;
         }
 
         .brand-content p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.78);
-            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.76);
+            line-height: 1.8;
             font-size: 16px;
-            font-family: ui-sans-serif, system-ui, sans-serif;
+            max-width: 430px;
+        }
+
+        .brand-line {
+            width: 62px;
+            height: 3px;
+            background: var(--gold);
+            border-radius: 999px;
+            margin-top: 28px;
         }
 
         .brand-footer {
             color: rgba(255, 255, 255, 0.55);
-            font-size: 13px;
+            font-size: 12px;
+            position: relative;
             z-index: 1;
-            font-family: ui-sans-serif, system-ui, sans-serif;
         }
 
         .form-panel {
             padding: 64px;
             display: flex;
             align-items: center;
-            font-family: ui-sans-serif, system-ui, sans-serif;
+            background: #fff;
         }
 
         .form-container {
@@ -154,17 +159,32 @@
             margin: auto;
         }
 
+        .form-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: var(--gold-soft);
+            color: #765e08;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            margin-bottom: 20px;
+        }
+
         .form-container h2 {
             margin: 0 0 8px;
-            font-size: 30px;
-            letter-spacing: -0.7px;
-            color: var(--navy-dark);
+            font-size: 31px;
+            letter-spacing: -0.8px;
+            color: var(--navy);
         }
 
         .subtitle {
             margin: 0 0 34px;
             color: var(--muted);
             font-size: 15px;
+            line-height: 1.6;
         }
 
         .field {
@@ -174,77 +194,79 @@
         label {
             display: block;
             margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--navy-dark);
+            font-size: 13px;
+            font-weight: 750;
+            color: var(--navy);
         }
 
         input {
             width: 100%;
-            height: 50px;
+            height: 52px;
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 13px;
             padding: 0 15px;
             font-size: 15px;
             color: var(--text);
             outline: none;
             background: #fff;
-            transition: 0.2s;
+            transition: .2s;
         }
 
         input:focus {
             border-color: var(--gold);
-            box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.16);
+            box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.12);
         }
 
         button {
             width: 100%;
-            height: 50px;
+            height: 52px;
             border: 0;
-            border-radius: 12px;
-            background: var(--gold);
-            color: var(--navy-dark);
-            font-size: 15px;
+            border-radius: 13px;
+            background: var(--navy);
+            color: white;
+            font-size: 14px;
             font-weight: 800;
             cursor: pointer;
-            transition: 0.2s;
-            letter-spacing: 0.2px;
+            transition: .2s;
         }
 
         button:hover {
-            background: var(--gold-dark);
+            background: var(--navy-light);
             transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(7, 26, 51, 0.15);
         }
 
         button:disabled {
-            opacity: 0.7;
+            opacity: .65;
+            cursor: not-allowed;
             transform: none;
-            cursor: default;
         }
 
         #error {
             min-height: 20px;
             margin: 14px 0 0;
             color: var(--danger);
-            font-size: 14px;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         @media (max-width: 800px) {
+            body {
+                padding: 15px;
+            }
+
             .login-wrapper {
                 grid-template-columns: 1fr;
+                min-height: auto;
             }
 
             .brand-panel {
-                padding: 40px;
-                min-height: 280px;
+                padding: 38px 30px;
+                min-height: 390px;
             }
 
             .brand-content h1 {
-                font-size: 32px;
-            }
-
-            .brand-footer {
-                display: none;
+                font-size: 34px;
             }
 
             .form-panel {
@@ -265,12 +287,18 @@
         </div>
 
         <div class="brand-content">
-            <h1>Votre parcours académique, <span class="accent">simplement</span>.</h1>
+            <div class="brand-kicker">Plateforme académique</div>
+
+            <h1>
+                Votre parcours académique, simplement.
+            </h1>
+
             <p>
-                Consultez vos notes, téléchargez vos relevés
-                et accédez aux informations relatives aux promotions
-                et aux diplômés.
+                Un espace centralisé pour consulter les résultats,
+                les relevés et les informations relatives aux diplômés.
             </p>
+
+            <div class="brand-line"></div>
         </div>
 
         <div class="brand-footer">
@@ -281,9 +309,15 @@
     <section class="form-panel">
         <div class="form-container">
 
+            <div class="form-badge">
+                <span>✦</span>
+                ESPACE SÉCURISÉ
+            </div>
+
             <h2>Bienvenue 👋</h2>
+
             <p class="subtitle">
-                Connectez-vous à votre espace.
+                Connectez-vous à votre espace académique.
             </p>
 
             <form id="login-form">
@@ -291,22 +325,22 @@
                 <div class="field">
                     <label for="email">Adresse e-mail</label>
                     <input
-                            type="email"
-                            id="email"
-                            placeholder="exemple@email.com"
-                            autocomplete="email"
-                            required
+                        type="email"
+                        id="email"
+                        placeholder="exemple@email.com"
+                        autocomplete="email"
+                        required
                     >
                 </div>
 
                 <div class="field">
                     <label for="password">Mot de passe</label>
                     <input
-                            type="password"
-                            id="password"
-                            placeholder="Votre mot de passe"
-                            autocomplete="current-password"
-                            required
+                        type="password"
+                        id="password"
+                        placeholder="Votre mot de passe"
+                        autocomplete="current-password"
+                        required
                     >
                 </div>
 
@@ -357,11 +391,13 @@
             }
 
             const data = await response.json();
-            const role = data.user.role;
 
-            // Seuls ADMIN et STUDENT ont accès direct à la plateforme.
-            if (role !== "STUDENT" && role !== "ADMIN") {
-                error.textContent = "Votre rôle n'a pas accès direct à cette plateforme.";
+            const role = data.user && data.user.role;
+
+           
+            if (role !== "ADMIN" && role !== "STUDENT") {
+                error.textContent =
+                    "Votre rôle ne dispose pas d'un accès à cette interface.";
                 return;
             }
 
