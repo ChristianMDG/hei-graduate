@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HEI Graduate — Connexion</title>
+
+    <title>HEI Graduate — Promotions</title>
 
     <style>
         * {
@@ -14,194 +16,274 @@
             --navy: #071b36;
             --navy-light: #0d2a4f;
             --gold: #d4af37;
-            --gold-light: #f4e7b2;
+            --gold-light: #f8f1d7;
             --background: #f4f6f9;
             --surface: #ffffff;
             --text: #10233f;
             --muted: #667085;
             --border: #e4e7ec;
             --danger: #b42318;
-            --shadow: 0 24px 70px rgba(7, 27, 54, 0.14);
+            --success: #027a48;
         }
 
         body {
             margin: 0;
-            min-height: 100vh;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-                         BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(212, 175, 55, 0.12), transparent 35%),
-                var(--background);
+            font-family: Inter, system-ui, sans-serif;
+            background: var(--background);
             color: var(--text);
+        }
+
+        .layout {
+            min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
         }
 
-        .login-wrapper {
-            width: 100%;
-            max-width: 1050px;
-            min-height: 620px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--surface);
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .brand-panel {
-            padding: 64px;
-            background:
-                radial-gradient(circle at top right, rgba(212,175,55,.20), transparent 35%),
-                linear-gradient(145deg, #05172f, #0b2749 60%, #12385f);
+        .sidebar {
+            width: 250px;
+            background: var(--navy);
             color: white;
+            padding: 26px 18px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            position: fixed;
+            inset: 0 auto 0 0;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 11px;
+            padding: 0 12px;
+            margin-bottom: 42px;
+            font-size: 19px;
             font-weight: 800;
-            font-size: 22px;
         }
 
         .brand-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 13px;
+            width: 38px;
+            height: 38px;
             display: grid;
             place-items: center;
+            border-radius: 11px;
             background: var(--gold);
             color: var(--navy);
-            font-size: 20px;
         }
 
-        .brand-content {
-            max-width: 420px;
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .brand-content h1 {
-            margin: 0 0 20px;
-            font-size: 44px;
-            line-height: 1.1;
-            letter-spacing: -1.5px;
-        }
-
-        .brand-content p {
-            margin: 0;
-            color: rgba(255,255,255,.78);
-            line-height: 1.7;
-            font-size: 16px;
-        }
-
-        .brand-footer {
-            color: rgba(255,255,255,.58);
-            font-size: 13px;
-        }
-
-        .form-panel {
-            padding: 64px;
+        .nav a {
             display: flex;
             align-items: center;
-        }
-
-        .form-container {
-            width: 100%;
-            max-width: 390px;
-            margin: auto;
-        }
-
-        .form-container h2 {
-            margin: 0 0 8px;
-            font-size: 30px;
-            letter-spacing: -.7px;
-        }
-
-        .subtitle {
-            margin: 0 0 34px;
-            color: var(--muted);
-            font-size: 15px;
-        }
-
-        .field {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
+            gap: 11px;
+            color: #d8e0ea;
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
         }
 
-        input {
-            width: 100%;
-            height: 50px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0 15px;
-            font-size: 15px;
-            color: var(--text);
-            outline: none;
-            background: #fff;
-            transition: .2s;
+        .nav a:hover,
+        .nav a.active {
+            color: var(--navy);
+            background: var(--gold);
         }
 
-        input:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 4px rgba(212,175,55,.12);
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
         }
 
-        button {
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .logout {
             width: 100%;
-            height: 50px;
-            border: 0;
-            border-radius: 12px;
-            background: var(--navy);
-            color: white;
-            font-size: 15px;
-            font-weight: 700;
+            border: 1px solid rgba(255,255,255,.12);
+            background: transparent;
+            color: #d8e0ea;
+            padding: 12px 14px;
+            text-align: left;
+            border-radius: 10px;
             cursor: pointer;
-            transition: .2s;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-        button:hover {
-            background: var(--navy-light);
-            transform: translateY(-1px);
+        .logout:hover {
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
-        #error {
-            min-height: 20px;
-            margin: 14px 0 0;
-            color: var(--danger);
+        .main {
+            margin-left: 250px;
+            padding: 42px;
+            width: calc(100% - 250px);
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            color: #a17e12;
+            letter-spacing: .12em;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+            letter-spacing: -.7px;
+        }
+
+        .description {
+            color: var(--muted);
+            margin: 0 0 30px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(7,27,54,.05);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 15px 24px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
 
-        @media (max-width: 800px) {
-            .login-wrapper {
-                grid-template-columns: 1fr;
+        th {
+            color: #59677a;
+            font-weight: 700;
+            background: #fafbfc;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        tbody tr:hover {
+            background: #fcfcfa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--gold-light);
+            color: #80640d;
+            font-weight: 800;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .view-link,
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 13px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .view-link {
+            background: var(--navy);
+            color: white;
+        }
+
+        .view-link:hover {
+            background: var(--navy-light);
+        }
+
+        .download-link {
+            border: 1px solid var(--gold);
+            background: var(--gold-light);
+            color: #70570b;
+        }
+
+        .download-link:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        .empty {
+            padding: 48px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        #status {
+            margin: 14px 0;
+            padding: 12px 16px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #status.error {
+            display: block;
+            background: #fef3f2;
+            color: var(--danger);
+        }
+
+        #status.ok {
+            display: block;
+            background: #ecfdf3;
+            color: var(--success);
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
             }
 
-            .brand-panel {
-                padding: 40px;
-                min-height: 300px;
+            .layout {
+                display: block;
             }
 
-            .brand-content h1 {
-                font-size: 34px;
-            }
-
-            .brand-footer {
-                display: none;
-            }
-
-            .form-panel {
-                padding: 40px 28px;
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 24px 16px;
             }
         }
     </style>
@@ -209,133 +291,341 @@
 
 <body>
 
-<div class="login-wrapper">
+<div class="layout">
 
-    <section class="brand-panel">
+    <aside class="sidebar">
+
         <div class="brand">
             <div class="brand-icon">🎓</div>
             <span>HEI Graduate</span>
         </div>
 
-        <div class="brand-content">
-            <h1>Votre parcours académique, simplement.</h1>
-            <p>
-                Consultez vos notes, téléchargez vos relevés
-                et accédez aux informations relatives aux promotions
-                et aux diplômés.
-            </p>
+        <nav class="nav">
+            <!-- Rempli par auth.js puis nettoyé ci-dessous -->
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button id="logout-btn" class="logout">
+                ↪ &nbsp; Se déconnecter
+            </button>
         </div>
 
-        <div class="brand-footer">
-            Plateforme de gestion académique — HEI Graduate
-        </div>
-    </section>
+    </aside>
 
-    <section class="form-panel">
-        <div class="form-container">
+    <main class="main">
 
-            <h2>Bienvenue 👋</h2>
+        <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
 
-            <p class="subtitle">
-                Connectez-vous à votre espace.
-            </p>
+        <h1>Promotions</h1>
 
-            <form id="login-form">
+        <p class="description">
+            Consultez les promotions et les diplômés par parcours.
+        </p>
 
-                <div class="field">
-                    <label for="email">Adresse e-mail</label>
-                    <input
-                            type="email"
-                            id="email"
-                            placeholder="exemple@email.com"
-                            autocomplete="email"
-                            required
-                    >
-                </div>
+        <p id="status"></p>
 
-                <div class="field">
-                    <label for="password">Mot de passe</label>
-                    <input
-                            type="password"
-                            id="password"
-                            placeholder="Votre mot de passe"
-                            autocomplete="current-password"
-                            required
-                    >
-                </div>
+        <section class="card">
 
-                <button type="submit">
-                    Se connecter
-                </button>
+            <div class="card-header">
+                <h2 class="card-title">
+                    Promotions × Parcours
+                </h2>
+            </div>
 
-                <p id="error"></p>
+            <div class="table-wrapper">
 
-            </form>
-        </div>
-    </section>
+                <table id="promotions-table" style="display:none;">
+
+                    <thead>
+                    <tr>
+                        <th>Promotion</th>
+                        <th>Parcours</th>
+                        <th>Année finale</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="promotions-body"></tbody>
+
+                </table>
+
+            </div>
+
+            <div id="empty" class="empty" style="display:none;">
+                Aucune promotion pour le moment.
+            </div>
+
+        </section>
+
+    </main>
 
 </div>
 
 <script th:src="@{/js/auth.js}"></script>
 
 <script>
-    document.getElementById("login-form").addEventListener("submit", async function (e) {
-        e.preventDefault();
+    window.heiAuth.requireAuth();
 
-        const error = document.getElementById("error");
-        const button = this.querySelector("button");
+    /*
+     * Nettoyage de la navigation.
+     * L'admin ne voit que Promotions.
+     * On remplace également les caractères/icônes cassés
+     * éventuellement générés par auth.js.
+     */
+    function setupAdminSidebar() {
+        const nav = document.querySelector(".nav");
 
-        error.textContent = "";
+        if (!nav) {
+            return;
+        }
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
+        nav.innerHTML = `
+            <a href="/promotions" class="active">
+                <span class="nav-icon">▣</span>
+                <span>Promotions</span>
+            </a>
+        `;
+    }
 
-        button.disabled = true;
-        button.textContent = "Connexion...";
+    if (!window.heiAuth.isAdmin()) {
+        if (window.heiAuth.isStudent()) {
+            window.location.href = "/notes";
+        } else {
+            window.location.href = "/login";
+        }
+    } else {
+        window.heiAuth.renderSidebar("promotions");
+        setupAdminSidebar();
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", function () {
+        window.heiAuth.logout();
+    });
+
+    function setStatus(msg, isError) {
+        const el = document.getElementById("status");
+
+        el.textContent = msg || "";
+
+        el.className = msg
+            ? (isError ? "error" : "ok")
+            : "";
+
+        el.style.display = msg ? "block" : "none";
+    }
+
+    /*
+     * Téléchargement Excel de la liste des diplômés
+     * pour UNE promotion et UN parcours.
+     */
+    async function downloadExcel(promotionId, parcoursId, label) {
+
+        setStatus(
+            "Préparation du fichier Excel pour " + label + "..."
+        );
 
         try {
-            const response = await fetch("/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
+
+            const qs = parcoursId
+                ? "?parcoursId=" + encodeURIComponent(parcoursId)
+                : "";
+
+            let response = await window.heiAuth.authFetch(
+                "/api/promotions/" +
+                promotionId +
+                "/diplomas/excel/generate" +
+                qs,
+                {
+                    method: "POST"
+                }
+            );
 
             if (!response.ok) {
-                error.textContent = "Identifiants invalides.";
+                response = await window.heiAuth.authFetch(
+                    "/api/promotions/" +
+                    promotionId +
+                    "/diplomas/excel" +
+                    qs
+                );
+            }
+
+            if (!response.ok) {
+                setStatus(
+                    "Impossible de télécharger le fichier Excel.",
+                    true
+                );
                 return;
             }
 
             const data = await response.json();
 
-            /*
-             * Seuls ADMIN et STUDENT ont accès à l'interface.
-             * Le TEACHER ne reçoit donc aucune session.
-             */
-            if (data.user.role !== "ADMIN" && data.user.role !== "STUDENT") {
-                error.textContent =
-                    "Accès à cette interface réservé aux administrateurs et aux étudiants.";
+            const url =
+                data.downloadUrl ||
+                data.url ||
+                data.presignedUrl;
+
+            if (!url) {
+                setStatus(
+                    "Réponse Excel sans URL de téléchargement.",
+                    true
+                );
                 return;
             }
 
-            window.heiAuth.setSession(data.token, data.user);
+            window.open(url, "_blank");
 
-            window.location.href =
-                data.user.role === "STUDENT"
-                    ? "/notes"
-                    : "/promotions";
+            setStatus(
+                "Fichier Excel prêt pour " + label + "."
+            );
 
-        } catch (err) {
-            error.textContent = "Erreur de connexion au serveur.";
-        } finally {
-            button.disabled = false;
-            button.textContent = "Se connecter";
+        } catch (e) {
+
+            setStatus(
+                "Erreur lors du téléchargement Excel.",
+                true
+            );
         }
-    });
+    }
+
+    async function loadPromotions() {
+
+        try {
+
+            const [promoRes, trackRes] = await Promise.all([
+                window.heiAuth.authFetch("/api/promotions"),
+                window.heiAuth.authFetch("/api/parcours?activeOnly=true")
+            ]);
+
+            if (!promoRes.ok || !trackRes.ok) {
+                setStatus(
+                    "Impossible de charger les promotions.",
+                    true
+                );
+                return;
+            }
+
+            const promotions = await promoRes.json();
+            const tracks = await trackRes.json();
+
+            if (!promotions.length) {
+                document.getElementById("empty").style.display = "block";
+                return;
+            }
+
+            const body =
+                document.getElementById("promotions-body");
+
+            body.innerHTML = "";
+
+            /*
+             * Une ligne par Promotion × Parcours.
+             */
+            promotions.forEach(function (promotion) {
+
+                tracks.forEach(function (parcours) {
+
+                    const row =
+                        document.createElement("tr");
+
+                    const parcoursCode =
+                        parcours.code ||
+                        parcours.label ||
+                        "Parcours";
+
+                    const parcoursLabel =
+                        parcours.label || "";
+
+                    const fullLabel =
+                        promotion.label +
+                        " — " +
+                        parcoursCode;
+
+                    row.innerHTML =
+
+                        "<td>" +
+                            "<strong>" +
+                                promotion.label +
+                            "</strong>" +
+                        "</td>" +
+
+                        "<td>" +
+                            "<span class='badge'>" +
+                                parcoursCode +
+                            "</span>" +
+                            parcoursLabel +
+                        "</td>" +
+
+                        "<td>" +
+                            (
+                                promotion.finalAcademicYearLabel ||
+                                "—"
+                            ) +
+                        "</td>" +
+
+                        "<td>" +
+                            "<div class='actions'>" +
+
+                                "<a class='view-link' href='/promotions/" +
+                                    promotion.id +
+                                    "?parcoursId=" +
+                                    encodeURIComponent(parcours.id) +
+                                "'>" +
+                                    "Voir les diplômés" +
+                                "</a>" +
+
+                                "<a class='download-link' href='#' " +
+                                    "data-promo='" +
+                                        promotion.id +
+                                    "' " +
+                                    "data-parcours='" +
+                                        parcours.id +
+                                    "' " +
+                                    "data-label='" +
+                                        fullLabel.replace(/'/g, "&#39;") +
+                                    "'>" +
+                                    "Télécharger la liste" +
+                                "</a>" +
+
+                            "</div>" +
+                        "</td>";
+
+                    body.appendChild(row);
+                });
+            });
+
+            document
+                .getElementById("promotions-table")
+                .style.display = "table";
+
+            body
+                .querySelectorAll(".download-link")
+                .forEach(function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.preventDefault();
+
+                            downloadExcel(
+                                link.getAttribute("data-promo"),
+                                link.getAttribute("data-parcours"),
+                                link.getAttribute("data-label")
+                            );
+                        }
+                    );
+                });
+
+        } catch (error) {
+
+            setStatus(
+                "Erreur lors du chargement des promotions.",
+                true
+            );
+        }
+    }
+
+    loadPromotions();
 </script>
 
 </body>

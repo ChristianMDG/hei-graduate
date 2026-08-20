@@ -312,7 +312,7 @@
 
             const data = await response.json();
 
-           
+
             if (data.user.role !== "ADMIN" && data.user.role !== "STUDENT") {
                 error.textContent =
                     "Accès à cette interface réservé aux administrateurs et aux étudiants.";
